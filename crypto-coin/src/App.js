@@ -21,7 +21,7 @@ class App extends React.Component {
       accnt: ""
     };
     this.coinToss = this.coinToss.bind(this);
-    this.crypto = this.crypto.bind(this);
+    this.cryptoButton = this.cryptoButton.bind(this);
   }
 
   coinToss() {
@@ -36,30 +36,28 @@ class App extends React.Component {
     });
   }
 
-  crypto() {
-    const cryptoButton = async () => {
-      const { ethereum } = window;
-      if (ethereum.isMetaMask) {
-        this.setState({ msg: "MetaMask Installed"});
-        await ethereum.request({ method: "eth_requestAccounts" });
-        const accounts = await ethereum.request({ method: "eth_accounts" });
+  async cryptoButton () {
+    const { ethereum } = window;
+    if (ethereum.isMetaMask) {
+      this.setState({ msg: "MetaMask Installed"});
+      await ethereum.request({ method: "eth_requestAccounts" });
+      const accounts = await ethereum.request({ method: "eth_accounts" });
 
-        const provider = new ethers.providers.Web3Provider(ethereum);
-        const signer = provider.getSigner();
-        const message = randomString(16);
-        const signature = await signer.signMessage(message);
+      const provider = new ethers.providers.Web3Provider(ethereum);
+      const signer = provider.getSigner();
+      const message = randomString(16);
+      const signature = await signer.signMessage(message);
 
-        const signAddress = await ethers.utils.verifyMessage(message, signature);
-        if (signAddress.toLowerCase() === accounts[0].toLowerCase()) {
-          this.setState({ msg: "User Login"});
-          this.setState({ accnt: accounts[0]});
-        } else {
-          this.setState({ msg: "Login failed"});
-        }
+      const signAddress = await ethers.utils.verifyMessage(message, signature);
+      if (signAddress.toLowerCase() === accounts[0].toLowerCase()) {
+        this.setState({ msg: "User Login"});
+        this.setState({ accnt: accounts[0]});
       } else {
-        this.setState({ msg: "MetaMask is not installed"});
-        }
-    }
+        this.setState({ msg: "Login failed"});
+      }
+    } else {
+      this.setState({ msg: "MetaMask is not installed"});
+      }
   }
 
   render() {
@@ -78,7 +76,7 @@ class App extends React.Component {
           Coin Toss
         </button>
         <h1>Crypto Authentication</h1>
-        <button className="ConnectBtn" onClick={this.crypto.cryptoButton}>
+        <button className="ConnectBtn" onClick={this.cryptoButton}>
           Connect Wallet
         </button>
         <p>{this.state.msg}</p>
