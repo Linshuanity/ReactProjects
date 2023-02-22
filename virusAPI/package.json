@@ -1,0 +1,37 @@
+{
+  "name": "restful_api_start_kit",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "repository": "https://github.com/andy6804tw/RESTful_API_start_kit.git",
+  "author": "Tsai Yi Lin <andy6804tw@yahoo.com.tw>",
+  "license": "MIT",
+  "scripts": {
+    "build": "webpack -w",
+    "build:prod": "webpack -p",
+    "start": "nodemon dist/index.bundle.js"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.0",
+    "body-parser": "^1.18.2",
+    "cors": "^2.8.4",
+    "dotenv": "^4.0.0",
+    "express": "^4.16.2",
+    "express-validation": "^1.0.2",
+    "http-status": "^1.0.1",
+    "joi": "^13.0.2",
+    "morgan": "^1.9.0",
+    "mysql": "^2.15.0"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-eslint": "^8.0.2",
+    "babel-loader": "^7.1.2",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "eslint": "^4.12.1",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.8.0",
+    "webpack": "^3.9.1",
+    "webpack-node-externals": "^1.6.0"
+  }
+}
