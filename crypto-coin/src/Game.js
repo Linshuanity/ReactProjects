@@ -1,5 +1,6 @@
 import React from "react";
 import { ethers } from "ethers";
+import "./Game.css";
 
 const randomString = function (length) {
   var text = "";
@@ -11,7 +12,7 @@ const randomString = function (length) {
   return text;
 };
 
-class App extends React.Component {
+class Game extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -92,7 +93,7 @@ class App extends React.Component {
 
   render() {
     return (
-      <div className="App">
+      <div className="Game">
         <div id="coin" className={this.state.result} key={+new Date()}>
           <div className="side-a">
             <h2>TAIL</h2>
@@ -117,5 +118,5 @@ class App extends React.Component {
   }
 }
 
-export default App;
+export default Game;
 
