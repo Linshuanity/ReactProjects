@@ -16,23 +16,53 @@ class App extends React.Component {
     super(props);
     this.state = {
       result: "",
-      nader: "nader",
       msg: "",
-      accnt: ""
+      accnt: "",
+      prize: 1,
+      chances: 5
     };
     this.coinToss = this.coinToss.bind(this);
+    this.collectPrize = this.collectPrize.bind(this);
     this.cryptoButton = this.cryptoButton.bind(this);
+    this.virus_asset = 0;
   }
 
   coinToss() {
-    this.setState({ nader: "" }, () => {
-      if (Math.random() < 0.5) {
-        this.setState({ result: "heads" });
-        console.log("heads");
-      } else {
-        this.setState({ result: "tails" });
-        console.log("tails");
-      }
+    const button = document.querySelector(".button-go");
+    if (Math.random() < 0.5) {
+      this.setState({ result: "heads" }, () => {
+         const animated = document.querySelector("#coin.heads");
+         animated.addEventListener('animationend', () => {
+            this.setState({result: "", prize: 1 }, () => {
+               button.disabled = true;
+               button.innerText = this.state.chances-1 + " chances left.";
+            });
+         });
+      });
+    } else {
+      this.setState({ result: "tails" }, () => {
+         const animated = document.querySelector("#coin.tails");
+         animated.addEventListener('animationend', () => {
+            this.setState({ result: "", prize: this.state.prize * 2 }, function () {
+               button.innerText = "Go for " + this.state.prize * 2;
+            });
+         });
+      });
+    }
+  }
+
+  collectPrize() {
+    const button = document.querySelector(".button-go");
+    this.virus_asset += this.state.prize;
+    this.setState({ prize: 1, chances: this.state.chances-1 }, function() {
+       if (this.state.chances > 0) {
+          button.disabled = false;
+       }
+       else {
+          document.querySelector(".button-stop").disabled = true;
+          button.disabled = true;
+       }
+       button.innerText = this.state.chances + " chances left.";
     });
   }
 
@@ -71,10 +101,11 @@ class App extends React.Component {
             <h2>HEAD</h2>
           </div>
         </div>
-        <h1>Flip a coin</h1>
-        <button id="btn" onClick={this.coinToss}>
-          Coin Toss
-        </button>
+        <h1>Current prize: {this.state.prize}</h1>
+        <h2>Virus Asset: {this.virus_asset}</h2>
+        <button className="button-stop" onClick={this.collectPrize}>Collect virus</button>
+        <button className="button-go" onClick={this.coinToss}>5 chances left</button>
+
         <h1>Crypto Authentication</h1>
         <button className="ConnectBtn" onClick={this.cryptoButton}>
           Connect Wallet

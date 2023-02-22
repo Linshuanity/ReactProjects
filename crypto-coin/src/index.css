@@ -23,6 +23,25 @@
   box-shadow: inset 0 0 45px rgba(255, 255, 255, 0.3),
     0 12px 20px -10px rgba(0, 0, 0, 0.4);
 }
+
+.button-go{
+  background-color: #CCFFFF;
+  text-align: center;
+  width: 250px;
+  height: 150px;
+  margin: 8px 12px;
+  cursor: pointer;
+  font-size: 28px;
+}
+.button-stop{
+  background-color: #FF4500;
+  text-align: center;
+  width: 250px;
+  height: 150px;
+  margin: 8px 12px;
+  cursor: pointer;
+  font-size: 28px;
+}
 .side-a {
   background-color: #bb0000;
   color: white;
