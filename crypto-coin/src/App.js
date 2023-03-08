@@ -13,7 +13,7 @@ function App() {
     if (typeof str !== 'string' || typeof url !== 'string') {
         return false;
     }
-    return str.toUpperCase() === url.toUpperCase();
+    return url.toUpperCase().startsWith(str.toUpperCase());
   }
 
   useEffect(() => {

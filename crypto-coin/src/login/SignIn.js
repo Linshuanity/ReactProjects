@@ -17,8 +17,8 @@ function Copyright(props) {
   return (
     <Typography variant="body2" color="text.secondary" align="center" {...props}>
       {'Copyright © '}
-      <Link color="inherit" href="https://mui.com/">
-        Your Website
+      <Link color="inherit" href="https://www.goVirus.com/">
+        GoVirus
       </Link>{' '}
       {new Date().getFullYear()}
       {'.'}
@@ -27,6 +27,10 @@ function Copyright(props) {
 }
 
 const theme = createTheme();
+
+const handleClick = () => {
+  alert('HaHaHa!');
+};
 
 export default function SignIn() {
   const handleSubmit = (event) => {
@@ -91,12 +95,12 @@ export default function SignIn() {
             </Button>
             <Grid container>
               <Grid item xs>
-                <Link href="#" variant="body2">
+                <Link href="#" variant="body2" onClick={handleClick}>
                   Forgot password?
                 </Link>
               </Grid>
               <Grid item>
-                <Link href="#" variant="body2">
+                <Link href="/SignUp" variant="body2">
                   {"Don't have an account? Sign Up"}
                 </Link>
               </Grid>
