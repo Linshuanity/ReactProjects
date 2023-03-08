@@ -1,0 +1,114 @@
+.post-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  margin: 20px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  background-color: white;
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.post-authoravatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.post-owneravatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.post-authorname {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.post-ownername {
+  font-weight: bold;
+}
+
+.post-image {
+  width: 50%;
+  margin-bottom: 10px;
+}
+
+.post-interactions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.post-like-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.post-like-button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.post-like-count {
+  margin-left: 10px;
+}
+
+.post-dislike-button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+.post-dislike-count {
+  margin-left: 10px;
+}
+
+.post-comment-container {
+  display: flex;
+}
+
+.post-comment-input {
+  flex-grow: 1;
+  padding: 5px;
+  margin-right: 10px;
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.post-comment-button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.post-comments {
+  display: flex;
+  flex-direction: column;
+}
+
+.post-comment {
+  margin-bottom: 5px;
+}
+
+.post-comment-username {
+  font-weight: bold;
+}
