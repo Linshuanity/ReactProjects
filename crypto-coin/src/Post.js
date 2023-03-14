@@ -42,8 +42,8 @@ const Post = () => {
         />
         <div className="post-ownername">Linshuanity (Owner)</div>
       </div>
-        <h2>GoVirus is awesome</h2>
-        <p>Join govirus, or I'll come back with a gun </p> 
+        <h2>GoGo Virus</h2>
+        <p>Join Virus </p> 
         <img className="post-image" src="https://picsum.photos/300" alt="post" />
       <div className="post-interactions">
         <div className="post-like-container">

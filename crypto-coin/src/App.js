@@ -5,6 +5,7 @@ import Home from './Home';
 import Game from './Game';
 import Post from './Post';
 import Profile from './Profile';
+import Gallery from './Gallery';
 import Link from '@mui/material/Link';
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
         <li><Link href="/game">Game</Link></li>
         <li><Link href="/post">Post</Link></li>
         <li><Link href="/profile">Profile</Link></li>
+        <li><Link href="/gallery">Gallery</Link></li>
       </ul>
     </nav>
       {
@@ -38,6 +40,7 @@ function App() {
      :checkUrl("game") ? <Game></Game>
      :checkUrl("post") ? <Post></Post>
      :checkUrl("Profile") ? <Profile></Profile>
+     :checkUrl("Gallery") ? <Gallery></Gallery>
      : <Home></Home>}
     </div>
   );
