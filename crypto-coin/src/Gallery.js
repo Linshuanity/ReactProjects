@@ -1,14 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import PostPage from './PostPage';
+import Post from './Post';
 import './gallery.css';
 
-const posts = [
-    { id: 1, title: 'GoGo Virus', content: 'Join Virus' }
-  //{ id: 1, owner: 'Dingy', creator: 'Linshuanity', title: 'Go! Go! Vrius', content: 'Join GoVirus, or I will come back with a gun.' },
+export const posts = [
+  { id: 1, owner: 'Dingy', author: 'Linshuanity', title: 'Go! Go! Vrius', content: 'Join GoVirus, or I will come back with a gun.' },
+  { id: 2, owner: 'Lin', author: 'Lin', title: 'So hard', content: 'Look at that' }
 ];
 
-function Profile(props) {
+function GalleryList(props) {
+  const { posts } = props;
+  return (
+    <ul>
+      {posts.map((post) => (
+	    <div key={post.id}>
+          <a href={`/posts/${post.id}`}>
+	        <Post post={post}></Post>
+          </a>
+    	</div>
+      ))}
+    </ul>
+  );
+}
+
+function Gallery(props) {
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [subscribed, setSubscribed] = useState(false);
 
@@ -29,22 +44,20 @@ function Profile(props) {
   }
 
   return (
-    <div className="Profile">
-      <div className="Profile-header">
-        <img src="https://picsum.photos/100" alt="Profile" className="Profile-photo" />
-        <div className="Profile-header-text">
+    <div className="Gallery">
+      <div className="Gallery-header">
+        <img src="https://picsum.photos/100" alt="Gallery" className="Gallery-photo" />
+        <div className="Gallery-header-text">
           <h1>Linshuanity</h1>
           <p>{subscriberCount} subscribers</p>
           {!subscribed && <button onClick={handleSubscribe}>Subscribe</button>}
           {subscribed && <p>You are subscribed!</p>}
         </div>
       </div>
-      <div className="Profile-content">
-        {/* Profile content goes here */}
-        <h1>Linshuanity</h1>
+      <div className="Gallery-content">
         <Router>
           <Routes>
-            <Route path="/posts/:id" element={<PostPage posts={posts} />} />
+            <Route path="/gallery" element={<GalleryList posts={posts} />} />
           </Routes>
         </Router>
       </div>
@@ -52,5 +65,5 @@ function Profile(props) {
   );
 }
 
-export default Profile;
+export default Gallery;
 

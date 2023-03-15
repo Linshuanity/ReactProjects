@@ -1,36 +1,36 @@
-.Profile {
+.Gallery {
   display: flex;
   flex-direction: column;
   align-items: center;
   font-family: sans-serif;
 }
 
-.Profile-header {
+.Gallery-header {
   display: flex;
   align-items: center;
   margin-bottom: 20px;
 }
 
-.Profile-photo {
+.Gallery-photo {
   width: 50px;
   height: 50px;
   border-radius: 50%;
   margin-right: 10px;
 }
 
-.Profile-header-text h1 {
+.Gallery-header-text h1 {
   margin: 0;
   font-size: 24px;
 }
 
-.Profile-header-text p {
+.Gallery-header-text p {
   margin: 0;
   font-size: 16px;
   color: #999;
   margin-bottom: 10px;
 }
 
-.Profile-header-text button {
+.Gallery-header-text button {
   font-size: 16px;
   padding: 10px 20px;
   background-color: #007bff;
@@ -40,17 +40,17 @@
   cursor: pointer;
 }
 
-.Profile-header-text button:hover {
+.Gallery-header-text button:hover {
   background-color: #0062cc;
 }
 
-.Profile-header-text p:last-child {
+.Gallery-header-text p:last-child {
   margin-top: 10px;
   color: #007bff;
   font-weight: bold;
 }
 
-.Profile-content {
+.Gallery-content {
   /* Style profile content here */
 }
 

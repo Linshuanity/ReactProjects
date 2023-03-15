@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import SignIn from './login/SignIn';
 import SignUp from './login/SignUp';
 import Home from './Home';
 import Game from './Game';
 import Post from './Post';
 import Profile from './Profile';
-import Gallery from './Gallery';
+import Gallery, { posts } from './Gallery';
 import Link from '@mui/material/Link';
 
 function App() {
@@ -29,7 +30,6 @@ function App() {
       <ul>
       <li><Link href="/">Home</Link></li>
         <li><Link href="/game">Game</Link></li>
-        <li><Link href="/post">Post</Link></li>
         <li><Link href="/profile">Profile</Link></li>
         <li><Link href="/gallery">Gallery</Link></li>
       </ul>
@@ -38,11 +38,18 @@ function App() {
       checkUrl("SignUp") ? <SignUp></SignUp>
      :checkUrl("SignIn") ? <SignIn></SignIn>
      :checkUrl("game") ? <Game></Game>
-     :checkUrl("post") ? <Post></Post>
-     :checkUrl("Profile") ? <Profile></Profile>
-     :checkUrl("Gallery") ? <Gallery></Gallery>
+     :checkUrl("profile") ? <Profile></Profile>
+     :checkUrl("gallery") ? <Gallery></Gallery>
      : <Home></Home>}
+    <Router>
+      <Routes>
+        {posts.map((post) => (
+          <Route key={post.id} path={`/posts/${post.id}`} element={<Post post={post} />} />
+        ))}
+      </Routes>
+    </Router>
     </div>
+
   );
 }
 

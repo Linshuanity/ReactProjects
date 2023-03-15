@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import ProfilePage from './ProfilePage';
 import PostPage from './PostPage';
 import './profile.css';
 
 const posts = [
-  { id: 1, title: 'My German', content: 'Guten Tag.' },
-  { id: 2, title: 'My French', content: 'Bonjour.' },
-  { id: 3, title: 'My English', content: 'Hi' }
+  { id: 1, title: 'German', content: 'Guten Tag.' },
+  { id: 2, title: 'French', content: 'Bonjour.' },
+  { id: 3, title: 'English', content: 'Hi' }
 ];
 
 function Profile(props) {
@@ -46,8 +45,7 @@ function Profile(props) {
         <h1>Linshuanity</h1>
         <Router>
           <Routes>
-            <Route path="/profile" element={<ProfilePage name="John Doe" bio="Lorem ipsum dolor sit amet." posts={posts} />} />
-            <Route path="/profile/posts/:id" element={<PostPage posts={posts} />} />
+            <Route path="/profile" element={<PostPage name="John Doe" bio="Lorem ipsum dolor sit amet." posts={posts} />} />
           </Routes>
         </Router>
       </div>

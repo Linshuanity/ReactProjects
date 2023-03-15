@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import "./post.css";
 
-const Post = () => {
+const Post = ({ post }) => {
+  //const { id } = useParams();
+  //const post = posts.find(post => post.id === parseInt(id));
   const [comment, setComment] = useState("");
   const [likes, setLikes] = useState(0);
   const [dislikes, setDislikes] = useState(0);
@@ -34,16 +36,16 @@ const Post = () => {
           src="https://picsum.photos/100"
           alt="avatar"
         />
-        <div className="post-authorname">Dingy (Author)</div>
+        <div className="post-authorname">{ post.author } (Author)</div>
         <img
           className="post-owneravatar"
           src="https://picsum.photos/200"
           alt="avatar"
         />
-        <div className="post-ownername">Linshuanity (Owner)</div>
+        <div className="post-ownername">{ post.owner } (Owner)</div>
       </div>
-        <h2>GoGo Virus</h2>
-        <p>Join Virus </p> 
+        <h2>{ post.title }</h2>
+        <p>{ post.content }</p> 
         <img className="post-image" src="https://picsum.photos/300" alt="post" />
       <div className="post-interactions">
         <div className="post-like-container">
