@@ -17,7 +17,7 @@ function Copyright(props) {
   return (
     <Typography variant="body2" color="text.secondary" align="center" {...props}>
       {'Copyright © '}
-      <Link color="inherit" href="https://www.goVirus.com/">
+      <Link color="inherit" href="https://goVirus.app/">
         GoVirus
       </Link>{' '}
       {new Date().getFullYear()}
@@ -33,8 +33,25 @@ export default function SignUp() {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     console.log({
+      user_name: data.get('userName'),
       email: data.get('email'),
       password: data.get('password'),
+    });
+    fetch('https://www.govirus.app/api/user/', {
+      method: 'POST',
+      body: JSON.stringify({
+        user_name: data.get('userName'),
+        user_email: data.get('email'),
+        user_password: data.get('password'),
+      }),
+      headers: {
+         'Content-type': 'application/json; charset=UTF-8',
+      },
+    }).then((res) =>{
+        console.log(res);
+        alert('註冊成功');}
+    ).catch((err) => {
+        console.log(err.message);
     });
   };
 
