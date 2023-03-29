@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { useState, useRef } from "react";
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -12,6 +12,8 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import Cookies from 'universal-cookie';
+import { useNavigate } from 'react-router-dom';
 
 function Copyright(props) {
   return (
@@ -28,7 +30,21 @@ function Copyright(props) {
 
 const theme = createTheme();
 
-export default function SignUp() {
+const isValidPassword = (password) => {
+  const passwordRegex = /^[a-zA-Z0-9]{6,30}$/; // 密碼字串必須是 6-30 位英文數字
+  return passwordRegex.test(password);
+};
+const isValidEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // 正確的email格式驗證
+  return emailRegex.test(email);
+};
+
+export default function SignUp(props) {
+  const navigate = useNavigate();
+  const nameInputRef = useRef(null);
+  const emailInputRef = useRef(null);
+  const passwordInputRef = useRef(null);
+
   const handleSubmit = (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -37,6 +53,24 @@ export default function SignUp() {
       email: data.get('email'),
       password: data.get('password'),
     });
+    if(data.get('userName').length==0)
+    {
+      nameInputRef.current.focus();
+      alert('請填寫您的暱稱');
+      return;
+    }
+    if(!isValidEmail(data.get('email')))
+    {
+      emailInputRef.current.focus();
+      alert('請檢查您的email格式');
+      return;
+    }
+    if(!isValidPassword(data.get('password')))
+    {
+      passwordInputRef.current.focus();
+      alert('請填寫6~30字英數字密碼');
+      return;
+    }
     fetch('https://www.govirus.app/api/user/', {
       method: 'POST',
       body: JSON.stringify({
@@ -47,10 +81,22 @@ export default function SignUp() {
       headers: {
          'Content-type': 'application/json; charset=UTF-8',
       },
-    }).then((res) =>{
-        console.log(res);
-        alert('註冊成功');}
-    ).catch((err) => {
+    })
+    .then(response => response.json())
+    .then(resdata => 
+      {
+        console.log(resdata);
+        if(resdata.status == 'ok'){
+          alert('註冊成功！');
+          const cookies = new Cookies();
+          cookies.set('user',  { user_id: resdata.user_id, user_name: data.get('userName')}, { path: '/',secure: true,sameSite :true});
+          navigate('/');
+        }
+        else
+          alert('註冊錯誤！'+resdata.msg);
+      }
+    )
+    .catch((err) => {
         console.log(err.message);
     });
   };
@@ -84,6 +130,7 @@ export default function SignUp() {
                   id="userName"
                   label="Name"
                   autoFocus
+                  ref={nameInputRef}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -94,6 +141,7 @@ export default function SignUp() {
                   label="Email Address"
                   name="email"
                   autoComplete="email"
+                  ref={emailInputRef}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -105,6 +153,7 @@ export default function SignUp() {
                   type="password"
                   id="password"
                   autoComplete="new-password"
+                  ref={passwordInputRef}
                 />
               </Grid>
               <Grid item xs={12}>

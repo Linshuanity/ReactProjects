@@ -1,10 +1,8 @@
 {
-  "name": "restful_api_start_kit",
+  "name": "virus-api",
   "version": "1.0.0",
+  "private": true,
   "main": "src/index.js",
-  "repository": "https://github.com/andy6804tw/RESTful_API_start_kit.git",
-  "author": "Tsai Yi Lin <andy6804tw@yahoo.com.tw>",
-  "license": "MIT",
   "scripts": {
     "build": "webpack -w",
     "build:prod": "webpack -p",

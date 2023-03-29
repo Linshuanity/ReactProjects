@@ -72,7 +72,7 @@ const createUser = (insertValues) => {
             console.error('SQL error: ', error);
             reject(error); // 寫入資料庫有問題時回傳錯誤
           } else if (result.affectedRows === 1) {
-            resolve(`新增成功！ user_id: ${result.insertId}`); // 寫入成功回傳寫入id
+            resolve(`{"status":"ok", "msg":"註冊成功！","user_id":"${result.insertId}"}`); // 寫入成功回傳寫入id
           }
           connection.release();
         });
@@ -93,11 +93,11 @@ const modifyUser = (insertValues, userId) => {
             console.error('SQL error: ', error);// 寫入資料庫有問題時回傳錯誤
             reject(error);
           } else if (result.affectedRows === 0) { // 寫入時發現無該筆資料
-            resolve('請確認修改Id！');
+            resolve(`{"status":"fail","msg":"請確認修改Id！"}`);
           } else if (result.message.match('Changed: 1')) { // 寫入成功
-            resolve('資料修改成功');
+            resolve(`{"status":"ok", "msg":"資料修改成功"}`);
           } else {
-            resolve('資料無異動');
+            resolve(`{"status":"ok", "msg":"資料無異動"}`);
           }
           connection.release();
         });
@@ -118,9 +118,9 @@ const deleteUser = (userId) => {
             console.error('SQL error: ', error);// 資料庫存取有問題時回傳錯誤
             reject(error);
           } else if (result.affectedRows === 1) {
-            resolve('刪除成功！');
+            resolve(`{"status":"ok", "msg":"刪除成功！"}`);
           } else {
-            resolve('刪除失敗！');
+            resolve(`{"status":"false", "msg":"刪除失敗！"}`);
           }
           connection.release();
         });
@@ -137,21 +137,25 @@ const selectUserLogin = (insertValues) => {
         reject(connectionError); // 若連線有問題回傳錯誤
       } else {
         connection.query( // User撈取所有欄位的值組
-          'SELECT * FROM virus_platform_user WHERE user_mail = ?',
-          insertValues.user_mail, (error, result) => {
+          'SELECT * FROM virus_platform_user WHERE user_email = ?',
+          insertValues.user_email, (error, result) => {
             if (error) {
               console.error('SQL error: ', error);
               reject(error); // 寫入資料庫有問題時回傳錯誤
             } else if (Object.keys(result).length === 0) {
-              reject(new APPError.LoginError1()); // 信箱尚未註冊
-            } else {
+              resolve(`{"status":"false", "msg":"信箱尚未註冊！"}`);
+              // reject(new APPError.LoginError1()); // 信箱尚未註冊
+            } else {              
               const dbHashPassword = result[0].user_password; // 資料庫加密後的密碼
               const userPassword = insertValues.user_password; // 使用者登入輸入的密碼
+              console.log('dbHashPassword:'+dbHashPassword);
+              console.log('userPassword:'+userPassword);
               bcrypt.compare(userPassword, dbHashPassword).then((res) => { // 使用bcrypt做解密驗證
                 if (res) {
-                  resolve('登入成功'); // 登入成功
+                  resolve(`{"status":"ok", "msg":"登入成功","user_name":"`+ result[0].user_name + `","user_id":"`+ result[0].user_id + `"}`);
                 } else {
-                  reject(new APPError.LoginError2()); // 登入失敗 輸入的密碼有誤
+                  resolve(`{"status":"false", "msg":"帳號或密碼有誤！"}`);
+                  // reject(new APPError.LoginError2()); // 登入失敗 輸入的密碼有誤
                 }
               });
             }
