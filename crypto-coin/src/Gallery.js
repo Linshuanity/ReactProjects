@@ -55,11 +55,7 @@ function Gallery(props) {
         </div>
       </div>
       <div className="Gallery-content">
-        <Router>
-          <Routes>
-            <Route path="/gallery" element={<GalleryList posts={posts} />} />
-          </Routes>
-        </Router>
+        <GalleryList posts={posts} />
       </div>
     </div>
   );
