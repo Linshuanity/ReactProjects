@@ -1,83 +1,81 @@
-import React, { useState } from "react";
-import "./post.css";
+import React, { useState } from 'react';
+import Modal from 'react-modal';
 
-const Post = ({ post }) => {
-  //const { id } = useParams();
-  //const post = posts.find(post => post.id === parseInt(id));
-  const [comment, setComment] = useState("");
+import './post.css';
+
+Modal.setAppElement('#root');
+
+const Post = ({ creator, owner, deadline, contentText, contentImage }) => {
+  const [modalIsOpen, setModalIsOpen] = useState(false);
   const [likes, setLikes] = useState(0);
   const [dislikes, setDislikes] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
-  const [comments, setComments] = useState([]);
+  const [showCommentInput, setShowCommentInput] = useState(false);
 
-  const handleCommentChange = (e) => {
-    setComment(e.target.value);
+  const openModal = (e) => {
+    e.stopPropagation();
+    setModalIsOpen(true);
   };
 
-  const handleAddComment = () => {
-    setComments([...comments, comment]);
-    setComment("");
+  const closeModal = () => {
+    setModalIsOpen(false);
   };
 
-  const handleLikeClick = () => {
-    setIsLiked(!isLiked);
-    isLiked ? setLikes(likes - 1) : setLikes(likes + 1);
+  const handleLike = (e) => {
+    e.stopPropagation();
+    setLikes(likes + 1);
   };
 
-  const handleDislikeClick = () => {
+  const handleDislike = (e) => {
+    e.stopPropagation();
     setDislikes(dislikes + 1);
   };
 
+  const handleComment = (e) => {
+    e.stopPropagation();
+    setShowCommentInput(!showCommentInput);
+  };
+
   return (
-    <div className="post-container">
+    <div className="post-container" onClick={openModal}>
       <div className="post-header">
-        <img
-          className="post-authoravatar"
-          src="https://picsum.photos/100"
-          alt="avatar"
-        />
-        <div className="post-authorname">{ post.author } (Author)</div>
-        <img
-          className="post-owneravatar"
-          src="https://picsum.photos/200"
-          alt="avatar"
-        />
-        <div className="post-ownername">{ post.owner } (Owner)</div>
+        <img className="post-creator-img" src="https://picsum.photos/50" alt="Profile" />
+        <span className="creator-name">{creator}</span>
+        <img className="post-owner-img" src="https://picsum.photos/50" alt="Owner" />
       </div>
-        <h2>{ post.title }</h2>
-        <p>{ post.content }</p> 
-        <img className="post-image" src="https://picsum.photos/300" alt="post" />
-      <div className="post-interactions">
-        <div className="post-like-container">
-          <button className="post-like-button" onClick={handleLikeClick}>
-            {isLiked ? "Unlike" : "Like"}
-          </button>
-          <div className="post-like-count">{likes} likes</div>
-          <button className="post-dislike-button" onClick={handleDislikeClick}>
-            Dislike
-          </button>
-          <div className="post-dislike-count">{dislikes} dislikes</div>
+      <div className="post-image-container">
+        <img className="post-image" src={contentImage} alt="Post content" />
+      </div>
+      <div className="post-actions">
+        <button className="post-action-btn" onClick={handleLike}>
+          <span className="post-like">❤️</span> {likes}
+        </button>
+        <button className="post-action-btn" onClick={handleDislike}>
+          <span className="post-dislike">🥊</span> {dislikes}
+        </button>
+        <button className="post-action-btn" onClick={handleComment}>
+          <span className="post-comment">💬</span>
+        </button>
+        <p>{deadline}</p>
+      </div>
+      <div className="post-text">
+        <p>{contentText}</p>
+      </div>
+      
+      {showCommentInput && (
+        <div className="comment-input-container">
+          <label htmlFor="comment-input">Write a comment:</label>
+          <input className="comment-input" id="comment-input" type="text" />
         </div>
-        <div className="post-comment-container">
-          <input
-            className="post-comment-input"
-            placeholder="Add a comment"
-            value={comment}
-            onChange={handleCommentChange}
-          />
-          <button className="post-comment-button" onClick={handleAddComment}>
-            Post
-          </button>
-        </div>
-      </div>
-      <div className="post-comments">
-        {comments.map((comment, index) => (
-          <div key={index} className="post-comment">
-            <span className="post-comment-username">Hacker: </span>
-            {comment}
-          </div>
-        ))}
-      </div>
+      )}
+{/* 
+      <Modal isOpen={modalIsOpen} onRequestClose={closeModal}>
+        <h2>{creator}</h2>
+        <p>{owner}</p>
+        <p>{deadline}</p>
+        <p>{contentText}</p>
+        <img src={contentImage} alt="Post content" />
+        <button onClick={closeModal}>Close</button>
+      </Modal> */}
     </div>
   );
 };

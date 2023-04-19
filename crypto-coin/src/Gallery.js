@@ -4,8 +4,8 @@ import Post from './Post';
 import './gallery.css';
 
 export const posts = [
-  { id: 1, owner: 'Dingy', author: 'Linshuanity', title: 'Go! Go! Vrius', content: 'Join GoVirus, or I will come back with a gun.' },
-  { id: 2, owner: 'Lin', author: 'Lin', title: 'So hard', content: 'Look at that' }
+  { id: 1, owner: 'Dingy', author: 'Linshuanity', title: 'Go! Go! Vrius', content: 'Join GoVirus, or I will come back with a gun.', deadline:'2025/12/31' },
+  { id: 2, owner: 'Lin', author: 'Lin', title: 'So hard', content: 'Look at that\n2\n3\n4\n5\n6', deadline:'2023/12/31' }
 ];
 
 function GalleryList(props) {
@@ -13,11 +13,17 @@ function GalleryList(props) {
   return (
     <ul>
       {posts.map((post) => (
-	    <div key={post.id}>
-          <a href={`/posts/${post.id}`}>
-	        <Post post={post}></Post>
-          </a>
-    	</div>
+        <div key={post.id}>
+          {/* <a href={`/posts/${post.id}`}> */}
+            <Post
+              creator={post.author}
+              owner={post.owner}
+              deadline={post.deadline}
+              contentText={post.content}
+              contentImage="https://picsum.photos/500"
+            />
+          {/* </a> */}
+        </div>
       ))}
     </ul>
   );
