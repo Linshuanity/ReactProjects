@@ -21,6 +21,8 @@ function GalleryList(props) {
               deadline={post.deadline}
               contentText={post.content}
               contentImage="https://picsum.photos/500"
+              ownerImage="https://picsum.photos/50"
+              creatorImage="https://picsum.photos/50"
             />
           {/* </a> */}
         </div>

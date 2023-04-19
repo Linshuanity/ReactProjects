@@ -5,7 +5,7 @@ import './post.css';
 
 Modal.setAppElement('#root');
 
-const Post = ({ creator, owner, deadline, contentText, contentImage }) => {
+const Post = ({ creator, owner, deadline, contentText, contentImage, creatorImage, ownerImage }) => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [likes, setLikes] = useState(0);
   const [dislikes, setDislikes] = useState(0);
@@ -38,9 +38,9 @@ const Post = ({ creator, owner, deadline, contentText, contentImage }) => {
   return (
     <div className="post-container" onClick={openModal}>
       <div className="post-header">
-        <img className="post-creator-img" src="https://picsum.photos/50" alt="Profile" />
+        <img className="post-creator-img" src={creatorImage} alt="Profile" />
         <span className="creator-name">{creator}</span>
-        <img className="post-owner-img" src="https://picsum.photos/50" alt="Owner" />
+        <img className="post-owner-img" src={ownerImage} alt="Owner" />
       </div>
       <div className="post-image-container">
         <img className="post-image" src={contentImage} alt="Post content" />
