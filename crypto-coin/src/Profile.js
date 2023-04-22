@@ -27,24 +27,66 @@ function Profile(props) {
   const profile = profiles.find(profile => profile.id === Number(id));
 
   const [subscriberCount, setSubscriberCount] = useState(0);
-  const [subscribed, setSubscribed] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
   useEffect(() => {
-    // Call API to get subscriber count
-    fetch('http://localhost:3000/api/subscriberCount')
+    // Check if the current user is already subscribed
+    fetch(`http://localhost:8080/api/subscribe/${id}`)
       .then(response => response.json())
-      .then(data => setSubscriberCount(data.count))
-      .catch(error => console.error(error));
-  }, []);
-
-  function handleSubscribe() {
-    // Call API to subscribe user
-    fetch('/api/subscribe', { method: 'POST' })
+      .then(data => setSubscriberCount(data[0].result))
+      .catch((error) => {
+        console.error(error);
+      });
+    fetch(`http://localhost:8080/api/subscribe/99/${id}`)
       .then(response => response.json())
-      .then(data => setSubscribed(data.subscribed))
-      .catch(error => console.error(error));
-  }
+      .then((data) => {
+        setIsSubscribed(data.subscribed);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, [id]);
 
+  const handleSubscribeClick = () => {
+    // Update the subscription status in the database
+    fetch('http://localhost:8080/api/subscribe/update', { 
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        subscriber_id: 99,
+        subscribed_id: id
+      })
+    })
+    .then((response) => {
+      setIsSubscribed(true);
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+  };
+
+  const handleUnsubscribeClick = () => {
+    // Update the subscription status in the database
+    fetch('http://localhost:8080/api/subscribe/update', { 
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        subscriber_id: 99,
+        subscribed_id: id
+      })
+    })
+    .then((response) => {
+      setIsSubscribed(false);
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+  };
+  
   return (
     <div className="Profile">
       <div className="Profile-header">
@@ -52,8 +94,8 @@ function Profile(props) {
         <div className="Profile-header-text">
           <h1>{profile.name}</h1>
           <p>{subscriberCount} subscribers</p>
-          {!subscribed && <button onClick={handleSubscribe}>Subscribe</button>}
-          {subscribed && <p>You are subscribed!</p>}
+          {!isSubscribed && <button onClick={handleSubscribeClick}>Subscribe</button>}
+          {isSubscribed && <button onClick={handleUnsubscribeClick}>Unsubscribe</button>}
         </div>
       </div>
       <div className="Profile-content">

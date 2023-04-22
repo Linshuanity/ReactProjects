@@ -2,6 +2,7 @@ import express from 'express';
 // Router
 import article from './article.route';
 import user from './user.route';
+import subscribe from './subscribe.route';
 
 import config from './../../config/config';
 
@@ -16,5 +17,7 @@ router.get('/', (req, res) => {
 router.use('/article', article);
 /** User Router */
 router.use('/user', user);
+/** Subscribe Router */
+router.use('/subscribe', subscribe);
 
 export default router;
