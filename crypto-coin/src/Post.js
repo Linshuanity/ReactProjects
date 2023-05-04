@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Modal from 'react-modal';
 
+import NumberInputButton from './Number';
 import './post.css';
 
 Modal.setAppElement('#root');
@@ -59,6 +60,9 @@ const Post = ({ creator, owner, deadline, contentText, contentImage, creatorImag
       </div>
       <div className="post-text">
         <p>{contentText}</p>
+      </div>
+      <div className="number-input-button">
+        <NumberInputButton/>
       </div>
       
       {showCommentInput && (

@@ -14,7 +14,7 @@ function GalleryList(props) {
     <ul>
       {posts.map((post) => (
         <div key={post.id}>
-          {/* <a href={`/posts/${post.id}`}> */}
+          <a href={`/posts/${post.id}`}>
             <Post
               creator={post.author}
               owner={post.owner}
@@ -24,7 +24,7 @@ function GalleryList(props) {
               ownerImage="https://picsum.photos/50"
               creatorImage="https://picsum.photos/50"
             />
-          {/* </a> */}
+          </a>
         </div>
       ))}
     </ul>
