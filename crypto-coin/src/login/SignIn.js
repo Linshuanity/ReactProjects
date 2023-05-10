@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { useContext } from "react";
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -14,6 +14,7 @@ import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Cookies from 'universal-cookie';
 import { useNavigate } from 'react-router-dom';
+import { UserContext } from "../context/UserContext";
 
 function Copyright(props) {
   return (
@@ -35,6 +36,7 @@ const handleClick = () => {
 };
 
 export default function SignIn(props) {
+  const { saveUserData } = useContext(UserContext);
   const navigate = useNavigate();
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -63,6 +65,8 @@ export default function SignIn(props) {
           const cookies = new Cookies();
           cookies.set('user',  { user_id: data.user_id, user_name: data.user_name }, { path: '/',secure: true,sameSite :true});
           
+          saveUserData(data);
+
           navigate('/');
         }
         else
