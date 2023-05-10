@@ -21,7 +21,7 @@ const selectArticle = () => {
           `SELECT
             *
           FROM
-            Article`
+            posts`
           , (error, result) => {
             if (error) {
               console.error('SQL error: ', error);
