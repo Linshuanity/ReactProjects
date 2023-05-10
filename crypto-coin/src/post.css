@@ -5,6 +5,13 @@
   margin-bottom: 20px;
 }
 
+.dead-post {
+  background-color: #7B7B7B;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 20px;
+}
+
 .post-header {
   display: flex;
   justify-content: space-between;

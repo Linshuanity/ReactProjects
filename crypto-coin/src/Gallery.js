@@ -3,22 +3,26 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Post from './Post';
 import './gallery.css';
 
+/*
 export const posts = [
-  { id: 1, owner: 'Dingy', author: 'Linshuanity', title: 'Go! Go! Vrius', content: 'Join GoVirus, or I will come back with a gun.', deadline:'2025/12/31' },
-  { id: 2, owner: 'Lin', author: 'Lin', title: 'So hard', content: 'Look at that\n2\n3\n4\n5\n6', deadline:'2023/12/31' }
+  { id: 1, owner: 'Dingy', author: 'Linshuanity', title: 'Go! Go! Vrius', content: 'Join GoVirus, or I will come back with a gun.', expire_date:'2025/12/31' },
+  { id: 2, owner: 'Lin', author: 'Lin', title: 'So hard', content: 'Look at that\n2\n3\n4\n5\n6', expire_date:'2023/01/31' }
 ];
+*/
+export const posts = [];
 
 function GalleryList(props) {
   const { posts } = props;
+
   return (
     <ul>
       {posts.map((post) => (
-        <div key={post.id}>
-          <a href={`/posts/${post.id}`}>
+        <div key={post.pid}>
+          <a href={`/posts/${post.pid}`}>
             <Post
               creator={post.author}
               owner={post.owner}
-              deadline={post.deadline}
+              expire_date={post.expire_date}
               contentText={post.content}
               contentImage="https://picsum.photos/500"
               ownerImage="https://picsum.photos/50"
@@ -34,12 +38,13 @@ function GalleryList(props) {
 function Gallery(props) {
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [subscribed, setSubscribed] = useState(false);
+  const [posts, setPosts] = useState([]);
 
   useEffect(() => {
     // Call API to get subscriber count
-    fetch('http://localhost:3000/api/subscriberCount')
+    fetch('http://localhost:8080/api/article/getPost')
       .then(response => response.json())
-      .then(data => setSubscriberCount(data.count))
+      .then(data => setPosts(data))
       .catch(error => console.error(error));
   }, []);
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from 'react-modal';
 
 import NumberInputButton from './Number';
@@ -6,11 +6,25 @@ import './post.css';
 
 Modal.setAppElement('#root');
 
-const Post = ({ creator, owner, deadline, contentText, contentImage, creatorImage, ownerImage }) => {
+const Post = ({ creator, owner, expire_date, contentText, contentImage, creatorImage, ownerImage }) => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [likes, setLikes] = useState(0);
   const [dislikes, setDislikes] = useState(0);
   const [showCommentInput, setShowCommentInput] = useState(false);
+  const [currentDate, setCurrentDate] = useState(new Date()); // Initialize current date state
+
+  // Update current date state every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentDate(new Date());
+    }, 10000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Function to check if a post is expired
+  const isExpired = (expire_date) => {
+    return new Date(expire_date) < currentDate;
+  };
 
   const openModal = (e) => {
     e.stopPropagation();
@@ -37,7 +51,7 @@ const Post = ({ creator, owner, deadline, contentText, contentImage, creatorImag
   };
 
   return (
-    <div className="post-container" onClick={openModal}>
+    <div className={isExpired(expire_date) ? 'dead-post' : 'post-container'} onClick={openModal}>
       <div className="post-header">
         <img className="post-creator-img" src={creatorImage} alt="Profile" />
         <span className="creator-name">{creator}</span>
@@ -56,7 +70,7 @@ const Post = ({ creator, owner, deadline, contentText, contentImage, creatorImag
         <button className="post-action-btn" onClick={handleComment}>
           <span className="post-comment">💬</span>
         </button>
-        <p>{deadline}</p>
+        <p>{expire_date}</p>
       </div>
       <div className="post-text">
         <p>{contentText}</p>
@@ -75,7 +89,7 @@ const Post = ({ creator, owner, deadline, contentText, contentImage, creatorImag
       <Modal isOpen={modalIsOpen} onRequestClose={closeModal}>
         <h2>{creator}</h2>
         <p>{owner}</p>
-        <p>{deadline}</p>
+        <p>{expire_date}</p>
         <p>{contentText}</p>
         <img src={contentImage} alt="Post content" />
         <button onClick={closeModal}>Close</button>

@@ -18,6 +18,7 @@ const profiles = [
 
 function App() {
   const [currentPage, setCurrentPage] = useState('');
+  const [posts, setPosts] = useState([]);
   const getUser = () => {
     const cookies = new Cookies();
     if (cookies.get('user') === undefined) {
@@ -28,6 +29,10 @@ function App() {
 
   useEffect(() => {
     setCurrentPage(window.location.href);
+    fetch('http://localhost:8080/api/article/getPost')
+      .then(response => response.json())
+      .then(data => setPosts(data))
+      .catch(error => console.error(error));
   }, []);
 
   return (
@@ -49,7 +54,7 @@ function App() {
         <Route path="/gallery" element={<Gallery/>} />
         <Route path="/" element={<Home/>} />
         {posts.map((post) => (
-          <Route key={post.id} path={`/posts/${post.id}`} element={<Post post={post} />} />
+          <Route key={post.pid} path={`/posts/${post.pid}`} element={<Post post={post} />} />
         ))}
       </Routes>
     </div>
