@@ -1,12 +1,19 @@
+import { useState } from "react";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPosts } from "state";
+import { Tab, Tabs, Typography } from "@mui/material";
 import PostWidget from "./PostWidget";
 
 const PostsWidget = ({ userId, isProfile = false }) => {
+  const [mode, setMode] = useState(0);
   const dispatch = useDispatch();
   const posts = useSelector((state) => state.posts);
   const token = useSelector((state) => state.token);
+
+  const handleTabChange = (event, newValue) => {
+    setMode(newValue);
+  };
 
   const getPosts = async () => {
     const response = await fetch("http://localhost:3001/posts", {
@@ -39,6 +46,14 @@ const PostsWidget = ({ userId, isProfile = false }) => {
 
   return (
     <>
+      <div style={{ marginTop: '10px' }}>
+        <Tabs value={mode} onChange={handleTabChange}>
+          <Tab label="My post" />
+          <Tab label="My collection" />
+          <Tab label="My order" />
+        </Tabs>
+        {mode === 2 && <Typography>My Order</Typography>}
+      </div>
       {posts.map(
         ({
           _id,

@@ -2,12 +2,16 @@ import {
   Button,
   useTheme,
 } from "@mui/material";
+import CoronavirusIcon from '@mui/icons-material/Coronavirus';
+import FlexBetween from "components/FlexBetween";
+import { Typography }from '@mui/material'
 import { useEffect, useState } from 'react';
 import Web3 from 'web3';
 
 const WalletConnectComponent = () => {
   const [web3, setWeb3] = useState(null);
   const [account, setAccount] = useState(null);
+  const [holding, setHolding] = useState(0);
 
   const { palette } = useTheme();
   useEffect(() => {
@@ -49,7 +53,10 @@ const WalletConnectComponent = () => {
 
   return (
     <div>
-      <h4>Web3 Wallet</h4>
+      <div style={{ display: 'flex', alignItems: 'center', height: '3rem'}}>
+        <CoronavirusIcon  color="blue"/>
+        <Typography style={{margin: '0.5rem'}}>{holding}</Typography>
+      </div>
       {account ? (
         <>
           <p>Connected Account: {account}</p>

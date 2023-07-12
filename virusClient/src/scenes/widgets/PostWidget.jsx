@@ -6,7 +6,7 @@ import {
 } from "@mui/icons-material";
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
-import { Box, Divider, IconButton, Typography, useTheme, InputBase } from "@mui/material";
+import { Box, Divider, IconButton, Typography, useTheme, Button, InputBase } from "@mui/material";
 import FlexBetween from "components/FlexBetween";
 import Friend from "components/Friend";
 import WidgetWrapper from "components/WidgetWrapper";
@@ -30,6 +30,7 @@ const PostWidget = ({
 }) => {
   const [isComments, setIsComments] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [newComment, setNewComment] = useState('');
   const dispatch = useDispatch();
   const token = useSelector((state) => state.token);
   const loggedInUserId = useSelector((state) => state.user._id);
@@ -43,6 +44,20 @@ const PostWidget = ({
   const main = palette.neutral.main;
   const primary = palette.primary.main;
   const navigate = useNavigate();
+
+  const handleAddComment = () => {
+    // Add the new comment to the list of comments, for example:
+    // You should replace this logic with your actual state management or API calls.
+    if (newComment.trim() !== '') {
+      // Assuming `comments` is an array, create a new array with the updated comments
+      const updatedComments = [...comments, newComment];
+      // Update the state or send the updated comments to your backend
+      console.log(updatedComments);
+    }
+
+    // Clear the input field after adding the comment
+    setNewComment('');
+  };
 
   const patchLike = async () => {
     const response = await fetch(`http://localhost:3001/posts/${postId}/like`, {
@@ -92,7 +107,7 @@ const PostWidget = ({
   }
 
   return (
-    <WidgetWrapper m="2rem 0">
+    <WidgetWrapper m="1rem 0">
       <Friend
         friendId={postUserId}
         name={name}
@@ -221,7 +236,7 @@ const PostWidget = ({
         </IconButton>
       </FlexBetween>
       {isComments && (
-        <Box mt="0.5rem">
+        <Box mt="1rem">
           {comments.map((comment, i) => (
             <Box key={`${name}-${i}`}>
               <Divider />
@@ -233,6 +248,31 @@ const PostWidget = ({
           <Divider />
         </Box>
       )}
+      <Box mt="1rem" display="flex" alignItems="center">
+        <InputBase
+          type="text"
+          placeholder="leave a comment"
+          value={newComment}
+          onChange={(event) => {
+            setNewComment(event.target.value);
+          }}
+          sx={{
+            flex: 1
+          }}
+        />
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={handleAddComment}
+          sx={{
+            color: palette.background.alt,
+            backgroundColor: palette.primary.main,
+            borderRadius: "3rem",
+          }}
+        >
+        Send
+        </Button>
+      </Box>
     </WidgetWrapper>
   );
 };
