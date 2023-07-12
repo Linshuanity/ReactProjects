@@ -56,7 +56,7 @@ const Navbar = () => {
             },
           }}
         >
-          Open Post
+          GoVirus
         </Typography>
         {isNonMobileScreens && (
           <FlexBetween

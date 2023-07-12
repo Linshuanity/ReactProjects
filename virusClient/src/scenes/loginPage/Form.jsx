@@ -21,8 +21,6 @@ const registerSchema = yup.object().shape({
   lastName: yup.string().required("required"),
   email: yup.string().email("invalid email").required("required"),
   password: yup.string().required("required"),
-  location: yup.string().required("required"),
-  occupation: yup.string().required("required"),
   picture: yup.string().required("required"),
 });
 
@@ -36,8 +34,6 @@ const initialValuesRegister = {
   lastName: "",
   email: "",
   password: "",
-  location: "",
-  occupation: "",
   picture: "",
 };
 
@@ -74,7 +70,12 @@ const Form = () => {
     onSubmitProps.resetForm();
 
     if (savedUser) {
-      setPageType("login");
+      if(savedUser.status === "error") 
+          return alert(savedUser.msg? savedUser.msg : "server disconnected");
+      else{
+        alert("User registered successfully");
+        setPageType("login");
+      }
     }
   };
 
@@ -84,11 +85,11 @@ const Form = () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(values),
     });
-    console.log('login:'+values);
-    console.log(values);
     const loggedIn = await loggedInResponse.json();
     onSubmitProps.resetForm();
     if (loggedIn) {
+      if(loggedIn.status === "error") 
+          return alert(loggedIn.msg? loggedIn.msg : "Invalid email or password");
       dispatch(
         setLogin({
           user: loggedIn.user,
@@ -96,6 +97,8 @@ const Form = () => {
         })
       );
       navigate("/home");
+    } else{
+      alert("server disconnected");
     }
   };
 
@@ -152,28 +155,6 @@ const Form = () => {
                   error={Boolean(touched.lastName) && Boolean(errors.lastName)}
                   helperText={touched.lastName && errors.lastName}
                   sx={{ gridColumn: "span 2" }}
-                />
-                <TextField
-                  label="Location"
-                  onBlur={handleBlur}
-                  onChange={handleChange}
-                  value={values.location}
-                  name="location"
-                  error={Boolean(touched.location) && Boolean(errors.location)}
-                  helperText={touched.location && errors.location}
-                  sx={{ gridColumn: "span 4" }}
-                />
-                <TextField
-                  label="Occupation"
-                  onBlur={handleBlur}
-                  onChange={handleChange}
-                  value={values.occupation}
-                  name="occupation"
-                  error={
-                    Boolean(touched.occupation) && Boolean(errors.occupation)
-                  }
-                  helperText={touched.occupation && errors.occupation}
-                  sx={{ gridColumn: "span 4" }}
                 />
                 <Box
                   gridColumn="span 4"
