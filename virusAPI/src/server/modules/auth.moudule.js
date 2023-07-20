@@ -91,7 +91,21 @@ const selectUserLogin = (insertValues) => {
               bcrypt.compare(userPassword, dbHashPassword).then((res) => { // 使用bcrypt做解密驗證
                 if (res) {
                   const token = jwt.sign({ id: result[0].user_id }, process.env.JWT_SECRET);
-                  resolve(`{"token":"`+ token + `","status":"ok", "user": {"picturePath":"`+ picturePath + `","_id":"`+ result[0].user_id + `"}, "msg":"登入成功","user_name":"`+ result[0].user_name + `","user_id":"`+ result[0].user_id + `"}`);
+                  const user = {
+                    picturePath: picturePath,
+                    _id: result[0].user_id,
+                    user_name: result[0].user_name,
+                    user_id: result[0].user_id,
+                  };
+                  const response = {
+                    token: token,
+                    status: "ok",
+                    user: user,
+                    msg: "登入成功",
+                  };
+
+                  const jsonResponse = JSON.stringify(response);
+                  resolve(jsonResponse);
                 } else {
                   resolve(`{"status":"error", "msg":"password error"}`);
                 }
