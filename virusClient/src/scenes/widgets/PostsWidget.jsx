@@ -16,17 +16,18 @@ const PostsWidget = ({ userId, isProfile = false }) => {
   };
 
   const getPosts = async () => {
-    const response = await fetch("http://localhost:3001/posts", {
-      method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
+    const response = await fetch("http://localhost:3002/posts/all", {
+      method: "POST",
+      body: 5,
     });
     const data = await response.json();
+    console.log(data);
     dispatch(setPosts({ posts: data }));
   };
 
   const getUserPosts = async () => {
     const response = await fetch(
-      `http://localhost:3001/posts/${userId}/posts`,
+      `http://localhost:3002/posts/${userId}/posts`,
       {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
@@ -56,30 +57,37 @@ const PostsWidget = ({ userId, isProfile = false }) => {
       </div>
       {posts.map(
         ({
-          _id,
-          userId,
-          firstName,
-          lastName,
-          description,
-          location,
-          picturePath,
-          userPicturePath,
-          price,
+          pid,
+          title,
+          content,
+          owner_id,
+          owner_name,
+          owner_profile,
+          author_name,
+          author_profile,
+          status,
+          create_date,
+          expire_date,
+          pool,
+          bid_price,
           likes,
-          comments,
+          image_path,
         }) => (
           <PostWidget
-            key={_id}
-            postId={_id}
-            postUserId={userId}
-            name={`${firstName} ${lastName}`}
-            description={description}
-            location={location}
-            picturePath={picturePath}
-            userPicturePath={userPicturePath}
-            price={price}
+            key={pid}
+            owner_id={owner_id}
+            owner_name={owner_name}
+            owner_profile={owner_profile}
+            author_name={author_name}
+            author_profile={author_profile}
+            description={title}
+            location= "Taipei"
+            create_date= {create_date}
+            expire_date= {expire_date}
+            picturePath={image_path}
+            price={bid_price}
             likes={likes}
-            comments={comments}
+            comments={[]}
           />
         )
       )}

@@ -18,12 +18,16 @@ import { setPost } from "state";
 
 const PostWidget = ({
   postId,
-  postUserId,
-  name,
+  owner_id,
+  owner_name,
+  owner_profile,
+  author_name,
+  author_profile,
   description,
   location,
+  create_date,
+  expire_date,
   picturePath,
-  userPicturePath,
   price,
   likes,
   comments,
@@ -37,8 +41,8 @@ const PostWidget = ({
   const isLiked = Boolean(likes[loggedInUserId]);
   const likeCount = Object.keys(likes).length;
   const [bid, setBid] = useState("");
-  const startDate = "2023-05-18";
-  const endDate = "2023-07-18";
+  const startDate = [create_date];
+  const endDate = [expire_date];
 
   const { palette } = useTheme();
   const main = palette.neutral.main;
@@ -109,10 +113,10 @@ const PostWidget = ({
   return (
     <WidgetWrapper m="1rem 0">
       <Friend
-        friendId={postUserId}
-        name={name}
+        friendId={owner_id}
+        name={author_name}
         subtitle={location}
-        userPicturePath={userPicturePath}
+        userPicturePath={author_profile}
       />
       <Typography color={main} sx={{ mt: "1rem" }}>
         {description}
@@ -156,17 +160,17 @@ const PostWidget = ({
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <Box width="50%"
                 onClick={() => {
-                  navigate(`/profile/${postUserId}`);
+                  navigate(`/profile/${owner_id}`);
                   navigate(0);
                 }}
                 onMouseOver={() => setIsHovered(true)}
                 onMouseOut={() => setIsHovered(false)}
               >
                 {isHovered ? (
-                  <div>{name}</div>
+                  <div>{owner_name}</div>
                 ) : (
                   <UserImage
-                    image={userPicturePath}
+                    image={owner_profile}
                     size="22px"
                   />
                 )}
@@ -208,11 +212,11 @@ const PostWidget = ({
           <FlexBetween gap="0.3rem">
             <Typography
                 sx={{
-                    color: loggedInUserId === postUserId ? "orange" : "blue",
+                    color: loggedInUserId === owner_id ? "orange" : "blue",
                     marginLeft: "0.5rem",
                 }}
             >
-            {loggedInUserId === postUserId ? "Ask" : "Bid"}
+            {loggedInUserId === owner_id ? "Ask" : "Bid"}
             </Typography>
             <InputBase
               type="number"
@@ -238,7 +242,7 @@ const PostWidget = ({
       {isComments && (
         <Box mt="1rem">
           {comments.map((comment, i) => (
-            <Box key={`${name}-${i}`}>
+            <Box key={`${author_name}-${i}`}>
               <Divider />
               <Typography sx={{ color: main, m: "0.5rem 0", pl: "1rem" }}>
                 {comment}

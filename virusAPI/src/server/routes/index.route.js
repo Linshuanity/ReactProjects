@@ -5,13 +5,13 @@ import user from './user.route';
 import users from './users.route';
 import subscribe from './subscribe.route';
 import auth from './auth.route';
+import posts from './post.route';
 import path from 'path';
 import config from './../../config/config';
 
 const router = express.Router();
 
 router.use(express.static('public'));
-
 /* GET localhost:[port]/api page. */
 router.get('/', (req, res) => {
   res.send(`此路徑是: localhost:${config.port}/api`);
@@ -25,6 +25,8 @@ router.use('/user', user);
 router.use('/users', users);
 /** auth Router */
 router.use('/auth', auth);
+/** posts Router */
+router.use('/posts', posts);
 /** Subscribe Router */
 router.use('/subscribe', subscribe);
 
