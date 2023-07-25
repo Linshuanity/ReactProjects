@@ -10,7 +10,7 @@ import config from './../../config/config';
 
 const router = express.Router();
 
-//router.use('/assets', express.static(path.join(__dirname, '../../../public/assets')))
+router.use(express.static('public'));
 
 /* GET localhost:[port]/api page. */
 router.get('/', (req, res) => {
