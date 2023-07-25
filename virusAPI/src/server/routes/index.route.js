@@ -5,11 +5,13 @@ import user from './user.route';
 import users from './users.route';
 import subscribe from './subscribe.route';
 import auth from './auth.route';
+import posts from './post.route';
 import path from 'path';
 import config from './../../config/config';
 
 const router = express.Router();
 
+router.use(express.static('public'));
 //router.use('/assets', express.static(path.join(__dirname, '../../../public/assets')))
 
 /* GET localhost:[port]/api page. */
@@ -25,6 +27,8 @@ router.use('/user', user);
 router.use('/users', users);
 /** auth Router */
 router.use('/auth', auth);
+/** posts Router */
+router.use('/posts', posts);
 /** Subscribe Router */
 router.use('/subscribe', subscribe);
 
