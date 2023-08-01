@@ -17,7 +17,9 @@
     "express-validation": "^1.0.2",
     "http-status": "^1.0.1",
     "joi": "^13.0.2",
+    "jsonwebtoken": "^9.0.1",
     "morgan": "^1.9.0",
+    "multer": "^1.4.5-lts.1",
     "mysql": "^2.15.0"
   },
   "devDependencies": {
