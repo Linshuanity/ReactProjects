@@ -19,7 +19,6 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
   const main = palette.neutral.main;
   const medium = palette.neutral.medium;
 
-  console.log(friends);
   let isFriend = false;
   try {
     isFriend = (friends!=null && friends.find((friend) => friend._id === friendId));

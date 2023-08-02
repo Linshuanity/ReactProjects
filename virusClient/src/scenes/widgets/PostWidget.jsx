@@ -14,10 +14,10 @@ import UserImage from "components/UserImage";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setPost } from "state";
+import { setPost, setLike } from "state";
 
 const PostWidget = ({
-  postId,
+  post_id,
   owner_id,
   owner_name,
   owner_profile,
@@ -29,17 +29,19 @@ const PostWidget = ({
   expire_date,
   picturePath,
   price,
+  is_liked,
   likes,
   comments,
 }) => {
   const [isComments, setIsComments] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [newComment, setNewComment] = useState('');
+  const postId = post_id;
   const dispatch = useDispatch();
   const token = useSelector((state) => state.token);
   const loggedInUserId = useSelector((state) => state.user._id);
-  const isLiked = Boolean(likes[loggedInUserId]);
-  const likeCount = Object.keys(likes).length;
+  const isLiked = is_liked;
+  const likeCount = likes;
   const [bid, setBid] = useState("");
   const startDate = [create_date];
   const endDate = [expire_date];
@@ -64,16 +66,17 @@ const PostWidget = ({
   };
 
   const patchLike = async () => {
-    const response = await fetch(`http://localhost:3001/posts/${postId}/like`, {
-      method: "PATCH",
+    const response = await fetch(`http://localhost:3002/posts/like`, {
+      method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ userId: loggedInUserId }),
+      body: JSON.stringify({ liker_id: loggedInUserId, post_id: postId, is_liked: isLiked }),
     });
-    const updatedPost = await response.json();
-    dispatch(setPost({ post: updatedPost }));
+    const update = await response.json();
+    const { post_id, is_like } = update;
+
+    dispatch(setPost({ post_id : postId, is_like : isLiked }));
   };
 
   function formatTimeLeft(time) {

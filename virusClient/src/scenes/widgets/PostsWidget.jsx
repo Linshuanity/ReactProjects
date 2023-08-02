@@ -10,6 +10,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
   const dispatch = useDispatch();
   const posts = useSelector((state) => state.posts);
   const token = useSelector((state) => state.token);
+  const loggedInUserId = useSelector((state) => state.user._id);
 
   const handleTabChange = (event, newValue) => {
     setMode(newValue);
@@ -18,10 +19,12 @@ const PostsWidget = ({ userId, isProfile = false }) => {
   const getPosts = async () => {
     const response = await fetch("http://localhost:3002/posts/all", {
       method: "POST",
-      body: 5,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ as_user: loggedInUserId }),
     });
     const data = await response.json();
-    console.log(data);
     dispatch(setPosts({ posts: data }));
   };
 
@@ -70,11 +73,12 @@ const PostsWidget = ({ userId, isProfile = false }) => {
           expire_date,
           pool,
           bid_price,
+          is_liked,
           likes,
           image_path,
         }) => (
           <PostWidget
-            key={pid}
+            post_id={pid}
             owner_id={owner_id}
             owner_name={owner_name}
             owner_profile={owner_profile}
@@ -86,6 +90,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
             expire_date= {expire_date}
             picturePath={image_path}
             price={bid_price}
+            is_liked={is_liked}
             likes={likes}
             comments={[]}
           />
