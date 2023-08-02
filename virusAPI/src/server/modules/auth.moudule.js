@@ -27,10 +27,14 @@ export const userAdd = (req, res) => {
     user_name: firstName+' '+lastName,
     user_email: email,
     user_password: bcrypt.hashSync(password, 10), // 密碼加密
-    user_image_path: req.file.path // 將圖片的路徑存入資料庫
+    user_image_path: req.file.path.substring(req.file.path.lastIndexOf('/') + 1) // 將圖片的路徑存入資料庫
+    // user_image_path: req.file.path // 將圖片的路徑存入資料庫
   };
   
   try {
+    //public/assets/00028-3097149379.png
+    // console.log("req.file.path");
+    // console.log(req.file.path);
     createUser(insertValues).then((result) => {
       res.send(result); // 成功回傳result結果
     }).catch((err) => { 

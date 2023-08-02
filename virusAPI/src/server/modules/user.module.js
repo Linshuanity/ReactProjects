@@ -38,19 +38,25 @@ const selectUser = () => {
 /*  User GET 取得  */
 const selectUserById = (userId) => {
   return new Promise((resolve, reject) => {
+    console.log('selectUserById userId:'+userId);
     connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
       if (connectionError) {
+        console.log('connectionError');
         reject(connectionError); // 若連線有問題回傳錯誤
       } else {
-        console.log('userid'+userId);
+        console.log('query');
+        console.log('connection.query userId:'+userId);
         connection.query( // User撈取所有欄位的值組
-          `select user_name as result from virus_platform_user where user_id = ?`, userId
-          , (error, result) => {
+          'SELECT * FROM virus_platform_user WHERE user_id = ?',
+          [userId], (error, result) => {
+            console.log('inside query');
             if (error) {
               console.error('SQL error: ', error);
               reject(error); // 寫入資料庫有問題時回傳錯誤
-            } else {
-              resolve(result); // 撈取成功回傳 JSON 資料
+            } else if (Object.keys(result).length === 0) {
+              resolve(`{"status":"error", "msg":"user not found"}`);
+            } else {              
+              resolve(`{"picturePath":"`+ result[0].user_image_path + `","_id":"`+ result[0].user_id +`","user_name":"`+ result[0].user_name + `"}`);
             }
             connection.release();
           }

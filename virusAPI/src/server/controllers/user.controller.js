@@ -16,6 +16,7 @@ const userGet = (req, res) => {
 const userGetById = (req, res) => {
   // 取得修改id
   const userId = req.params.user_id;
+  console.log('userGetById userId:'+userId);
   userModule.selectUserById(userId).then((result) => {
     res.send(result); // 成功回傳result結果
   }).catch((err) => { return res.send(err); }); // 失敗回傳錯誤訊息

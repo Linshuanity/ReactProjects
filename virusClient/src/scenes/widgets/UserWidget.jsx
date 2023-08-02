@@ -23,7 +23,8 @@ const UserWidget = ({ userId, picturePath }) => {
   const main = palette.neutral.main;
 
   const getUser = async () => {
-    const response = await fetch(`http://localhost:3001/users/${userId}`, {
+    console.log("getUser picturePath" + picturePath);
+    const response = await fetch(`http://localhost:3002/users/${userId}`, {
       method: "GET",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -38,15 +39,13 @@ const UserWidget = ({ userId, picturePath }) => {
   if (!user) {
     return null;
   }
-
+  // {"picturePath":"public/assets/00009-4284122733.png","_id":"1"}
   const {
-    firstName,
-    lastName,
-    location,
-    occupation,
-    postCount,
-    postWorth,
+    _id,
+    user_name,
+    // picturePath,
     friends,
+    // postCount,
   } = user;
 
   return (
@@ -71,9 +70,9 @@ const UserWidget = ({ userId, picturePath }) => {
                 },
               }}
             >
-              {firstName} {lastName}
+              {user_name}
             </Typography>
-            <Typography color={medium}>{friends.length} friends</Typography>
+            {/* <Typography color={medium}>{friends.length} friends</Typography> */}
           </Box>
         </FlexBetween>
         <ManageAccountsOutlined />
@@ -86,11 +85,11 @@ const UserWidget = ({ userId, picturePath }) => {
       <Box p="1rem 0">
         <Box display="flex" alignItems="center" gap="1rem" mb="0.5rem">
           <LocationOnOutlined fontSize="large" sx={{ color: main }} />
-          <Typography color={medium}>{location}</Typography>
+          <Typography color={medium}>location</Typography>
         </Box>
         <Box display="flex" alignItems="center" gap="1rem">
           <WorkOutlineOutlined fontSize="large" sx={{ color: main }} />
-          <Typography color={medium}>{occupation}</Typography>
+          <Typography color={medium}>occupation</Typography>
         </Box>
       </Box>
 
@@ -101,13 +100,13 @@ const UserWidget = ({ userId, picturePath }) => {
         <FlexBetween mb="0.5rem">
           <Typography color={medium}>Number of posts</Typography>
           <Typography color={main} fontWeight="500">
-            {postCount}
+            {/* {postCount} */}
           </Typography>
         </FlexBetween>
         <FlexBetween>
           <Typography color={medium}>Total post worth</Typography>
           <Typography color={main} fontWeight="500">
-            {postWorth}
+            postWorth
           </Typography>
         </FlexBetween>
       </Box>
