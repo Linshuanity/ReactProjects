@@ -5,7 +5,6 @@ import {
   ShareOutlined,
 } from "@mui/icons-material";
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import { Box, Divider, IconButton, Typography, useTheme, Button, InputBase } from "@mui/material";
 import FlexBetween from "components/FlexBetween";
 import Friend from "components/Friend";
@@ -14,7 +13,7 @@ import UserImage from "components/UserImage";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setPost, setLike } from "state";
+import { setPost } from "state";
 
 const PostWidget = ({
   post_id,
@@ -40,8 +39,8 @@ const PostWidget = ({
   const dispatch = useDispatch();
   const token = useSelector((state) => state.token);
   const loggedInUserId = useSelector((state) => state.user._id);
-  const isLiked = is_liked;
-  const likeCount = likes;
+  const [isLiked, setLike] = useState(is_liked);
+  const [likeCount, setLikeCount] = useState(likes);
   const [bid, setBid] = useState("");
   const startDate = [create_date];
   const endDate = [expire_date];
@@ -66,6 +65,8 @@ const PostWidget = ({
   };
 
   const patchLike = async () => {
+    setLikeCount(likeCount + (isLiked ? -1 : 1));
+    setLike(!isLiked);
     const response = await fetch(`http://localhost:3002/posts/like`, {
       method: "POST",
       headers: {
@@ -74,7 +75,6 @@ const PostWidget = ({
       body: JSON.stringify({ liker_id: loggedInUserId, post_id: postId, is_liked: isLiked }),
     });
     const update = await response.json();
-    const { post_id, is_like } = update;
 
     dispatch(setPost({ post_id : postId, is_like : isLiked }));
   };
