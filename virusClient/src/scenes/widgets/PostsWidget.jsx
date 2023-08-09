@@ -26,7 +26,6 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     });
     const data = await response.json();
     dispatch(setPosts({ posts: data }));
-    dispatch(setPosts({ posts: data }));
   };
 
   const getUserPosts = async () => {
@@ -76,6 +75,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
           bid_price,
           is_liked,
           likes,
+          comments,
           image_path,
         }) => (
           <PostWidget
@@ -93,7 +93,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
             price={bid_price}
             is_liked={is_liked}
             likes={likes}
-            comments={[]}
+            comments={comments}
           />
         )
       )}

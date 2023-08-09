@@ -34,6 +34,17 @@ export const userLike = (req, res, next) => {
   }).catch((error) => { next(error); }); // 失敗回傳錯誤訊息
 };
 
+export const userComment = (req, res, next) => {
+  // 取得帳密
+  const user_id = req.body.user_id;
+  const post_id = req.body.post_id;
+  const context = req.body.context;
+  addUserComment(user_id, post_id, context).then((result) => {
+
+    res.send(result); // 成功回傳result結果
+  }).catch((error) => { next(error); }); // 失敗回傳錯誤訊息
+};
+
 const selectUserPosts = (insertValues) => {
   return new Promise((resolve, reject) => {
     connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
@@ -106,6 +117,29 @@ const addUserLike = (liker_id, post_id, is_liked) => {
                   }
                 }
               );
+            }
+            connection.release();
+          }
+        );
+      }
+    });
+  });
+};
+
+const addUserComment = (user_id, post_id, context) => {
+  return new Promise((resolve, reject) => {
+    connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
+        const query = `INSERT INTO comments VALUES (DEFAULT, ${user_id}, ${post_id}, "${context}" , DEFAULT)`;
+      if (connectionError) {
+        reject(connectionError); // 若連線有問題回傳錯誤
+      } else {
+        connection.query(query, (error, result) => {
+            if (error) {
+              console.error('SQL error: ', error);
+              reject(error); // 寫入資料庫有問題時回傳錯誤
+            } else {              
+              const jsonResponse = JSON.stringify(result);
+              resolve(jsonResponse);
             }
             connection.release();
           }

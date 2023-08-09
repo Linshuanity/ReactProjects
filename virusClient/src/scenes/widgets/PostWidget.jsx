@@ -39,6 +39,8 @@ const PostWidget = ({
   const dispatch = useDispatch();
   const token = useSelector((state) => state.token);
   const loggedInUserId = useSelector((state) => state.user._id);
+  const loggedInUserName = useSelector((state) => state.user.user_name);
+  const userImagePath = useSelector((state) => state.user.picturePath);
   const [isLiked, setLike] = useState(is_liked);
   const [likeCount, setLikeCount] = useState(likes);
   const [bid, setBid] = useState("");
@@ -49,24 +51,52 @@ const PostWidget = ({
   const main = palette.neutral.main;
   const primary = palette.primary.main;
   const navigate = useNavigate();
+  const [commentCount, setCommentCount] = useState(comments);
+  const [commentList, setCommentList] = useState([]);
 
-  const handleAddComment = () => {
+  const handleAddComment = async () => {
     // Add the new comment to the list of comments, for example:
     // You should replace this logic with your actual state management or API calls.
     if (newComment.trim() !== '') {
       // Assuming `comments` is an array, create a new array with the updated comments
-      const updatedComments = [...comments, newComment];
+      const commentObject = {
+        context: newComment,
+        user_name: loggedInUserName,
+        user_image_path: userImagePath
+      };
+      setCommentList([...commentList, commentObject]);
       // Update the state or send the updated comments to your backend
-      console.log(updatedComments);
+      const response = await fetch(`http://localhost:3002/posts/comment`, {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user_id: loggedInUserId, post_id: postId, context: newComment}),
+      });
+      const update = await response.json();
+      setCommentCount(commentCount => commentCount + 1);
     }
 
     // Clear the input field after adding the comment
     setNewComment('');
   };
 
+  const fetchComments = async () => {
+    setIsComments(!isComments);
+    const response = await fetch("http://localhost:3002/posts/comments", {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ post_id: postId }),
+    });
+    const update = await response.json();
+    setCommentList(update);
+  };
+
   const patchLike = async () => {
-    setLikeCount(likeCount + (isLiked ? -1 : 1));
-    setLike(!isLiked);
+    setLikeCount(likeCount => likeCount + (isLiked ? -1 : 1));
+    setLike(isLiked => !isLiked);
     const response = await fetch(`http://localhost:3002/posts/like`, {
       method: "POST",
       headers: {
@@ -199,10 +229,10 @@ const PostWidget = ({
           </FlexBetween>
 
           <FlexBetween gap="0.3rem">
-            <IconButton onClick={() => setIsComments(!isComments)}>
+            <IconButton onClick={fetchComments}>
               <ChatBubbleOutlineOutlined />
             </IconButton>
-            <Typography>{comments.length}</Typography>
+            <Typography>{commentCount}</Typography>
           </FlexBetween>
 
           <FlexBetween gap="0.3rem">
@@ -244,12 +274,19 @@ const PostWidget = ({
       </FlexBetween>
       {isComments && (
         <Box mt="1rem">
-          {comments.map((comment, i) => (
+          {commentList.map((comment, i) => (
             <Box key={`${author_name}-${i}`}>
               <Divider />
-              <Typography sx={{ color: main, m: "0.5rem 0", pl: "1rem" }}>
-                {comment}
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', p: '0.5rem' }}>
+                <UserImage
+                  image={comment.user_image_path}
+                  size="22px"
+                />
+                <Box sx={{ ml: '0.5rem' }}>
+                  <Typography variant="subtitle2">{comment.user_name}</Typography>
+                  <Typography color={main}>{comment.context}</Typography>
+                </Box>
+              </Box>
             </Box>
           ))}
           <Divider />
