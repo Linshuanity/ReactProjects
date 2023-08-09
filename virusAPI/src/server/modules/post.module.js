@@ -45,6 +45,14 @@ export const userComment = (req, res, next) => {
   }).catch((error) => { next(error); }); // 失敗回傳錯誤訊息
 };
 
+export const userComments = (req, res, next) => {
+  const post_id = req.body.post_id;
+  selectUserComments(post_id).then((result) => {
+
+    res.send(result);
+  }).catch((error) => { next(error); });
+};
+
 const selectUserPosts = (insertValues) => {
   return new Promise((resolve, reject) => {
     connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
@@ -130,6 +138,52 @@ const addUserComment = (user_id, post_id, context) => {
   return new Promise((resolve, reject) => {
     connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
         const query = `INSERT INTO comments VALUES (DEFAULT, ${user_id}, ${post_id}, "${context}" , DEFAULT)`;
+      if (connectionError) {
+        reject(connectionError); // 若連線有問題回傳錯誤
+      } else {
+        connection.query(query, (error, result) => {
+            if (error) {
+              console.error('SQL error: ', error);
+              reject(error); // 寫入資料庫有問題時回傳錯誤
+
+            } else {
+              const update_query = `UPDATE posts SET comments = comments + 1 WHERE pid = ${post_id}`;
+              // Assuming you have another query to execute here
+              connection.query(update_query,
+                (error, result) => {
+                  if (error) {
+                    console.error('Second query error:', error);
+                    connection.rollback(() => {
+                      reject(error);
+                    });
+                  } else {
+                    connection.commit((err) => {
+                      if (err) {
+                        console.error('Commit error:', err);
+                        connection.rollback(() => {
+                          reject(err);
+                        });
+                      } else {
+                        const jsonResponse = JSON.stringify(result);
+                        resolve(jsonResponse);
+                      }
+                    });
+                  }
+                }
+              );
+            }
+            connection.release();
+          }
+        );
+      }
+    });
+  });
+};
+
+const selectUserComments = (post_id) => {
+  return new Promise((resolve, reject) => {
+    connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
+    const query = `SELECT c.context, u.user_name, u.user_image_path FROM comments as c JOIN virus_platform_user as u on c.user_id = u.user_id WHERE c.post_id = ${post_id}`;
       if (connectionError) {
         reject(connectionError); // 若連線有問題回傳錯誤
       } else {
