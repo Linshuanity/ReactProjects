@@ -6,7 +6,7 @@ import { setFriends } from "state";
 import FlexBetween from "./FlexBetween";
 import UserImage from "./UserImage";
 
-const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
+const Friend = ({ friendId, name, userPicturePath }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { _id } = useSelector((state) => state.user);
@@ -21,36 +21,38 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
 
   let isFriend = false;
   try {
-    isFriend = (friends!=null && friends.find((friend) => friend._id === friendId));
+    isFriend = (friends!=null && friends.some((friend) => friend._id === friendId));
   } catch (error) {
     isFriend = false;
   }
 
   const patchFriend = async () => {
     const response = await fetch(
-      `http://localhost:3001/users/${_id}/${friendId}`,
+      `http://localhost:3002/subscribe/add/${_id}/${friendId}`,
       {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,
+          is_delete: isFriend,
           "Content-Type": "application/json",
         },
       }
     );
+    isFriend = !isFriend;
     const data = await response.json();
     dispatch(setFriends({ friends: data }));
   };
 
   return (
     <FlexBetween>
-      <FlexBetween gap="1rem">
+      <FlexBetween 
+        gap="1rem"
+        onClick={() => {
+          navigate(`/profile/${friendId}`);
+        }}
+      >
         <UserImage image={userPicturePath} size="55px" />
-        <Box
-          onClick={() => {
-            navigate(`/profile/${friendId}`);
-            navigate(0);
-          }}
-        >
+        <Box>
           <Typography
             color={main}
             variant="h5"
@@ -65,7 +67,7 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
             {name}
           </Typography>
           <Typography color={medium} fontSize="0.75rem">
-            {subtitle}
+            {'blank'}
           </Typography>
         </Box>
       </FlexBetween>

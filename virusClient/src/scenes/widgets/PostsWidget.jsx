@@ -63,9 +63,10 @@ const PostsWidget = ({ userId, isProfile = false }) => {
           pid,
           title,
           content,
-          owner_id,
+          owner_uid,
           owner_name,
           owner_profile,
+          author_uid,
           author_name,
           author_profile,
           status,
@@ -80,9 +81,10 @@ const PostsWidget = ({ userId, isProfile = false }) => {
         }) => (
           <PostWidget
             post_id={pid}
-            owner_id={owner_id}
+            owner_id={owner_uid}
             owner_name={owner_name}
             owner_profile={owner_profile}
+            author_id={author_uid}
             author_name={author_name}
             author_profile={author_profile}
             description={title}

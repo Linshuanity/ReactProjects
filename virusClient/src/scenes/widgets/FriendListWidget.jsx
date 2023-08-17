@@ -17,8 +17,7 @@ const FriendListWidget = ({ userId }) => {
       <Friend
         key={friend._id}
         friendId={friend._id}
-        name={`${friend.firstName} ${friend.lastName}`}
-        subtitle={friend.occupation}
+        name={friend.name}
         userPicturePath={friend.picturePath}
       />
     ))
@@ -28,7 +27,7 @@ const FriendListWidget = ({ userId }) => {
 
   const getFriends = async () => {
     const response = await fetch(
-      `http://localhost:3001/users/${userId}/friends`,
+      `http://localhost:3002/subscribe/friends/${userId}`,
       {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },

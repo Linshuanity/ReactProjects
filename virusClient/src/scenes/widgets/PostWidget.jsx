@@ -20,6 +20,7 @@ const PostWidget = ({
   owner_id,
   owner_name,
   owner_profile,
+  author_id,
   author_name,
   author_profile,
   description,
@@ -146,7 +147,7 @@ const PostWidget = ({
   return (
     <WidgetWrapper m="1rem 0">
       <Friend
-        friendId={owner_id}
+        friendId={author_id}
         name={author_name}
         subtitle={location}
         userPicturePath={author_profile}
