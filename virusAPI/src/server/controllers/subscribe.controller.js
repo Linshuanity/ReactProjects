@@ -3,6 +3,12 @@ import subscribeModule from '../modules/subscribe.module';
 /**
  * User 資料表
  */
+const getFriends = (req, res) => {
+  const user_id = req.params.user_id;
+  subscribeModule.getFriends(user_id).then((result) => {
+    res.send(result); // 成功回傳result結果
+  }).catch((err) => { return res.send(err); }); // 失敗回傳錯誤訊息
+};
 
 /*  User GET 取得  */
 const subscribeGet = (req, res) => {
@@ -16,7 +22,10 @@ const subscribeGet = (req, res) => {
 /*  User DELETE  */
 const deleteSubscribe = (req, res) => {
   // 取得修改id
-  const deleteValues = [req.body.subscriber_id, req.body.subscribed_id];
+  const deleteValues = {
+    subscriber_id: req.params.subscriber_id, 
+    subscribed_id: req.params.subscribed_id,
+  };
   subscribeModule.deleteSubscribe(deleteValues).then((result) => {
     res.send(result); // 成功回傳result結果
   }).catch((err) => { return res.send(err); }); // 失敗回傳錯誤訊息
@@ -26,8 +35,9 @@ const deleteSubscribe = (req, res) => {
 const createSubscribe = (req, res) => {
   // 取得新增參數
   const insertValues = {
-    subscriber_id: req.body.subscriber_id,
-    subscribed_id: req.body.subscribed_id,
+    user_id: req.params.subscriber_id,
+    friend_id: req.params.subscribed_id,
+    is_delete: req.headers.is_delete,
   };
   subscribeModule.createSubscribe(insertValues).then((result) => {
     res.send(result); // 成功回傳result結果
@@ -42,6 +52,7 @@ const getCountById = (req, res) => {
 };
 
 export default {
+  getFriends,
   subscribeGet,
   deleteSubscribe,
   createSubscribe,
