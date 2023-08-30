@@ -30,17 +30,13 @@ export const authSlice = createSlice({
       }
     },
     setPosts: (state, action) => {
-      return {
-          ...state, posts: action.payload.posts};
+      state.posts = action.payload.posts;
     },
     setPost: (state, action) => {
       const updatedPosts = state.posts.map((post) => {
-        if (post.post_id === action.payload.post_id) {
-          return {
-            ...post,
-            isLiked: action.payload.post.isLiked, // Update is_liked
-            likeCount: post.likeCount + (post.isLiked ? -1 : 1), // Update like count
-          };
+        if (`${post['pid']}` == action.payload.post_id) {
+          post.is_liked = !action.payload.is_like; // Update is_liked
+          post.likes = post.likes +(action.payload.is_like ? -1 : 1); // Update like count
         }
         return post;
       });
@@ -55,7 +51,6 @@ export const authSlice = createSlice({
         if (post._id === _id) return { ...post, likes: post.likes + (is_liked ? -1 : 1) };
         return post;
       });
-
       // Update the posts array in the state with the updatedPosts array
       state.posts = updatedPosts;
     },
