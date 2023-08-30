@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import { userPosts, userLike, userComment, userComments } from "../modules/post.module.js";
+import { userPosts, userLike, userBid, userComment, userComments } from "../modules/post.module.js";
 
 /* FILE STORAGE */
 const storage = multer.diskStorage({
@@ -17,6 +17,7 @@ const router = express.Router();
 
 router.post("/all", userPosts);
 router.post("/like", userLike);
+router.post("/bid", userBid);
 router.post("/comment", userComment);
 router.post("/comments", userComments);
 

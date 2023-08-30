@@ -173,6 +173,29 @@ const selectUserLogin = (insertValues) => {
   });
 };
 
+const addRemoveFriend = (id, insertValues, userId) => {
+  return new Promise((resolve, reject) => {
+    connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
+      if (connectionError) {
+        reject(connectionError); // 若連線有問題回傳錯誤
+      } else { // User資料表修改指定id一筆資料
+        connection.query('UPDATE virus_platform_user SET ? WHERE user_id = ?', [insertValues, userId], (error, result) => {
+          if (error) {
+            console.error('SQL error: ', error);// 寫入資料庫有問題時回傳錯誤
+            reject(error);
+          } else if (result.affectedRows === 0) { // 寫入時發現無該筆資料
+            resolve(`{"status":"fail","msg":"請確認修改Id！"}`);
+          } else if (result.message.match('Changed: 1')) { // 寫入成功
+            resolve(`{"status":"ok", "msg":"資料修改成功"}`);
+          } else {
+            resolve(`{"status":"ok", "msg":"資料無異動"}`);
+          }
+          connection.release();
+        });
+      }
+    });
+  });
+};
 
 export default {
   selectUser,
