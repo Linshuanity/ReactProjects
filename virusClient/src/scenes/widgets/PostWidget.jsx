@@ -4,6 +4,7 @@ import {
   FavoriteOutlined,
   ShareOutlined,
 } from "@mui/icons-material";
+import Modal from 'react-modal';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { Box, Divider, IconButton, Typography, useTheme, Button, InputBase } from "@mui/material";
 import FlexBetween from "components/FlexBetween";
@@ -14,6 +15,8 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPost } from "state";
+
+import "./post_widget.css";
 
 const PostWidget = ({
   post_id,
@@ -41,6 +44,7 @@ const PostWidget = ({
   const loggedInUserName = useSelector((state) => state.user.user_name);
   const userImagePath = useSelector((state) => state.user.picturePath);
   const [bid, setBid] = useState("");
+  const [newPrice, setPrice] = useState(-1);
   const startDate = [create_date];
   const endDate = [expire_date];
 
@@ -50,6 +54,24 @@ const PostWidget = ({
   const navigate = useNavigate();
   const [commentCount, setCommentCount] = useState(comments);
   const [commentList, setCommentList] = useState([]);
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+
+  const handleAddBid = async () => {
+    const response = await fetch(`http://localhost:3002/posts/bid`, {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+          user_id: loggedInUserId, 
+          post_id: postId, 
+          price: bid,
+          is_bid: loggedInUserId !== owner_id }),
+    });
+    const update = await response.json();
+    setPrice(bid);
+    setIsConfirmationOpen(false);
+  }
 
   const likesCount = useSelector((state) => {
     const posts = state.posts;
@@ -244,18 +266,22 @@ const PostWidget = ({
             <IconButton >
               <ShoppingCartIcon />
             </IconButton>
-            <Typography>$ {price}</Typography>
+            <Typography>$ {price > newPrice ? price : newPrice}</Typography>
           </FlexBetween>
           
           <FlexBetween gap="0.3rem">
-            <Typography
-                sx={{
-                    color: loggedInUserId === owner_id ? "orange" : "blue",
-                    marginLeft: "0.5rem",
-                }}
+            <Button
+              sx={{
+                backgroundColor: loggedInUserId === owner_id ? 'orange' : 'blue',
+                padding: '2px 4px',
+                color: 'white',
+                marginLeft: '0.5rem',
+              }}
+              variant="contained"
+              onClick={() => setIsConfirmationOpen(true)}
             >
-            {loggedInUserId === owner_id ? "Ask" : "Bid"}
-            </Typography>
+              {loggedInUserId === owner_id ? 'Ask' : 'Bid'}
+            </Button>
             <InputBase
               type="number"
               placeholder="set price"
@@ -269,6 +295,20 @@ const PostWidget = ({
                 padding: "0.5rem 0.5rem",
               }}
             />
+              <Modal
+                isOpen={isConfirmationOpen}
+                onRequestClose={() => setIsConfirmationOpen(false)}
+                ariaHideApp={false}
+                className="custom-modal" // Apply your custom CSS class
+              >
+                <div className="custom-modal-content">
+                  <p>Are you sure you want to place this bid?</p>
+                  <div className="button-container">
+                    <button className="yes-button" onClick={handleAddBid}>Yes</button>
+                    <button className="no-button" onClick={() => setIsConfirmationOpen(false)}>No</button>
+                  </div>
+                </div>
+              </Modal>
           </FlexBetween>
           
         </FlexBetween>

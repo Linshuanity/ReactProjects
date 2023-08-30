@@ -34,6 +34,17 @@ export const userLike = (req, res, next) => {
   }).catch((error) => { next(error); }); // 失敗回傳錯誤訊息
 };
 
+export const userBid = (req, res, next) => {
+  const user_id = req.body.user_id;
+  const post_id = req.body.post_id;
+  const price = req.body.price;
+  const is_bid = req.body.is_bid;
+  addUserBid(user_id, post_id, price, is_bid).then((result) => {
+
+    res.send(result); // 成功回傳result結果
+  }).catch((error) => { next(error); }); // 失敗回傳錯誤訊息
+};
+
 export const userComment = (req, res, next) => {
   // 取得帳密
   const user_id = req.body.user_id;
@@ -120,6 +131,59 @@ const addUserLike = (liker_id, post_id, is_liked) => {
                         });
                       } else {
                         resolve({ _id: post_id, is_liked: is_liked, message: 'Both queries executed successfully.' });
+                      }
+                    });
+                  }
+                }
+              );
+            }
+            connection.release();
+          }
+        );
+      }
+    });
+  });
+};
+
+const addUserBid = (user_id, post_id, price, is_bid) => {
+  return new Promise((resolve, reject) => {
+    connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
+      const query = `INSERT INTO bids VALUES (DEFAULT, ${user_id}, ${post_id}, ${is_bid}, ${price}, DEFAULT) ON DUPLICATE KEY UPDATE price = ${price}, create_time = DEFAULT`
+      if (connectionError) {
+        reject(connectionError); // 若連線有問題回傳錯誤
+      } else {
+        connection.query(query, (error, result) => {
+            if (error) {
+              console.error('SQL error: ', error);
+              reject(error); // 寫入資料庫有問題時回傳錯誤
+
+            } else {
+              const update_query = 
+              `UPDATE posts p
+              JOIN (
+                  SELECT post_id, MAX(price) AS max_price
+                  FROM bids
+                  WHERE post_id = ${post_id}
+              ) b ON p.pid = b.post_id
+              SET p.bid_price = b.max_price`
+              // Assuming you have another query to execute here
+              connection.query(update_query,
+                (error, result) => {
+                  if (error) {
+                    console.error('Second query error:', error);
+                    connection.rollback(() => {
+                      reject(error);
+                    });
+                  } else {
+                    connection.commit((err) => {
+                      if (err) {
+                        console.error('Commit error:', err);
+                        connection.rollback(() => {
+                          reject(err);
+                        });
+                      } else {
+                        const jsonResponse = JSON.stringify(result);
+                        resolve(jsonResponse);
                       }
                     });
                   }
