@@ -69,10 +69,11 @@ const PostsWidget = ({ userId, isProfile = false }) => {
           author_uid,
           author_name,
           author_profile,
+          level,
           status,
           create_date,
           expire_date,
-          pool,
+          bid_user_id,
           bid_price,
           is_liked,
           likes,
@@ -87,11 +88,13 @@ const PostsWidget = ({ userId, isProfile = false }) => {
             author_id={author_uid}
             author_name={author_name}
             author_profile={author_profile}
+            level={level}
             description={title}
             location= "Taipei"
             create_date= {create_date}
             expire_date= {expire_date}
             picturePath={image_path}
+            bid_user_id={bid_user_id}
             price={bid_price}
             is_liked={is_liked}
             likes={likes}

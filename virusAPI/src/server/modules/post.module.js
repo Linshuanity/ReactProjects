@@ -40,7 +40,16 @@ export const userBid = (req, res, next) => {
   const price = req.body.price;
   const is_bid = req.body.is_bid;
   addUserBid(user_id, post_id, price, is_bid).then((result) => {
+    res.send(result); // 成功回傳result結果
+  }).catch((error) => { next(error); }); // 失敗回傳錯誤訊息
+};
 
+export const userPurchase = (req, res, next) => {
+  const trader_id = req.body.trader_id;
+  const post_id = req.body.post_id;
+  const user_id = req.body.user_id;
+  const for_sell = req.body.for_sell;
+  transfer_post(trader_id, post_id, user_id, for_sell).then((result) => {
     res.send(result); // 成功回傳result結果
   }).catch((error) => { next(error); }); // 失敗回傳錯誤訊息
 };
@@ -51,7 +60,6 @@ export const userComment = (req, res, next) => {
   const post_id = req.body.post_id;
   const context = req.body.context;
   addUserComment(user_id, post_id, context).then((result) => {
-
     res.send(result); // 成功回傳result結果
   }).catch((error) => { next(error); }); // 失敗回傳錯誤訊息
 };
@@ -161,11 +169,69 @@ const addUserBid = (user_id, post_id, price, is_bid) => {
               const update_query = 
               `UPDATE posts p
               JOIN (
-                  SELECT post_id, MAX(price) AS max_price
+                  SELECT post_id, price, user_id
                   FROM bids
                   WHERE post_id = ${post_id}
+                  ORDER BY price DESC
+                  LIMIT 1
               ) b ON p.pid = b.post_id
-              SET p.bid_price = b.max_price`
+              SET p.bid_price = b.price, p.bid_user_id = user_id`
+              // Assuming you have another query to execute here
+              connection.query(update_query,
+                (error, result) => {
+                  if (error) {
+                    console.error('Second query error:', error);
+                    connection.rollback(() => {
+                      reject(error);
+                    });
+                  } else {
+                    connection.commit((err) => {
+                      if (err) {
+                        console.error('Commit error:', err);
+                        connection.rollback(() => {
+                          reject(err);
+                        });
+                      } else {
+                        const jsonResponse = JSON.stringify(result);
+                        resolve(jsonResponse);
+                      }
+                    });
+                  }
+                }
+              );
+            }
+            connection.release();
+          }
+        );
+      }
+    });
+  });
+};
+
+const transfer_post = (trader_id, post_id, user_id, for_sell) => {
+  const new_owner_id = for_sell ? trader_id : user_id;
+  return new Promise((resolve, reject) => {
+    connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
+      const query = `DELETE FROM bids WHERE user_id = ${user_id} and post_id = ${post_id}`;
+      if (connectionError) {
+        reject(connectionError); // 若連線有問題回傳錯誤
+      } else {
+        connection.query(query, (error, result) => {
+            if (error) {
+              console.error('SQL error: ', error);
+              reject(error); // 寫入資料庫有問題時回傳錯誤
+
+            } else {
+              const update_query = 
+              `UPDATE posts p
+              LEFT JOIN (
+                  SELECT post_id, price, user_id
+                  FROM bids
+                  WHERE post_id = ${post_id}
+                  ORDER BY price DESC
+                  LIMIT 1
+              ) b ON p.pid = b.post_id
+              SET p.bid_price = b.price, p.bid_user_id = user_id, p.owner_uid = ${new_owner_id} where p.pid = ${post_id}`
               // Assuming you have another query to execute here
               connection.query(update_query,
                 (error, result) => {

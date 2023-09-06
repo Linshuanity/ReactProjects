@@ -26,11 +26,13 @@ const PostWidget = ({
   author_id,
   author_name,
   author_profile,
+  level,
   description,
   location,
   create_date,
   expire_date,
   picturePath,
+  bid_user_id,
   price,
   is_liked,
   likes,
@@ -48,7 +50,8 @@ const PostWidget = ({
   const [isLiked, setLike] = useState(is_liked);
   const [likeCount, setLikeCount] = useState(likes);
   const [bid, setBid] = useState("");
-  const [newPrice, setPrice] = useState(-1);
+  const [forSell, setSell] = useState(bid_user_id === owner_id);
+  const [Price, setPrice] = useState(price);
   const startDate = [create_date];
   const endDate = [expire_date];
 
@@ -73,7 +76,8 @@ const PostWidget = ({
           is_bid: loggedInUserId !== owner_id }),
     });
     const update = await response.json();
-    setPrice(bid);
+    setPrice(Math.max(bid, Price));
+    setSell(forSell || (loggedInUserId === owner_id));
     setIsConfirmationOpen(false);
   }
 
@@ -94,7 +98,7 @@ const PostWidget = ({
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ user_id: loggedInUserId, post_id: postId, context: newComment}),
+        body: JSON.stringify({ user_id: loggedInUserId, post_id: postId, context: newComment }),
       });
       const update = await response.json();
       setCommentCount(commentCount => commentCount + 1);
@@ -102,6 +106,22 @@ const PostWidget = ({
 
     // Clear the input field after adding the comment
     setNewComment('');
+  };
+
+  const purchaseAction = async () => {
+
+    const response = await fetch(`http://localhost:3002/posts/purchase`, {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+          trader_id: loggedInUserId, 
+          post_id: postId, 
+          user_id: bid_user_id,
+          for_sell: forSell }),
+    });
+    const update = await response.json();
   };
 
   const fetchComments = async () => {
@@ -259,10 +279,16 @@ const PostWidget = ({
           </FlexBetween>
 
           <FlexBetween gap="0.3rem">
-            <IconButton >
+            <IconButton onClick={purchaseAction}>
               <ShoppingCartIcon />
             </IconButton>
-            <Typography>$ {price > newPrice ? price : newPrice}</Typography>
+            <Typography
+              sx={{
+                color: forSell ? 'orange' : 'blue',
+              }}
+            >
+              $ {Price} 
+            </Typography>
           </FlexBetween>
           
           <FlexBetween gap="0.3rem">
