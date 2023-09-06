@@ -34,8 +34,6 @@ const PostWidget = ({
   picturePath,
   bid_user_id,
   price,
-  is_liked,
-  likes,
   comments,
 }) => {
   const [isComments, setIsComments] = useState(false);
@@ -47,8 +45,6 @@ const PostWidget = ({
   const loggedInUserId = useSelector((state) => state.user._id);
   const loggedInUserName = useSelector((state) => state.user.user_name);
   const userImagePath = useSelector((state) => state.user.picturePath);
-  const [isLiked, setLike] = useState(is_liked);
-  const [likeCount, setLikeCount] = useState(likes);
   const [bid, setBid] = useState("");
   const [forSell, setSell] = useState(bid_user_id === owner_id);
   const [Price, setPrice] = useState(price);
@@ -81,6 +77,16 @@ const PostWidget = ({
     setIsConfirmationOpen(false);
   }
 
+  const likesCount = useSelector((state) => {
+    const posts = state.posts;
+    const post = posts.find((post) => post.pid === postId);
+    return post ? post.likes : 0;
+  });
+  const isLiked = useSelector((state) => {
+    const posts = state.posts;
+    const post = posts.find((post) => post.pid === postId);
+    return post ? post.is_liked : false;
+  });
   const handleAddComment = async () => {
     // Add the new comment to the list of comments, for example:
     // You should replace this logic with your actual state management or API calls.
@@ -138,8 +144,7 @@ const PostWidget = ({
   };
 
   const patchLike = async () => {
-    setLikeCount(likeCount => likeCount + (isLiked ? -1 : 1));
-    setLike(isLiked => !isLiked);
+    dispatch(setPost({ post_id : postId, is_like : isLiked }));
     const response = await fetch(`http://localhost:3002/posts/like`, {
       method: "POST",
       headers: {
@@ -149,7 +154,6 @@ const PostWidget = ({
     });
     const update = await response.json();
 
-    dispatch(setPost({ post_id : postId, is_like : isLiked }));
   };
 
   function formatTimeLeft(time) {
@@ -268,7 +272,7 @@ const PostWidget = ({
                 <FavoriteBorderOutlined />
               )}
             </IconButton>
-            <Typography>{likeCount}</Typography>
+            <Typography>{likesCount}</Typography>
           </FlexBetween>
 
           <FlexBetween gap="0.3rem">
