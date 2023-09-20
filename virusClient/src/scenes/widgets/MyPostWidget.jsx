@@ -41,15 +41,14 @@ const MyPostWidget = ({ picturePath }) => {
   const handlePost = async () => {
     const formData = new FormData();
     formData.append("userId", _id);
-    formData.append("createrId", _id);
-    formData.append("description", post);
+    formData.append("content", post);
     formData.append("price", price);
     if (image) {
       formData.append("picture", image);
       formData.append("picturePath", image.name);
     }
 
-    const response = await fetch(`http://localhost:3001/posts`, {
+    const response = await fetch(`http://localhost:3002/posts/createPost`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: formData,

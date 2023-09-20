@@ -15,7 +15,6 @@ const connectionPool = mysql.createPool({
 
 /* LOGGING IN */
 export const userPosts = (req, res, next) => {
-  // 取得帳密
   const insertValues = req.body;
   selectUserPosts(insertValues).then((result) => {
 
@@ -24,7 +23,6 @@ export const userPosts = (req, res, next) => {
 };
 
 export const userLike = (req, res, next) => {
-  // 取得帳密
   const liker_id = req.body.liker_id;
   const post_id = req.body.post_id;
   const is_liked = req.body.is_liked;
@@ -70,6 +68,69 @@ export const userComments = (req, res, next) => {
 
     res.send(result);
   }).catch((error) => { next(error); });
+};
+
+
+/*
+export const createPost = async (req, res) => {
+  try {
+    const { userId, description, picturePath, price} = req.body;
+    const user = await User.findById(userId);
+    const newPost = new Post({
+      userId,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      location: user.location,
+      description,
+      userPicturePath: user.picturePath,
+      picturePath,
+      price,
+      likes: {},
+      comments: [],
+    });
+    await newPost.save();
+
+    const post = await Post.find();
+    res.status(201).json(post);
+  } catch (err) {
+    res.status(409).json({ message: err.message });
+  }
+};
+*/
+
+export const createUserPost = (req, res, next) => {
+  const insertValues = req.body;
+  console.log('createUserPost req.body: ', req.body);
+  console.log('req.body.content: ', req.body.content);
+  console.log('insertValues: ', insertValues);
+  createPost(insertValues).then((result) => {
+  // const post_id = req.body.post_id;
+  // createPost(post_id).then((result) => {
+
+    res.send(result);
+  }).catch((error) => { next(error); });
+};
+
+/* POST 新增 */
+const createPost = (insertValues) => {
+  return new Promise((resolve, reject) => {
+    connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
+      if (connectionError) {
+        reject(connectionError); // 若連線有問題回傳錯誤
+      } else {
+        // 'UPDATE virus_platform_user SET ? WHERE user_id = ?', [insertValues, userId]
+        connection.query('INSERT INTO posts (title,content,owner_uid,author_uid,image_path) VALUES (?,?,?,?,?)',  [insertValues.content,insertValues.content,insertValues.userId,insertValues.userId,insertValues.picturePath], (error, result) => { // 資料表寫入一筆資料
+          if (error) {
+            console.error('SQL error: ', error);
+            reject(error); // 寫入資料庫有問題時回傳錯誤
+          } else if (result.affectedRows === 1) {
+            resolve(`{"status":"ok", "msg":"成功！"}`);
+          }
+          connection.release();
+        });
+      }
+    });
+  });
 };
 
 const selectUserPosts = (insertValues) => {

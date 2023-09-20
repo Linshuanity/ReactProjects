@@ -42,6 +42,15 @@ export const authSlice = createSlice({
       });
       state.posts = updatedPosts;
     },
+    setPostCommentCount: (state, action) => {
+      const updatedPosts = state.posts.map((post) => {
+        if (`${post['pid']}` == action.payload.post_id) {
+          post.commentCount = action.payload.commentCount;
+        }
+        return post;
+      });
+      state.posts = updatedPosts;
+    },
     setLike: (state, action) => {
       const _id = action.payload._id;
       const is_liked = action.payload.is_liked;
@@ -57,6 +66,6 @@ export const authSlice = createSlice({
   },
 });
 
-export const { setMode, setLogin, setLogout, setFriends, setPosts, setPost, setLike } =
+export const { setMode, setLogin, setLogout, setFriends, setPosts, setPost, setPostCommentCount, setLike } =
   authSlice.actions;
 export default authSlice.reducer;
