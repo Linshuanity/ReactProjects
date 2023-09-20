@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setPosts } from "state";
 import { Tab, Tabs, Typography } from "@mui/material";
 import PostWidget from "./PostWidget";
 
 const PostsWidget = ({ userId, isProfile = false }) => {
   const [mode, setMode] = useState(0);
   const dispatch = useDispatch();
-  const posts = useSelector((state) => state.posts);
+  const [posts, setPosts] = useState([]);
   const token = useSelector((state) => state.token);
   const loggedInUserId = useSelector((state) => state.user._id);
 
@@ -25,7 +24,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
       body: JSON.stringify({ as_user: loggedInUserId }),
     });
     const data = await response.json();
-    dispatch(setPosts({ posts: data }));
+    setPosts(data);
   };
 
   const getUserPosts = async () => {
@@ -41,11 +40,15 @@ const PostsWidget = ({ userId, isProfile = false }) => {
   };
 
   useEffect(() => {
-    if (isProfile) {
-      getUserPosts();
-    } else {
-      getPosts();
-    }
+    const fetchData = async () => {
+      if (isProfile) {
+        await getUserPosts();
+      } else {
+        await getPosts();
+      }
+    };
+
+    fetchData();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (

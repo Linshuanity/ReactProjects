@@ -144,7 +144,6 @@ const PostWidget = ({
   };
 
   const patchLike = async () => {
-    dispatch(setPost({ post_id : postId, is_like : isLiked }));
     const response = await fetch(`http://localhost:3002/posts/like`, {
       method: "POST",
       headers: {
@@ -153,7 +152,7 @@ const PostWidget = ({
       body: JSON.stringify({ liker_id: loggedInUserId, post_id: postId, is_liked: isLiked }),
     });
     const update = await response.json();
-
+    dispatch(setPost({ post_id : postId, is_like : isLiked }));
   };
 
   function formatTimeLeft(time) {
