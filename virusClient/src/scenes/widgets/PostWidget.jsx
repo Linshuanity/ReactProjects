@@ -33,6 +33,8 @@ const PostWidget = ({
   expire_date,
   picturePath,
   bid_user_id,
+  is_liked,
+  likes,
   price,
   comments,
 }) => {
@@ -48,6 +50,8 @@ const PostWidget = ({
   const [bid, setBid] = useState("");
   const [forSell, setSell] = useState(bid_user_id === owner_id);
   const [Price, setPrice] = useState(price);
+  const [isLiked, setLiked] = useState(is_liked);
+  const [likesCount, setLikes] = useState(likes);
   const startDate = [create_date];
   const endDate = [expire_date];
 
@@ -77,16 +81,6 @@ const PostWidget = ({
     setIsConfirmationOpen(false);
   }
 
-  const likesCount = useSelector((state) => {
-    const posts = state.posts;
-    const post = posts.find((post) => post.pid === postId);
-    return post ? post.likes : 0;
-  });
-  const isLiked = useSelector((state) => {
-    const posts = state.posts;
-    const post = posts.find((post) => post.pid === postId);
-    return post ? post.is_liked : false;
-  });
   const handleAddComment = async () => {
     // Add the new comment to the list of comments, for example:
     // You should replace this logic with your actual state management or API calls.
@@ -152,7 +146,8 @@ const PostWidget = ({
       body: JSON.stringify({ liker_id: loggedInUserId, post_id: postId, is_liked: isLiked }),
     });
     const update = await response.json();
-    dispatch(setPost({ post_id : postId, is_like : isLiked }));
+    setLikes(likesCount + (isLiked ? -1 : 1));
+    setLiked(!isLiked);
   };
 
   function formatTimeLeft(time) {
