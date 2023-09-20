@@ -190,6 +190,14 @@ const addUserLike = (liker_id, post_id, is_liked) => {
             {
               sql: `UPDATE posts SET likes = likes + 1 WHERE pid = ?`,
               params: [post_id]
+            },
+            {
+              sql: `INSERT INTO accounting VALUES (DEFAULT, 0, ?, 1, 0, DEFAULT, DEFAULT)`,
+              params: [liker_id]
+            },
+            {
+              sql: `UPDATE virus_platform_user SET virus = virus + 1 where user_id = ?`,
+              params: [liker_id]
             }
           ];
 
