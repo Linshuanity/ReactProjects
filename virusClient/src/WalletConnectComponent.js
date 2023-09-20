@@ -8,12 +8,13 @@ import { Typography }from '@mui/material'
 import { useEffect, useState } from 'react';
 import Web3 from 'web3';
 
-const WalletConnectComponent = () => {
+const WalletConnectComponent = ({holding}) => {
   const [web3, setWeb3] = useState(null);
   const [account, setAccount] = useState(null);
-  const [holding, setHolding] = useState(0);
+  const [balance, setBalance] = useState(holding);
 
   const { palette } = useTheme();
+
   useEffect(() => {
     // 檢查用戶是否安裝了 Web3 錢包
     if (window.ethereum) {
@@ -55,7 +56,7 @@ const WalletConnectComponent = () => {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', height: '3rem'}}>
         <CoronavirusIcon  color="blue"/>
-        <Typography style={{margin: '0.5rem'}}>{holding}</Typography>
+        <Typography style={{margin: '0.5rem'}}>{balance}</Typography>
       </div>
       {account ? (
         <>

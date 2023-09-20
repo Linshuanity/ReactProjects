@@ -44,7 +44,7 @@ const UserWidget = ({ userId, picturePath }) => {
     _id,
     user_name,
     // picturePath,
-    friends,
+    holding,
     // postCount,
   } = user;
 
@@ -78,7 +78,8 @@ const UserWidget = ({ userId, picturePath }) => {
         <ManageAccountsOutlined />
       </FlexBetween>
 
-      <WalletConnectComponent />
+      <WalletConnectComponent holding={holding}>
+      </WalletConnectComponent>
       <Divider />
 
       {/* SECOND ROW */}

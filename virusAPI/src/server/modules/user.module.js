@@ -55,8 +55,13 @@ const selectUserById = (userId) => {
               reject(error); // 寫入資料庫有問題時回傳錯誤
             } else if (Object.keys(result).length === 0) {
               resolve(`{"status":"error", "msg":"user not found"}`);
-            } else {              
-              resolve(`{"picturePath":"`+ result[0].user_image_path + `","_id":"`+ result[0].user_id +`","user_name":"`+ result[0].user_name + `"}`);
+            } else {
+              resolve({
+                picturePath: result[0].user_image_path,
+                _id: result[0].user_id,
+                user_name: result[0].user_name,
+                holding: result[0].virus
+              });
             }
             connection.release();
           }

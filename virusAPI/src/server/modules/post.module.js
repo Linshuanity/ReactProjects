@@ -172,43 +172,55 @@ const addUserLike = (liker_id, post_id, is_liked) => {
       if (connectionError) {
         reject(connectionError); // 若連線有問題回傳錯誤
       } else {
-        const query = is_liked ? `DELETE from likes WHERE post_id = ${post_id} and liker_id = ${liker_id}` : `INSERT INTO likes VALUES (DEFAULT, ${liker_id}, ${post_id}, DEFAULT)`;
-        connection.query(query, 
-          (error, result) => {
-            if (error) {
-              console.error('First query error:', error);
-              connection.rollback(() => {
-                reject(error);
-              });
-            } else {
-              const likeId = result.insertId;
-              const update_query = is_liked ? `UPDATE posts SET likes = likes - 1 WHERE pid = ${post_id}` : `UPDATE posts SET likes = likes + 1 WHERE pid = ${post_id}`;
-              // Assuming you have another query to execute here
-              connection.query(update_query,
-                (error, result) => {
-                  if (error) {
-                    console.error('Second query error:', error);
-                    connection.rollback(() => {
-                      reject(error);
-                    });
-                  } else {
-                    connection.commit((err) => {
-                      if (err) {
-                        console.error('Commit error:', err);
-                        connection.rollback(() => {
-                          reject(err);
-                        });
-                      } else {
-                        resolve({ _id: post_id, is_liked: is_liked, message: 'Both queries executed successfully.' });
-                      }
-                    });
-                  }
-                }
-              );
+          const queries = is_liked ? [
+            {
+              sql: `DELETE from likes WHERE post_id = ? and liker_id = ?`,
+              params: [post_id, liker_id]
+            },
+            {
+              sql: `UPDATE posts SET likes = likes - 1 WHERE pid = ?`,
+              params: [post_id]
             }
-            connection.release();
+          ] :
+          [ 
+            {
+              sql: `INSERT INTO likes VALUES (DEFAULT, ?, ?, DEFAULT)`,
+              params: [liker_id, post_id]
+            },
+            {
+              sql: `UPDATE posts SET likes = likes + 1 WHERE pid = ?`,
+              params: [post_id]
+            }
+          ];
+
+          const results = []; // Array to store the results of each query
+
+          function executeQueries() {
+            const queryPromises = [];
+            for (const query of queries) {
+              const queryPromise = new Promise((resolve, reject) => {
+                connection.query(query.sql, query.params, (error, result) => {
+                  if (error) {
+                    reject(error); // If there is an error in any query, reject with the error
+                  } else {
+                    results.push(result); // Store the result of the current query
+                    resolve(); // Resolve the Promise after successful query execution
+                  }
+                });
+              });
+              queryPromises.push(queryPromise);
+            }
+
+            // Use Promise.all to wait for all queries to complete
+            Promise.all(queryPromises)
+              .then(() => {
+                resolve(results); // All queries have been executed successfully
+              })
+              .catch((error) => {
+                reject(error); // If any query encounters an error, reject with the error
+              });
           }
-        );
+          executeQueries();
       }
     });
   });
