@@ -146,11 +146,12 @@ const selectUserPosts = (insertValues) => {
       FROM posts AS p
       JOIN virus_platform_user AS v1 ON p.owner_uid = v1.user_id
       JOIN virus_platform_user AS v2 ON p.author_uid = v2.user_id
-      LEFT JOIN likes AS l ON p.pid = l.post_id AND l.liker_id = ${insertValues.as_user}`;
+      LEFT JOIN likes AS l ON p.pid = l.post_id AND l.liker_id = ?
+      order by p.pid desc`;
       if (connectionError) {
         reject(connectionError); // 若連線有問題回傳錯誤
       } else {
-        connection.query(query, (error, result) => {
+        connection.query(query,insertValues.as_user, (error, result) => {
             if (error) {
               console.error('SQL error: ', error);
               reject(error); // 寫入資料庫有問題時回傳錯誤
