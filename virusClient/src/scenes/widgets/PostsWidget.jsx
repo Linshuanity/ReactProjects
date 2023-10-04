@@ -21,7 +21,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ as_user: loggedInUserId }),
+      body: JSON.stringify({ as_user: loggedInUserId, filter_mode: mode }),
     });
     const data = await response.json();
     setPosts(data);
@@ -49,7 +49,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     };
 
     fetchData();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>
@@ -59,7 +59,6 @@ const PostsWidget = ({ userId, isProfile = false }) => {
           <Tab label="My collection" />
           <Tab label="My order" />
         </Tabs>
-        {mode === 2 && <Typography>My Order</Typography>}
       </div>
       {posts.map(
         ({
