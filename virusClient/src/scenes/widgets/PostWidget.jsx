@@ -119,7 +119,8 @@ const PostWidget = ({
           trader_id: loggedInUserId, 
           post_id: postId, 
           user_id: bid_user_id,
-          for_sell: forSell }),
+          for_sell: forSell,
+          price: Price }),
     });
     const update = await response.json();
   };

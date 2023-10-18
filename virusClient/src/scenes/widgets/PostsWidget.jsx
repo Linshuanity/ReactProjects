@@ -21,7 +21,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ as_user: loggedInUserId, filter_mode: mode }),
+      body: JSON.stringify({ as_user: userId, filter_mode: mode }),
     });
     const data = await response.json();
     setPosts(data);
@@ -36,16 +36,16 @@ const PostsWidget = ({ userId, isProfile = false }) => {
       }
     );
     const data = await response.json();
-    dispatch(setPosts({ posts: data }));
+    setPosts(data);
   };
 
   useEffect(() => {
     const fetchData = async () => {
-      if (isProfile) {
-        await getUserPosts();
-      } else {
-        await getPosts();
-      }
+      //if (isProfile) {
+      //  await getUserPosts();
+      //} else {
+      await getPosts();
+      //}
     };
 
     fetchData();
