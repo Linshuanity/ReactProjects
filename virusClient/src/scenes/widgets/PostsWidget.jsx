@@ -77,6 +77,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
           expire_date,
           bid_user_id,
           bid_price,
+          ask_price,
           is_liked,
           likes,
           comments,
@@ -97,7 +98,8 @@ const PostsWidget = ({ userId, isProfile = false }) => {
             expire_date= {expire_date}
             picturePath={image_path}
             bid_user_id={bid_user_id}
-            price={bid_price}
+            bid_price={bid_price}
+            ask_price={ask_price}
             is_liked={is_liked}
             likes={likes}
             comments={comments}
