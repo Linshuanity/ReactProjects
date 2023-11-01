@@ -170,6 +170,20 @@ const PostWidget = ({
     setLiked(!isLiked);
   };
 
+  const handleCopyToClipboard = () => {
+    const shareURL = `https://localhost:3000/post/${post_id}`; // Replace with your actual URL
+    copyToClipboard(shareURL);
+  }
+
+  function copyToClipboard(text) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+  }
+
   function formatTimeLeft(time) {
     const days = Math.floor(time / (1000 * 60 * 60 * 24));
     const hours = Math.floor((time % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -364,7 +378,7 @@ const PostWidget = ({
           
         </FlexBetween>
 
-        <IconButton>
+        <IconButton onClick={handleCopyToClipboard}>
           <ShareOutlined />
         </IconButton>
       </FlexBetween>
