@@ -1,6 +1,5 @@
 import express from 'express';
 // Router
-import article from './article.route';
 import user from './user.route';
 import users from './users.route';
 import subscribe from './subscribe.route';
@@ -17,8 +16,6 @@ router.get('/', (req, res) => {
   res.send(`此路徑是: localhost:${config.port}/api`);
 });
 
-/** Article Router */
-router.use('/article', article);
 /** User Router */
 router.use('/user', user);
 /** Users Router */
@@ -29,6 +26,5 @@ router.use('/auth', auth);
 router.use('/posts', posts);
 /** Subscribe Router */
 router.use('/subscribe', subscribe);
-
 
 export default router;
