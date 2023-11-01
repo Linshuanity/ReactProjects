@@ -35,10 +35,11 @@ const PostWidget = ({
   bid_user_id,
   is_liked,
   likes,
-  price,
+  bid_price,
+  ask_price,
   comments,
 }) => {
-  const [isComments, setIsComments] = useState(false);
+  const [listMode, setListMode] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [newComment, setNewComment] = useState('');
   const postId = post_id;
@@ -47,9 +48,9 @@ const PostWidget = ({
   const loggedInUserId = useSelector((state) => state.user._id);
   const loggedInUserName = useSelector((state) => state.user.user_name);
   const userImagePath = useSelector((state) => state.user.picturePath);
+  const isSell = loggedInUserId === owner_id;
+  const price = isSell ? bid_price : ask_price;
   const [bid, setBid] = useState("");
-  const [forSell, setSell] = useState(bid_user_id === owner_id);
-  const [Price, setPrice] = useState(price);
   const [isLiked, setLiked] = useState(is_liked);
   const [likesCount, setLikes] = useState(likes);
   const startDate = [create_date];
@@ -61,6 +62,7 @@ const PostWidget = ({
   const navigate = useNavigate();
   const [commentCount, setCommentCount] = useState(comments);
   const [commentList, setCommentList] = useState([]);
+  const [bidList, setBidList] = useState([]);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
 
   const handleAddBid = async () => {
@@ -76,8 +78,6 @@ const PostWidget = ({
           is_bid: loggedInUserId !== owner_id }),
     });
     const update = await response.json();
-    setPrice(Math.max(bid, Price));
-    setSell(forSell || (loggedInUserId === owner_id));
     setIsConfirmationOpen(false);
   }
 
@@ -119,22 +119,42 @@ const PostWidget = ({
           trader_id: loggedInUserId, 
           post_id: postId, 
           user_id: bid_user_id,
-          for_sell: forSell }),
+          for_sell: isSell,
+          price: price }),
     });
     const update = await response.json();
   };
 
+  const fetchBids = async () => {
+    if (listMode !== 2)
+    {
+      const response = await fetch("http://localhost:3002/posts/bids", {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ post_id: postId }),
+      });
+      const update = await response.json();
+      setBidList(update);
+    }
+    setListMode(listMode === 2 ? 0 : 2);
+  };
+
   const fetchComments = async () => {
-    setIsComments(!isComments);
-    const response = await fetch("http://localhost:3002/posts/comments", {
-      method: "POST",
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ post_id: postId }),
-    });
-    const update = await response.json();
-    setCommentList(update);
+    if (listMode !== 1)
+    {
+      const response = await fetch("http://localhost:3002/posts/comments", {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ post_id: postId }),
+      });
+      const update = await response.json();
+      setCommentList(update);
+    }
+    setListMode(listMode === 1 ? 0 : 1);
   };
 
   const patchLike = async () => {
@@ -277,22 +297,33 @@ const PostWidget = ({
           </FlexBetween>
 
           <FlexBetween gap="0.3rem">
-            <IconButton onClick={purchaseAction}>
+            <IconButton onClick={fetchBids}>
               <ShoppingCartIcon />
             </IconButton>
+            <Button
+              sx={{
+                backgroundColor: isSell ? 'red' : 'green',
+                padding: '2px 4px',
+                color: 'white',
+                marginLeft: '0.5rem',
+              }}
+              variant="contained"
+              onClick={() => {purchaseAction()}}
+            >
+              {(isSell ? 'Sell @ ' : 'Buy @ ') + price}
+            </Button>
             <Typography
               sx={{
-                color: forSell ? 'orange' : 'blue',
+                color: isSell ? 'orange' : 'blue',
               }}
             >
-              $ {Price} 
             </Typography>
           </FlexBetween>
           
           <FlexBetween gap="0.3rem">
             <Button
               sx={{
-                backgroundColor: loggedInUserId === owner_id ? 'orange' : 'blue',
+                backgroundColor: isSell ? 'orange' : 'blue',
                 padding: '2px 4px',
                 color: 'white',
                 marginLeft: '0.5rem',
@@ -300,7 +331,7 @@ const PostWidget = ({
               variant="contained"
               onClick={() => setIsConfirmationOpen(true)}
             >
-              {loggedInUserId === owner_id ? 'Ask' : 'Bid'}
+              {isSell ? 'Ask' : 'Bid'}
             </Button>
             <InputBase
               type="number"
@@ -337,7 +368,7 @@ const PostWidget = ({
           <ShareOutlined />
         </IconButton>
       </FlexBetween>
-      {isComments && (
+      {listMode === 1 && (
         <Box mt="1rem">
           {commentList.map((comment, i) => (
             <Box key={`${author_name}-${i}`}>
@@ -350,6 +381,25 @@ const PostWidget = ({
                 <Box sx={{ ml: '0.5rem' }}>
                   <Typography variant="subtitle2">{comment.user_name}</Typography>
                   <Typography color={main}>{comment.context}</Typography>
+                </Box>
+              </Box>
+            </Box>
+          ))}
+          <Divider />
+        </Box>
+      ) || listMode === 2 && (
+        <Box mt="1rem">
+          {bidList.map((bid, i) => (
+            <Box key={`${author_name}-${i}`}>
+              <Divider />
+              <Box sx={{ display: 'flex', alignItems: 'center', p: '0.5rem' }}>
+                <UserImage
+                  image={bid.user_image_path}
+                  size="22px"
+                />
+                <Box sx={{ ml: '0.5rem' }}>
+                  <Typography variant="subtitle2">{bid.user_name}</Typography>
+                  <Typography color={main}>{bid.price}</Typography>
                 </Box>
               </Box>
             </Box>

@@ -54,7 +54,8 @@ export const userPurchase = (req, res, next) => {
   const post_id = req.body.post_id;
   const user_id = req.body.user_id;
   const for_sell = req.body.for_sell;
-  transfer_post(trader_id, post_id, user_id, for_sell).then((result) => {
+  const price = req.body.price;
+  transfer_post(trader_id, post_id, user_id, for_sell, price).then((result) => {
     res.send(result); // 成功回傳result結果
   }).catch((error) => { next(error); }); // 失敗回傳錯誤訊息
 };
@@ -77,6 +78,13 @@ export const userComments = (req, res, next) => {
   }).catch((error) => { next(error); });
 };
 
+export const userBids = (req, res, next) => {
+  const post_id = req.body.post_id;
+  selectUserBids(post_id).then((result) => {
+
+    res.send(result);
+  }).catch((error) => { next(error); });
+};
 
 /*
 export const createPost = async (req, res) => {
@@ -313,52 +321,21 @@ const addUserLike = (liker_id, post_id, is_liked) => {
   });
 };
 
-const addUserBid = (user_id, post_id, price, is_bid) => {
+const selectUserBids = (post_id) => {
   return new Promise((resolve, reject) => {
     connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
-      const query = `INSERT INTO bids VALUES (DEFAULT, ${user_id}, ${post_id}, ${is_bid}, ${price}, DEFAULT) ON DUPLICATE KEY UPDATE price = ${price}, create_time = DEFAULT`
+      const query = `SELECT * FROM bids as b JOIN virus_platform_user as u on b.user_id = u.user_id WHERE b.post_id = ? and b.is_bid = 1 ORDER BY b.price DESC`;
       if (connectionError) {
         reject(connectionError); // 若連線有問題回傳錯誤
       } else {
-        connection.query(query, (error, result) => {
+        connection.query(query, [post_id], (error, result) => {
             if (error) {
               console.error('SQL error: ', error);
               reject(error); // 寫入資料庫有問題時回傳錯誤
 
             } else {
-              const update_query = 
-              `UPDATE posts p
-              JOIN (
-                  SELECT post_id, price, user_id
-                  FROM bids
-                  WHERE post_id = ${post_id}
-                  ORDER BY price DESC
-                  LIMIT 1
-              ) b ON p.pid = b.post_id
-              SET p.bid_price = b.price, p.bid_user_id = user_id`
-              // Assuming you have another query to execute here
-              connection.query(update_query,
-                (error, result) => {
-                  if (error) {
-                    console.error('Second query error:', error);
-                    connection.rollback(() => {
-                      reject(error);
-                    });
-                  } else {
-                    connection.commit((err) => {
-                      if (err) {
-                        console.error('Commit error:', err);
-                        connection.rollback(() => {
-                          reject(err);
-                        });
-                      } else {
-                        const jsonResponse = JSON.stringify(result);
-                        resolve(jsonResponse);
-                      }
-                    });
-                  }
-                }
-              );
+              const jsonResponse = JSON.stringify(result);
+              resolve(jsonResponse);
             }
             connection.release();
           }
@@ -368,57 +345,139 @@ const addUserBid = (user_id, post_id, price, is_bid) => {
   });
 };
 
-const transfer_post = (trader_id, post_id, user_id, for_sell) => {
-  const new_owner_id = for_sell ? trader_id : user_id;
+const addUserBid = (user_id, post_id, price, is_bid) => {
   return new Promise((resolve, reject) => {
     connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
-      const query = `DELETE FROM bids WHERE user_id = ${user_id} and post_id = ${post_id}`;
       if (connectionError) {
         reject(connectionError); // 若連線有問題回傳錯誤
       } else {
-        connection.query(query, (error, result) => {
-            if (error) {
-              console.error('SQL error: ', error);
-              reject(error); // 寫入資料庫有問題時回傳錯誤
+        const queries = [
+          {
+            sql: `INSERT INTO bids (user_id, post_id, is_bid, price) SELECT ?, ?, ?, ?
+                    WHERE ? <= (SELECT virus FROM virus_platform_user WHERE user_id = ?)
+                    ON DUPLICATE KEY UPDATE price = ?, create_time = DEFAULT`,
+            params: [user_id, post_id, is_bid, price, price, user_id, price]
+          },
+          {
+            sql: `UPDATE posts p
+                SET p.bid_price = (
+                    SELECT MAX(price)
+                    FROM bids
+                    WHERE post_id = p.pid AND is_bid = true
+                ),
+                p.ask_price = (
+                    SELECT MAX(price)
+                    FROM bids
+                    WHERE post_id = p.pid AND is_bid = false
+                )
+                WHERE p.pid = ?`,
+            params: [post_id]
+          }
+        ];
 
-            } else {
-              const update_query = 
-              `UPDATE posts p
+          const results = []; // Array to store the results of each query
+
+          function executeQueries() {
+            const queryPromises = [];
+            for (const query of queries) {
+              const queryPromise = new Promise((resolve, reject) => {
+                connection.query(query.sql, query.params, (error, result) => {
+                  if (error) {
+                    reject(error); // If there is an error in any query, reject with the error
+                  } else {
+                    results.push(result); // Store the result of the current query
+                    resolve(); // Resolve the Promise after successful query execution
+                  }
+                });
+              });
+              queryPromises.push(queryPromise);
+            }
+
+            // Use Promise.all to wait for all queries to complete
+            Promise.all(queryPromises)
+              .then(() => {
+                resolve(results); // All queries have been executed successfully
+              })
+              .catch((error) => {
+                reject(error); // If any query encounters an error, reject with the error
+              });
+          }
+          executeQueries();
+      }
+    });
+  });
+};
+
+const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
+  const seller_id = for_sell ? trader_id : user_id;
+  const buyer_id = for_sell ? user_id : trader_id;
+  return new Promise((resolve, reject) => {
+    connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
+      if (connectionError) {
+        reject(connectionError); // 若連線有問題回傳錯誤
+      } else {
+        const queries = [
+          {
+            sql: `DELETE FROM bids WHERE user_id = ? and post_id = ?`,
+            params: [user_id, post_id]
+          },
+          {
+            sql: `UPDATE virus_platform_user SET virus = virus - ? WHERE user_id = ?`,
+            params: [price, buyer_id]
+          },
+          {
+            sql: `UPDATE virus_platform_user SET virus = virus + ? WHERE user_id = ?`,
+            params: [price, seller_id]
+          },
+          {
+            sql: `UPDATE posts p
               LEFT JOIN (
                   SELECT post_id, price, user_id
                   FROM bids
-                  WHERE post_id = ${post_id}
+                  WHERE post_id = ?
                   ORDER BY price DESC
                   LIMIT 1
               ) b ON p.pid = b.post_id
-              SET p.bid_price = b.price, p.bid_user_id = user_id, p.owner_uid = ${new_owner_id} where p.pid = ${post_id}`
-              // Assuming you have another query to execute here
-              connection.query(update_query,
-                (error, result) => {
-                  if (error) {
-                    console.error('Second query error:', error);
-                    connection.rollback(() => {
-                      reject(error);
-                    });
-                  } else {
-                    connection.commit((err) => {
-                      if (err) {
-                        console.error('Commit error:', err);
-                        connection.rollback(() => {
-                          reject(err);
-                        });
-                      } else {
-                        const jsonResponse = JSON.stringify(result);
-                        resolve(jsonResponse);
-                      }
-                    });
-                  }
-                }
-              );
-            }
-            connection.release();
+              SET p.bid_price = b.price, p.bid_user_id = b.user_id, p.owner_uid = ? where p.pid = ?`,
+            params: [post_id, buyer_id, post_id]
+          },
+          {
+            sql: `DELETE FROM bids
+                    WHERE user_id = ? 
+                      AND is_bid = True 
+                      AND price > (SELECT virus FROM virus_platform_user WHERE user_id = ?)`,
+            params: [buyer_id]
           }
-        );
+        ];
+
+          const results = []; // Array to store the results of each query
+
+          function executeQueries() {
+            const queryPromises = [];
+            for (const query of queries) {
+              const queryPromise = new Promise((resolve, reject) => {
+                connection.query(query.sql, query.params, (error, result) => {
+                  if (error) {
+                    reject(error); // If there is an error in any query, reject with the error
+                  } else {
+                    results.push(result); // Store the result of the current query
+                    resolve(); // Resolve the Promise after successful query execution
+                  }
+                });
+              });
+              queryPromises.push(queryPromise);
+            }
+
+            // Use Promise.all to wait for all queries to complete
+            Promise.all(queryPromises)
+              .then(() => {
+                resolve(results); // All queries have been executed successfully
+              })
+              .catch((error) => {
+                reject(error); // If any query encounters an error, reject with the error
+              });
+          }
+          executeQueries();
       }
     });
   });

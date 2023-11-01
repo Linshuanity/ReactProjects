@@ -21,7 +21,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ as_user: loggedInUserId, filter_mode: mode }),
+      body: JSON.stringify({ as_user: userId, filter_mode: mode }),
     });
     const data = await response.json();
     setPosts(data);
@@ -36,16 +36,16 @@ const PostsWidget = ({ userId, isProfile = false }) => {
       }
     );
     const data = await response.json();
-    dispatch(setPosts({ posts: data }));
+    setPosts(data);
   };
 
   useEffect(() => {
     const fetchData = async () => {
-      if (isProfile) {
-        await getUserPosts();
-      } else {
-        await getPosts();
-      }
+      //if (isProfile) {
+      //  await getUserPosts();
+      //} else {
+      await getPosts();
+      //}
     };
 
     fetchData();
@@ -77,6 +77,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
           expire_date,
           bid_user_id,
           bid_price,
+          ask_price,
           is_liked,
           likes,
           comments,
@@ -97,7 +98,8 @@ const PostsWidget = ({ userId, isProfile = false }) => {
             expire_date= {expire_date}
             picturePath={image_path}
             bid_user_id={bid_user_id}
-            price={bid_price}
+            bid_price={bid_price}
+            ask_price={ask_price}
             is_liked={is_liked}
             likes={likes}
             comments={comments}
