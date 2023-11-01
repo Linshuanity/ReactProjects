@@ -17,11 +17,12 @@ const PostPage = () => {
 
   const getPost = async () => {
     const response = await fetch(`http://localhost:3002/posts/${postId}`, {
-      method: "GET",
+      method: "POST",
       body: JSON.stringify({ post_id: postId }),
     });
     const data = await response.json();
     console.log("getPost data" + data);
+    console.log("getPost data" + data.pid);
     setPost(data);
   };
 
@@ -46,24 +47,24 @@ const PostPage = () => {
           mt={isNonMobileScreens ? undefined : "2rem"}
         >
           <PostWidget
-          // post_id={post.pid}
-          // owner_id={post.owner_uid}
-          // owner_name={post.owner_name}
-          // // owner_profile={owner_profile}
-          // author_id={post.author_uid}
-          // author_name={post.author_name}
-          // // author_profile={author_profile}
-          // level={post.level}
-          // description={post.title}
-          // location= "Taipei"
-          // create_date= {post.create_dat}
-          // expire_date= {post.expire_date}
-          // picturePath={post.image_path}
-          // bid_user_id={post.bid_user_id}
-          // price={post.bid_price}
-          // // is_liked={is_liked}
-          // likes={post.likes}
-          // comments={post.comments}
+          post_id={post==null?'':post.pid}
+          owner_id={post==null?'':post.owner_uid}
+          owner_name={post==null?'':post.owner_name}
+          owner_profile={post==null?'':post.owner_profile}
+          author_id={post==null?'':post.author_uid}
+          author_name={post==null?'':post.author_name}
+          author_profile={post==null?'':post.author_profile}
+          level={post==null?'':post.level}
+          description={post==null?'':post.title}
+          location= "Taipei"
+          create_date= {post==null?'':post.create_dat}
+          expire_date= {post==null?'':post.expire_date}
+          picturePath={post==null?'':post.image_path}
+          bid_user_id={post==null?'':post.bid_user_id}
+          price={post==null?'':post.bid_price}
+          // is_liked={is_liked}
+          likes={post==null?'':post.likes}
+          comments={post==null?'':post.comments}
         />
         </Box>
         {isNonMobileScreens && (
