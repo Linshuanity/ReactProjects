@@ -326,21 +326,12 @@ const PostWidget = ({
             >
               {(isSell ? 'Sell @ ' : 'Buy @ ') + price}
             </Button>
-            <Typography
-              sx={{
-                color: isSell ? 'orange' : 'blue',
-              }}
-            >
-            </Typography>
-          </FlexBetween>
-          
-          <FlexBetween gap="0.3rem">
             <Button
               sx={{
                 backgroundColor: isSell ? 'orange' : 'blue',
                 padding: '2px 4px',
                 color: 'white',
-                marginLeft: '0.5rem',
+                minWidth: "50px",
               }}
               variant="contained"
               onClick={() => setIsConfirmationOpen(true)}
@@ -353,7 +344,7 @@ const PostWidget = ({
               onChange={(e) => setBid(e.target.value)}
               value={bid}
               sx={{
-                width: "5rem",
+                width: "6rem",
                 height: "2rem",
                 backgroundColor: palette.neutral.light,
                 borderRadius: "1rem",
