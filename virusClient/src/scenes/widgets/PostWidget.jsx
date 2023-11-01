@@ -55,6 +55,10 @@ const PostWidget = ({
   const [likesCount, setLikes] = useState(likes);
   const startDate = [create_date];
   const endDate = [expire_date];
+  const currentTime = new Date();
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const isAlive = currentTime <= end;
 
   const { palette } = useTheme();
   const main = palette.neutral.main;
@@ -206,9 +210,6 @@ const PostWidget = ({
 
 
   function calculateProgress(startDate, endDate) {
-    const currentTime = new Date();
-    const start = new Date(startDate);
-    const end = new Date(endDate);
     const totalTime = end.getTime() - start.getTime();
     const elapsedTime = currentTime.getTime() - start.getTime();
     const timeLeft = end - currentTime;
@@ -258,13 +259,15 @@ const PostWidget = ({
 
         return (
           <div style={{ flex: "1", marginLeft: "1rem" }}>
-            <progress
-              value={progress}
-              max="100"
-              style={{ width: "100%" }}
-            >
-            {progress}%
-            </progress>
+            {isAlive && (
+              <progress
+                value={progress}
+                max="100"
+                style={{ width: "100%" }}
+              >
+              {progress}%
+              </progress>
+            )}
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <Box width="50%"
                 onClick={() => {
@@ -284,7 +287,7 @@ const PostWidget = ({
                 )}
               </Box>
               <div style={{ width: '50%', textAlign: "right"}}>
-                {timeLeft} left
+                {timeLeft} {isAlive ? `left` : 'expired'}
               </div>
             </div>
           </div>
