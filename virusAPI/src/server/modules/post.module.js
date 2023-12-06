@@ -1,9 +1,6 @@
-import bcrypt from "bcrypt";
+
 import mysql from 'mysql';
 import config from '../../config/config';
-import fs from 'fs';
-import path from 'path';
-import jwt from "jsonwebtoken";
 
 const connectionPool = mysql.createPool({
   connectionLimit: 10,
@@ -12,118 +9,111 @@ const connectionPool = mysql.createPool({
   password: config.mysqlPass,
   database: config.mysqlDatabase
 });
-
-/* LOGGING IN */
-export const userPosts = (req, res, next) => {
-  const insertValues = req.body;
-  selectUserPosts(insertValues).then((result) => {
-
-    res.send(result); // 成功回傳result結果
-  }).catch((error) => { next(error); }); // 失敗回傳錯誤訊息
-};
-
-export const getPost = (req, res, next) => {
-  console.log('getPost req.params.post_id: ', req.params.post_id);
-  selectUserPost(req.params.post_id).then((result) => {
-    res.send(result); // 成功回傳result結果
-  }).catch((error) => { next(error); }); // 失敗回傳錯誤訊息
-};
-
-export const userLike = (req, res, next) => {
-  const liker_id = req.body.liker_id;
-  const post_id = req.body.post_id;
-  const is_liked = req.body.is_liked;
-  addUserLike(liker_id, post_id, is_liked).then((result) => {
-
-    res.send(result); // 成功回傳result結果
-  }).catch((error) => { next(error); }); // 失敗回傳錯誤訊息
-};
-
-export const userBid = (req, res, next) => {
-  const user_id = req.body.user_id;
-  const post_id = req.body.post_id;
-  const price = req.body.price;
-  const is_bid = req.body.is_bid;
-  addUserBid(user_id, post_id, price, is_bid).then((result) => {
-    res.send(result); // 成功回傳result結果
-  }).catch((error) => { next(error); }); // 失敗回傳錯誤訊息
-};
-
-export const userPurchase = (req, res, next) => {
-  const trader_id = req.body.trader_id;
-  const post_id = req.body.post_id;
-  const user_id = req.body.user_id;
-  const for_sell = req.body.for_sell;
-  const price = req.body.price;
-  transfer_post(trader_id, post_id, user_id, for_sell, price).then((result) => {
-    res.send(result); // 成功回傳result結果
-  }).catch((error) => { next(error); }); // 失敗回傳錯誤訊息
-};
-
-export const userComment = (req, res, next) => {
-  // 取得帳密
-  const user_id = req.body.user_id;
-  const post_id = req.body.post_id;
-  const context = req.body.context;
-  addUserComment(user_id, post_id, context).then((result) => {
-    res.send(result); // 成功回傳result結果
-  }).catch((error) => { next(error); }); // 失敗回傳錯誤訊息
-};
-
-export const userComments = (req, res, next) => {
-  const post_id = req.body.post_id;
-  selectUserComments(post_id).then((result) => {
-
-    res.send(result);
-  }).catch((error) => { next(error); });
-};
-
-export const userBids = (req, res, next) => {
-  const post_id = req.body.post_id;
-  selectUserBids(post_id).then((result) => {
-
-    res.send(result);
-  }).catch((error) => { next(error); });
-};
-
-/*
-export const createPost = async (req, res) => {
+const executeQuery = async (sql, params = []) => {
+  const connection = await getConnection();
   try {
-    const { userId, description, picturePath, price} = req.body;
-    const user = await User.findById(userId);
-    const newPost = new Post({
-      userId,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      location: user.location,
-      description,
-      userPicturePath: user.picturePath,
-      picturePath,
-      price,
-      likes: {},
-      comments: [],
-    });
-    await newPost.save();
-
-    const post = await Post.find();
-    res.status(201).json(post);
-  } catch (err) {
-    res.status(409).json({ message: err.message });
+    const [results] = await connection.query(sql, params);
+    return results;
+  } catch (error) {
+    throw error;
+  } finally {
+    connection.release();
   }
 };
-*/
 
-export const createUserPost = (req, res, next) => {
-  const insertValues = req.body;
-  console.log('createUserPost req.body: ', req.body);
-  console.log('req.body.content: ', req.body.content);
-  console.log('insertValues: ', insertValues);
-  createPost(insertValues).then((result) => {
-  // const post_id = req.body.post_id;
-  // createPost(post_id).then((result) => {
+const getConnection = () => {
+  return new Promise((resolve, reject) => {
+    connectionPool.getConnection((err, connection) => {
+      if (err) reject(err);
+      else resolve(connection);
+    });
+  });
+};
 
+export const userPosts = async (req, res, next) => {
+  try {
+    const result = await selectUserPosts(req.body);
     res.send(result);
-  }).catch((error) => { next(error); });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getPost = async (req, res, next) => {
+  try {
+    const result = await selectUserPost(req.params.post_id);
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const userLike = async (req, res, next) => {
+  try {
+    const { liker_id, post_id, is_liked } = req.body;
+    const result = await addUserLike(liker_id, post_id, is_liked);
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const userBid = async (req, res, next) => {
+  try {
+    const { user_id, post_id, price, is_bid } = req.body;
+    const result = await addUserBid(user_id, post_id, price, is_bid);
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const userPurchase = async (req, res, next) => {
+  try {
+    const { trader_id, post_id, user_id, for_sell, price } = req.body;
+    const result = await transfer_post(trader_id, post_id, user_id, for_sell, price);
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const userComment = async (req, res, next) => {
+  try {
+    const { user_id, post_id, context } = req.body;
+    const result = await addUserComment(user_id, post_id, context);
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const userComments = async (req, res, next) => {
+  try {
+    const result = await selectUserComments(req.body.post_id);
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const userBids = async (req, res, next) => {
+  try {
+    const result = await selectUserBids(req.body.post_id);
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createUserPost = async (req, res, next) => {
+  try {
+    const insertValues = req.body;
+    const result = await createPost(insertValues);
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
 };
 
 /* POST 新增 */
@@ -207,116 +197,111 @@ const selectUserPost = (post_id) => {
 
 const selectUserPosts = (insertValues) => {
   return new Promise((resolve, reject) => {
-    connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
-    let filter_string = "";
-    if (insertValues.filter_mode === 0)
-    {
-        filter_string = "WHERE p.author_uid = ?";
-    }
-    if (insertValues.filter_mode === 1)
-    {
-        filter_string = "WHERE p.owner_uid = ?";
-    }
-    if (insertValues.filter_mode === 2)
-    {
-        filter_string = "LEFT JOIN bids AS b ON p.pid = b.post_id WHERE b.user_id = ?"
-    }
-
-    const query = `
-      SELECT DISTINCT p.*,
-             v1.user_name AS owner_name,
-             v1.user_image_path AS owner_profile,
-             v2.user_name AS author_name,
-             v2.user_image_path AS author_profile,
-             CASE WHEN l.post_id IS NOT NULL THEN 1 ELSE 0 END AS is_liked
-      FROM posts AS p
-      JOIN virus_platform_user AS v1 ON p.owner_uid = v1.user_id
-      JOIN virus_platform_user AS v2 ON p.author_uid = v2.user_id
-      LEFT JOIN likes AS l ON p.pid = l.post_id AND l.liker_id = ?
-      ${filter_string} order by p.pid desc`;
+    connectionPool.getConnection((connectionError, connection) => {
       if (connectionError) {
         reject(connectionError); // 若連線有問題回傳錯誤
-      } else {
-        connection.query(query,[insertValues.as_user, insertValues.as_user], (error, result) => {
-            if (error) {
-              console.error('SQL error: ', error);
-              reject(error); // 寫入資料庫有問題時回傳錯誤
-            } else {              
-              const jsonResponse = JSON.stringify(result);
-              resolve(jsonResponse);
-            }
-            connection.release();
-          }
-        );
+        return;
       }
+
+      let filter_string = "";
+      let queryParams = [insertValues.as_user, insertValues.as_user];
+      switch (insertValues.filter_mode) {
+        case 0:
+          filter_string = "WHERE p.author_uid = ?";
+          break;
+        case 1:
+          filter_string = "WHERE p.owner_uid = ?";
+          break;
+        case 2:
+          filter_string = "LEFT JOIN bids AS b ON p.pid = b.post_id WHERE b.user_id = ?";
+          queryParams = [insertValues.as_user];
+          break;
+      }
+
+      const query = `
+        SELECT DISTINCT p.*,
+               v1.user_name AS owner_name,
+               v1.user_image_path AS owner_profile,
+               v2.user_name AS author_name,
+               v2.user_image_path AS author_profile,
+               CASE WHEN l.post_id IS NOT NULL THEN 1 ELSE 0 END AS is_liked
+        FROM posts AS p
+        JOIN virus_platform_user AS v1 ON p.owner_uid = v1.user_id
+        JOIN virus_platform_user AS v2 ON p.author_uid = v2.user_id
+        LEFT JOIN likes AS l ON p.pid = l.post_id AND l.liker_id = ?
+        ${filter_string} order by p.pid desc`;
+
+      connection.query(query, queryParams, (error, result) => {
+        connection.release();
+        if (error) {
+          console.error('SQL error: ', error);
+          reject(error); // 寫入資料庫有問題時回傳錯誤
+          return;
+        }
+        const jsonResponse = JSON.stringify(result);
+        resolve(jsonResponse);
+      });
     });
   });
 };
 
 const addUserLike = (liker_id, post_id, is_liked) => {
   return new Promise((resolve, reject) => {
-    connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
+    connectionPool.getConnection((connectionError, connection) => {
       if (connectionError) {
-        reject(connectionError); // 若連線有問題回傳錯誤
-      } else {
-          const queries = is_liked ? [
-            {
-              sql: `DELETE from likes WHERE post_id = ? and liker_id = ?`,
-              params: [post_id, liker_id]
-            },
-            {
-              sql: `UPDATE posts SET likes = likes - 1 WHERE pid = ?`,
-              params: [post_id]
-            }
-          ] :
-          [ 
-            {
-              sql: `INSERT INTO likes VALUES (DEFAULT, ?, ?, DEFAULT)`,
-              params: [liker_id, post_id]
-            },
-            {
-              sql: `UPDATE posts SET likes = likes + 1 WHERE pid = ?`,
-              params: [post_id]
-            },
-            {
-              sql: `INSERT INTO accounting VALUES (DEFAULT, 0, ?, 1, 0, DEFAULT, DEFAULT)`,
-              params: [liker_id]
-            },
-            {
-              sql: `UPDATE virus_platform_user SET virus = virus + 1 where user_id = ?`,
-              params: [liker_id]
-            }
-          ];
-
-          const results = []; // Array to store the results of each query
-
-          function executeQueries() {
-            const queryPromises = [];
-            for (const query of queries) {
-              const queryPromise = new Promise((resolve, reject) => {
-                connection.query(query.sql, query.params, (error, result) => {
-                  if (error) {
-                    reject(error); // If there is an error in any query, reject with the error
-                  } else {
-                    results.push(result); // Store the result of the current query
-                    resolve(); // Resolve the Promise after successful query execution
-                  }
-                });
-              });
-              queryPromises.push(queryPromise);
-            }
-
-            // Use Promise.all to wait for all queries to complete
-            Promise.all(queryPromises)
-              .then(() => {
-                resolve(results); // All queries have been executed successfully
-              })
-              .catch((error) => {
-                reject(error); // If any query encounters an error, reject with the error
-              });
-          }
-          executeQueries();
+        reject(connectionError);
+        return;
       }
+
+      connection.beginTransaction(err => {
+        if (err) {
+          connection.release();
+          reject(err);
+          return;
+        }
+
+        const queries = is_liked ? [
+          `DELETE from likes WHERE post_id = ? and liker_id = ?`,
+          `UPDATE posts SET likes = likes - 1 WHERE pid = ?`
+        ] : [
+          `INSERT INTO likes VALUES (DEFAULT, ?, ?, DEFAULT)`,
+          `UPDATE posts SET likes = likes + 1 WHERE pid = ?`,
+          `INSERT INTO accounting VALUES (DEFAULT, 0, ?, 1, 0, DEFAULT, DEFAULT)`,
+          `UPDATE virus_platform_user SET virus = virus + 1 where user_id = ?`
+        ];
+
+        const executeQuery = (sql, params) => {
+          return new Promise((resolve, reject) => {
+            connection.query(sql, params, (error, result) => {
+              if (error) {
+                return reject(error);
+              }
+              resolve(result);
+            });
+          });
+        };
+
+        Promise.all(queries.map(query => executeQuery(query, [post_id, liker_id])))
+          .then(results => {
+            connection.commit(err => {
+              if (err) {
+                connection.rollback(() => {
+                  connection.release();
+                  reject(err);
+                });
+                return;
+              }
+              connection.release();
+              resolve(results);
+            });
+          })
+          .catch(error => {
+            connection.rollback(() => {
+              connection.release();
+              reject(error);
+            });
+          });
+      });
     });
   });
 };
