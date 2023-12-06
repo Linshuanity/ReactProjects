@@ -11,62 +11,69 @@ const connectionPool = mysql.createPool({
   database: config.mysqlDatabase
 });
 
-/*  User GET 取得  */
 const selectUser = () => {
   return new Promise((resolve, reject) => {
-    connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
+    connectionPool.getConnection((connectionError, connection) => {
       if (connectionError) {
-        reject(connectionError); // 若連線有問題回傳錯誤
-      } else {
-        connection.query( // User撈取所有欄位的值組
-          `select user_name as result from virus_platform_user`
-          , (error, result) => {
-            if (error) {
-              console.error('SQL error: ', error);
-              reject(error); // 寫入資料庫有問題時回傳錯誤
-            } else {
-              resolve(result); // 撈取成功回傳 JSON 資料
-            }
-            connection.release();
-          }
-        );
+        reject(connectionError);
+        return; // Make sure to return after rejecting to avoid continuing the execution
       }
+
+      const query = 'SELECT user_name AS result FROM virus_platform_user';
+
+      connection.query(query, (queryError, result) => {
+        connection.release(); // Release the connection regardless of the query result
+
+        if (queryError) {
+          console.error('SQL error:', queryError);
+          reject(queryError);
+        } else {
+          resolve(result);
+        }
+      });
     });
   });
 };
 
+
 /*  User GET 取得  */
 const selectUserById = (userId) => {
   return new Promise((resolve, reject) => {
-    console.log('selectUserById userId:'+userId);
-    connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
+    console.log('selectUserById userId:', userId);
+
+    connectionPool.getConnection((connectionError, connection) => {
       if (connectionError) {
         console.log('connectionError');
-        reject(connectionError); // 若連線有問題回傳錯誤
-      } else {
-        console.log('query');
-        console.log('connection.query userId:'+userId);
-        connection.query( // User撈取所有欄位的值組
-          'SELECT * FROM virus_platform_user WHERE user_id = ?',
-          [userId], (error, result) => {
-            console.log('inside query');
-            if (error) {
-              console.error('SQL error: ', error);
-              reject(error); // 寫入資料庫有問題時回傳錯誤
-            } else if (Object.keys(result).length === 0) {
-              resolve(`{"status":"error", "msg":"user not found"}`);
-            } else {
-              resolve({
-                picturePath: result[0].user_image_path,
-                _id: result[0].user_id,
-                user_name: result[0].user_name,
-                holding: result[0].virus
-              });
-            }
-            connection.release();
-          }
-        );
+        reject(connectionError);
+        return; // Early return after rejecting to avoid continuing execution
       }
+
+      console.log('query');
+      console.log('connection.query userId:', userId);
+
+      const query = 'SELECT * FROM virus_platform_user WHERE user_id = ?';
+
+      connection.query(query, [userId], (queryError, result) => {
+        console.log('inside query');
+        connection.release();
+
+        if (queryError) {
+          console.error('SQL error:', queryError);
+          reject(queryError);
+        } else if (result.length === 0) {
+          resolve({
+            status: 'error',
+            msg: 'user not found'
+          });
+        } else {
+          resolve({
+            picturePath: result[0].user_image_path,
+            _id: result[0].user_id,
+            user_name: result[0].user_name,
+            holding: result[0].virus
+          });
+        }
+      });
     });
   });
 };
@@ -74,20 +81,31 @@ const selectUserById = (userId) => {
 /* User  POST 新增 */
 const createUser = (insertValues) => {
   return new Promise((resolve, reject) => {
-    connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
+    connectionPool.getConnection((connectionError, connection) => {
       if (connectionError) {
-        reject(connectionError); // 若連線有問題回傳錯誤
-      } else {
-        connection.query('INSERT INTO virus_platform_user SET ?', insertValues, (error, result) => { // User資料表寫入一筆資料
-          if (error) {
-            console.error('SQL error: ', error);
-            reject(error); // 寫入資料庫有問題時回傳錯誤
-          } else if (result.affectedRows === 1) {
-            resolve(`{"status":"ok", "msg":"註冊成功！","user_id":"${result.insertId}"}`); // 寫入成功回傳寫入id
-          }
-          connection.release();
-        });
+        reject(connectionError);
+        return; // Early return after rejecting to avoid continuing execution
       }
+
+      const insertQuery = 'INSERT INTO virus_platform_user SET ?';
+
+      connection.query(insertQuery, insertValues, (queryError, result) => {
+        connection.release();
+
+        if (queryError) {
+          console.error('SQL error:', queryError);
+          reject(queryError);
+        } else if (result.affectedRows === 1) {
+          resolve({
+            status: 'ok',
+            msg: '註冊成功！',
+            user_id: result.insertId
+          });
+        } else {
+          // Consider rejecting with an error if the expected number of affected rows is not met
+          reject(new Error('Unexpected result from the database query.'));
+        }
+      });
     });
   });
 };
@@ -95,24 +113,37 @@ const createUser = (insertValues) => {
 /* User PUT 修改 */
 const modifyUser = (insertValues, userId) => {
   return new Promise((resolve, reject) => {
-    connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
+    connectionPool.getConnection((connectionError, connection) => {
       if (connectionError) {
-        reject(connectionError); // 若連線有問題回傳錯誤
-      } else { // User資料表修改指定id一筆資料
-        connection.query('UPDATE virus_platform_user SET ? WHERE user_id = ?', [insertValues, userId], (error, result) => {
-          if (error) {
-            console.error('SQL error: ', error);// 寫入資料庫有問題時回傳錯誤
-            reject(error);
-          } else if (result.affectedRows === 0) { // 寫入時發現無該筆資料
-            resolve(`{"status":"fail","msg":"請確認修改Id！"}`);
-          } else if (result.message.match('Changed: 1')) { // 寫入成功
-            resolve(`{"status":"ok", "msg":"資料修改成功"}`);
-          } else {
-            resolve(`{"status":"ok", "msg":"資料無異動"}`);
-          }
-          connection.release();
-        });
+        reject(connectionError);
+        return; // Early return after rejecting to avoid continuing execution
       }
+
+      const updateQuery = 'UPDATE virus_platform_user SET ? WHERE user_id = ?';
+
+      connection.query(updateQuery, [insertValues, userId], (queryError, result) => {
+        connection.release();
+
+        if (queryError) {
+          console.error('SQL error:', queryError);
+          reject(queryError);
+        } else if (result.affectedRows === 0) {
+          resolve({
+            status: 'fail',
+            msg: '請確認修改Id！'
+          });
+        } else if (result.message && result.message.match('Changed: 1')) {
+          resolve({
+            status: 'ok',
+            msg: '資料修改成功'
+          });
+        } else {
+          resolve({
+            status: 'ok',
+            msg: '資料無異動'
+          });
+        }
+      });
     });
   });
 };
@@ -120,22 +151,32 @@ const modifyUser = (insertValues, userId) => {
 /* User  DELETE 刪除 */
 const deleteUser = (userId) => {
   return new Promise((resolve, reject) => {
-    connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
+    connectionPool.getConnection((connectionError, connection) => {
       if (connectionError) {
-        reject(connectionError); // 若連線有問題回傳錯誤
-      } else { // User資料表刪除指定id一筆資料
-        connection.query('DELETE FROM virus_platform_user WHERE user_id = ?', userId, (error, result) => {
-          if (error) {
-            console.error('SQL error: ', error);// 資料庫存取有問題時回傳錯誤
-            reject(error);
-          } else if (result.affectedRows === 1) {
-            resolve(`{"status":"ok", "msg":"刪除成功！"}`);
-          } else {
-            resolve(`{"status":"false", "msg":"刪除失敗！"}`);
-          }
-          connection.release();
-        });
+        reject(connectionError);
+        return; // Early return after rejecting to avoid continuing execution
       }
+
+      const deleteQuery = 'DELETE FROM virus_platform_user WHERE user_id = ?';
+
+      connection.query(deleteQuery, userId, (queryError, result) => {
+        connection.release();
+
+        if (queryError) {
+          console.error('SQL error:', queryError);
+          reject(queryError);
+        } else if (result.affectedRows === 1) {
+          resolve({
+            status: 'ok',
+            msg: '刪除成功！'
+          });
+        } else {
+          resolve({
+            status: 'fail',
+            msg: '刪除失敗！'
+          });
+        }
+      });
     });
   });
 };
@@ -143,61 +184,85 @@ const deleteUser = (userId) => {
 /*  User GET (Login)登入取得資訊  */
 const selectUserLogin = (insertValues) => {
   return new Promise((resolve, reject) => {
-    connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
+    connectionPool.getConnection((connectionError, connection) => {
       if (connectionError) {
-        reject(connectionError); // 若連線有問題回傳錯誤
-      } else {
-        connection.query( // User撈取所有欄位的值組
-          'SELECT * FROM virus_platform_user WHERE user_email = ?',
-          insertValues.user_email, (error, result) => {
-            if (error) {
-              console.error('SQL error: ', error);
-              reject(error); // 寫入資料庫有問題時回傳錯誤
-            } else if (Object.keys(result).length === 0) {
-              resolve(`{"status":"false", "msg":"信箱尚未註冊！"}`);
-              // reject(new APPError.LoginError1()); // 信箱尚未註冊
-            } else {              
-              const dbHashPassword = result[0].user_password; // 資料庫加密後的密碼
-              const userPassword = insertValues.user_password; // 使用者登入輸入的密碼
-              console.log('dbHashPassword:'+dbHashPassword);
-              console.log('userPassword:'+userPassword);
-              bcrypt.compare(userPassword, dbHashPassword).then((res) => { // 使用bcrypt做解密驗證
-                if (res) {
-                  resolve(`{"status":"ok", "msg":"登入成功","user_name":"`+ result[0].user_name + `","user_id":"`+ result[0].user_id + `"}`);
-                } else {
-                  resolve(`{"status":"false", "msg":"帳號或密碼有誤！"}`);
-                  // reject(new APPError.LoginError2()); // 登入失敗 輸入的密碼有誤
-                }
+        reject(connectionError);
+        return; // Early return after rejecting to avoid continuing execution
+      }
+
+      const selectQuery = 'SELECT * FROM virus_platform_user WHERE user_email = ?';
+
+      connection.query(selectQuery, insertValues.user_email, (queryError, result) => {
+        if (queryError) {
+          console.error('SQL error:', queryError);
+          reject(queryError);
+        } else if (result.length === 0) {
+          resolve({
+            status: 'false',
+            msg: '信箱尚未註冊！'
+          });
+        } else {
+          const dbHashPassword = result[0].user_password;
+          const userPassword = insertValues.user_password;
+
+          console.log('dbHashPassword:', dbHashPassword);
+          console.log('userPassword:', userPassword);
+
+          bcrypt.compare(userPassword, dbHashPassword).then((res) => {
+            if (res) {
+              resolve({
+                status: 'ok',
+                msg: '登入成功',
+                user_name: result[0].user_name,
+                user_id: result[0].user_id
+              });
+            } else {
+              resolve({
+                status: 'false',
+                msg: '帳號或密碼有誤！'
               });
             }
-            connection.release();
-          }
-        );
-      }
+          });
+        }
+        connection.release();
+      });
     });
   });
 };
 
 const addRemoveFriend = (id, insertValues, userId) => {
   return new Promise((resolve, reject) => {
-    connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
+    connectionPool.getConnection((connectionError, connection) => {
       if (connectionError) {
-        reject(connectionError); // 若連線有問題回傳錯誤
-      } else { // User資料表修改指定id一筆資料
-        connection.query('UPDATE virus_platform_user SET ? WHERE user_id = ?', [insertValues, userId], (error, result) => {
-          if (error) {
-            console.error('SQL error: ', error);// 寫入資料庫有問題時回傳錯誤
-            reject(error);
-          } else if (result.affectedRows === 0) { // 寫入時發現無該筆資料
-            resolve(`{"status":"fail","msg":"請確認修改Id！"}`);
-          } else if (result.message.match('Changed: 1')) { // 寫入成功
-            resolve(`{"status":"ok", "msg":"資料修改成功"}`);
-          } else {
-            resolve(`{"status":"ok", "msg":"資料無異動"}`);
-          }
-          connection.release();
-        });
+        reject(connectionError);
+        return;
       }
+
+      const updateQuery = 'UPDATE virus_platform_user SET ? WHERE user_id = ?';
+
+      connection.query(updateQuery, [insertValues, userId], (queryError, result) => {
+        connection.release();
+
+        if (queryError) {
+          console.error('SQL error:', queryError);
+          reject(queryError);
+        } else if (result.affectedRows === 0) {
+          resolve({
+            status: 'fail',
+            msg: '請確認修改Id！'
+          });
+        } else if (result.message && result.message.match('Changed: 1')) {
+          resolve({
+            status: 'ok',
+            msg: '資料修改成功'
+          });
+        } else {
+          resolve({
+            status: 'ok',
+            msg: '資料無異動'
+          });
+        }
+      });
     });
   });
 };
