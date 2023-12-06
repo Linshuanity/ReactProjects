@@ -21,7 +21,7 @@ const MissionWidget = () => {
         </Typography>
       </FlexBetween>
       {listItems.map((item) => (
-        <Typography sx={{ margin: '16px 0' }}>
+        <Typography key={item.id} sx={{ margin: '16px 0' }}>
           <FlexBetween>
             <Typography color={main} variant="h5" fontWeight="500"
               sx={{
