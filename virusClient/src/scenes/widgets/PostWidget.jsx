@@ -225,7 +225,7 @@ const PostWidget = ({
             src={`http://localhost:3002/assets/${picturePath}`}
           />
           <img
-            src={`http://localhost:3002/assets/${picturePath}`}
+            src={`http://localhost:3002/assets/${picturePath}?123`}
             alt="Foreground Photo"
             style={{
               position: 'absolute',
