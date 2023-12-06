@@ -84,6 +84,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
           image_path,
         }) => (
           <PostWidget
+            key={pid}
             post_id={pid}
             owner_id={owner_uid}
             owner_name={owner_name}
