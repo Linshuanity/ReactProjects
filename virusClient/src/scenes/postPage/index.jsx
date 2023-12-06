@@ -62,7 +62,7 @@ const PostPage = () => {
           picturePath={post==null?'':post.image_path}
           bid_user_id={post==null?'':post.bid_user_id}
           price={post==null?'':post.bid_price}
-          // is_liked={is_liked}
+          is_liked={post==null?'':post.is_liked}
           likes={post==null?'':post.likes}
           comments={post==null?'':post.comments}
         />

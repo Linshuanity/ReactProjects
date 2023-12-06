@@ -49,20 +49,49 @@ const createUser = (insertValues) => {
   return new Promise((resolve, reject) => {
     connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
       if (connectionError) {
-        resolve(`{"status":"error", "msg":"`+connectionError+`"}`);
-      } else {
-        connection.query('INSERT INTO virus_platform_user SET ?', insertValues, (error, result) => { // User資料表寫入一筆資料
-          if (error) {
-            resolve(`{"status":"error", "msg":"email already exists"}`);
-          } else if (result.affectedRows === 1) {
-            resolve(`{"status":"ok", "msg":"註冊成功！","user_id":"${result.insertId}"}`); // 寫入成功回傳寫入id
-          }
-          connection.release();
-        });
+        reject(new Error(`Connection Error: ${connectionError}`));
+        return;
       }
+
+      connection.query('INSERT INTO virus_platform_user SET ?', insertValues, (error, result) => { // User資料表寫入一筆資料
+        connection.release(); // 無論成功或失敗都應釋放連線
+
+        if (error) {
+          reject(new Error(`Query Error: ${error}`));
+          return;
+        }
+
+        if (result.affectedRows === 1) {
+          resolve(`{"status":"ok", "msg":"註冊成功！","user_id":"${result.insertId}"}`); // 寫入成功回傳寫入id
+        } else {
+          reject(new Error('Unknown error occurred'));
+        }
+      });
     });
   });
 };
+
+
+// const createUser = (insertValues) => {
+//   return new Promise((resolve, reject) => {
+//     connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
+//       if (connectionError) {
+//         resolve(`{"status":"error", "msg":"`+connectionError+`"}`);
+//       } else {
+//         connection.query('INSERT INTO virus_platform_user SET ?', insertValues, (error, result) => { // User資料表寫入一筆資料
+//           if (error) {
+//             resolve(`{"status":"error", "msg":"email already exists"}`);
+//           } else if (result.affectedRows === 1) {
+//             resolve(`{"status":"ok", "msg":"註冊成功！","user_id":"${result.insertId}"}`); // 寫入成功回傳寫入id
+//           }
+//           connection.release();
+//         });
+//       }
+//     });
+//   });
+// };
+
+
 
 /* LOGGING IN */
 export const userLogin = (req, res, next) => {
