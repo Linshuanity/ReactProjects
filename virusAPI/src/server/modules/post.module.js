@@ -214,7 +214,7 @@ const selectUserPosts = (insertValues) => {
           break;
         case 2:
           filter_string = "LEFT JOIN bids AS b ON p.pid = b.post_id WHERE b.user_id = ?";
-          queryParams = [insertValues.as_user];
+          queryParams = [insertValues.as_user, insertValues.as_user];
           break;
       }
 
@@ -261,17 +261,36 @@ const addUserLike = (liker_id, post_id, is_liked) => {
         }
 
         const queries = is_liked ? [
-          `DELETE from likes WHERE post_id = ? and liker_id = ?`,
-          `UPDATE posts SET likes = likes - 1 WHERE pid = ?`
+          {
+            sql: `UPDATE posts SET likes = likes - 1 WHERE pid = ? AND EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
+            params: [post_id, post_id, liker_id]
+          },
+          {
+            sql: `DELETE from likes WHERE post_id = ? and liker_id = ?`,
+            params: [post_id, liker_id]
+          }
         ] : [
-          `INSERT INTO likes VALUES (DEFAULT, ?, ?, DEFAULT)`,
-          `UPDATE posts SET likes = likes + 1 WHERE pid = ?`,
-          `INSERT INTO accounting VALUES (DEFAULT, 0, ?, 1, 0, DEFAULT, DEFAULT)`,
-          `UPDATE virus_platform_user SET virus = virus + 1 where user_id = ?`
+          {
+            sql: `UPDATE posts SET likes = likes + 1 WHERE pid = ? AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
+            params: [post_id, post_id, liker_id]
+          },
+          {
+            sql: `INSERT INTO accounting (from_id, to_id, amount, type) SELECT 0, ?, 1, 0 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
+            params: [liker_id, post_id, liker_id]
+          },
+          {
+            sql: `UPDATE virus_platform_user SET virus = virus + 1 where user_id = ? AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
+            params: [liker_id, post_id, liker_id]
+          },
+          {
+            sql: `INSERT INTO likes (liker_id, post_id) select ?, ? FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
+            params: [liker_id, post_id, post_id, liker_id]
+          }
         ];
 
         const executeQuery = (sql, params) => {
           return new Promise((resolve, reject) => {
+            console.log(sql, params)
             connection.query(sql, params, (error, result) => {
               if (error) {
                 return reject(error);
@@ -281,7 +300,7 @@ const addUserLike = (liker_id, post_id, is_liked) => {
           });
         };
 
-        Promise.all(queries.map(query => executeQuery(query, [post_id, liker_id])))
+        Promise.all(queries.map(query => executeQuery(query.sql, query.params)))
           .then(results => {
             connection.commit(err => {
               if (err) {

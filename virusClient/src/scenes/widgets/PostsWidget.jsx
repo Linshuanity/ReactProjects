@@ -14,38 +14,42 @@ const PostsWidget = ({ userId, isProfile = false }) => {
   const handleTabChange = (event, newValue) => {
     setMode(newValue);
   };
+  // const apiEndpoint = process.env.REACT_APP_API_ENDPOINT; // 使用環境變量
+  const apiEndpoint = 'http://localhost:3002';
 
   const getPosts = async () => {
-    const response = await fetch("http://localhost:3002/posts/all", {
-      method: "POST",
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ as_user: userId, filter_mode: mode }),
-    });
-    const data = await response.json();
-    setPosts(data);
+    try {
+      const response = await fetch(`${apiEndpoint}/posts/all`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ as_user: userId, filter_mode: mode }),
+      });
+      if (!response.ok) throw new Error('Network response was not ok');
+      const data = await response.json();
+      setPosts(data);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    }
   };
 
   const getUserPosts = async () => {
-    const response = await fetch(
-      `http://localhost:3002/posts/${userId}/posts`,
-      {
-        method: "GET",
+    try {
+      const response = await fetch(`${apiEndpoint}/posts/${userId}/posts`, {
+        method: 'GET',
         headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    const data = await response.json();
-    setPosts(data);
+      });
+      if (!response.ok) throw new Error('Network response was not ok');
+      const data = await response.json();
+      setPosts(data);
+    } catch (error) {
+      console.error('Error fetching user posts:', error);
+      // 可以添加更多的錯誤處理邏輯
+    }
   };
 
   useEffect(() => {
     const fetchData = async () => {
-      //if (isProfile) {
-      //  await getUserPosts();
-      //} else {
       await getPosts();
-      //}
     };
 
     fetchData();
@@ -60,53 +64,30 @@ const PostsWidget = ({ userId, isProfile = false }) => {
           <Tab label="My order" />
         </Tabs>
       </div>
-      {posts.map(
-        ({
-          pid,
-          title,
-          content,
-          owner_uid,
-          owner_name,
-          owner_profile,
-          author_uid,
-          author_name,
-          author_profile,
-          level,
-          status,
-          create_date,
-          expire_date,
-          bid_user_id,
-          bid_price,
-          ask_price,
-          is_liked,
-          likes,
-          comments,
-          image_path,
-        }) => (
-          <PostWidget
-            key={pid}
-            post_id={pid}
-            owner_id={owner_uid}
-            owner_name={owner_name}
-            owner_profile={owner_profile}
-            author_id={author_uid}
-            author_name={author_name}
-            author_profile={author_profile}
-            level={level}
-            description={title}
-            location= "Taipei"
-            create_date= {create_date}
-            expire_date= {expire_date}
-            picturePath={image_path}
-            bid_user_id={bid_user_id}
-            bid_price={bid_price}
-            ask_price={ask_price}
-            is_liked={is_liked}
-            likes={likes}
-            comments={comments}
-          />
-        )
-      )}
+      {posts.map((post) => (
+        <PostWidget
+          key={post.pid}
+          post_id={post.pid}
+          owner_id={post.owner_uid}
+          owner_name={post.owner_name}
+          owner_profile={post.owner_profile}
+          author_id={post.author_uid}
+          author_name={post.author_name}
+          author_profile={post.author_profile}
+          level={post.level}
+          description={post.title}
+          location="Taipei" // 需要根據實際數據進行動態設置
+          create_date={post.create_date}
+          expire_date={post.expire_date}
+          picturePath={post.image_path}
+          bid_user_id={post.bid_user_id}
+          bid_price={post.bid_price}
+          ask_price={post.ask_price}
+          is_liked={post.is_liked}
+          likes={post.likes}
+          comments={post.comments}
+        />
+      ))}
     </>
   );
 };
