@@ -16,9 +16,9 @@ const FriendListWidget = ({ userId }) => {
     friends.map((friend) => (
       <Friend
         key={friend._id}
-        friendId={friend._id}
+        friend_id={friend._id}
         name={friend.name}
-        userPicturePath={friend.picturePath}
+        user_picture_path={friend.picturePath}
       />
     ))
   } catch (error) {

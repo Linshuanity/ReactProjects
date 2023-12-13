@@ -2,14 +2,16 @@ import { PersonAddOutlined, PersonRemoveOutlined } from "@mui/icons-material";
 import { Box, IconButton, Typography, useTheme } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { setFriends } from "state";
+import { updateFriends } from "state";
+import { useState } from "react";
 import FlexBetween from "./FlexBetween";
 import UserImage from "./UserImage";
 
-const Friend = ({ friendId, name, userPicturePath }) => {
+const Friend = ({ friend_id, name, user_picture_path }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { _id } = useSelector((state) => state.user);
+  const friendId = friend_id;
   const token = useSelector((state) => state.token);
   const friends = useSelector((state) => state.user.friends);
 
@@ -19,12 +21,9 @@ const Friend = ({ friendId, name, userPicturePath }) => {
   const main = palette.neutral.main;
   const medium = palette.neutral.medium;
 
-  let isFriend = false;
-  try {
-    isFriend = (friends!=null && friends.some((friend) => friend._id === friendId));
-  } catch (error) {
-    isFriend = false;
-  }
+  const [isFriend, setIsFriend] = useState(friends !== null && Array.isArray(friends) && friends.some((friend) => friend._id === friend_id)); // Should change the naming. Otherwise this can be very confusing. 
+  // friend._id is the friend user id while _id is the member of this class, which refers to login user.
+  console.log(isFriend);
 
   const patchFriend = async () => {
     const response = await fetch(
@@ -38,9 +37,9 @@ const Friend = ({ friendId, name, userPicturePath }) => {
         },
       }
     );
-    isFriend = !isFriend;
     const data = await response.json();
-    dispatch(setFriends({ friends: data }));
+    dispatch(updateFriends({ friend: data, is_delete: isFriend, user_id: friendId }));
+    setIsFriend(!isFriend);
   };
 
   return (
@@ -51,7 +50,7 @@ const Friend = ({ friendId, name, userPicturePath }) => {
           navigate(`/profile/${friendId}`);
         }}
       >
-        <UserImage image={userPicturePath} size="55px" />
+        <UserImage image={user_picture_path} size="55px" />
         <Box>
           <Typography
             color={main}

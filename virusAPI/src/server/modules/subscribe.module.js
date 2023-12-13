@@ -30,7 +30,7 @@ const executeQuery = (sql, params) => {
 };
 
 const getFriends = userId => executeQuery(
-  `SELECT s.subscribed_id as _id, u.user_name as name, u.user_image_path as picturePath FROM subscribes as s JOIN virus_platform_user as u ON u.user_id = s.subscribed_id where s.subscriber_id = ?`, 
+  `SELECT s.subscribed_id as _id, u.user_name as name, u.user_image_path as picturePath FROM subscribes as s JOIN virus_platform_user as u ON u.user_id = s.subscribed_id where s.subscriber_id = ? limit 5`, 
   [userId]
 );
 
@@ -46,11 +46,20 @@ const countBySubscribedId = subscribedId => executeQuery(
 
 const createSubscribe = insertValues => {
   const { user_id, friend_id, is_delete } = insertValues;
-  const query = is_delete === 'true' ? 
+  const update_query = is_delete === 'true' ? 
     `DELETE FROM subscribes WHERE subscriber_id = ? AND subscribed_id = ?` : 
     `INSERT INTO subscribes VALUES (DEFAULT, ?, ?, DEFAULT)`;
 
-  return executeQuery(query, [user_id, friend_id]);
+  const select_query = `SELECT user_id as _id, user_name as name, user_image_path as picturePath from virus_platform_user where user_id = ?`
+
+  return executeQuery(update_query, [user_id, friend_id])
+      .then(result => {
+          return executeQuery(select_query, [user_id]);
+      })
+      .catch(error => {
+          console.error('Error executing query:', error);
+          throw error; // Propagate the error to the caller
+      });
 };
 
 const deleteSubscribe = deleteValues => executeQuery(

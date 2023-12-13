@@ -29,12 +29,20 @@ export const authSlice = createSlice({
         console.error("user friends non-existent :(");
       }
     },
+    updateFriends: (state, action) => {
+      if (action.payload.is_delete) {
+          state.user.friends = state.user.friends.filter(friend => friend._id !== action.payload.user_id);
+      } else {
+          state.user.friends = [...state.user.friends, ...action.payload.friend];
+      }
+    },
+
     setPosts: (state, action) => {
       state.posts = action.payload.posts;
     },
     setPost: (state, action) => {
       const updatedPosts = state.posts.map((post) => {
-        if (`${post['pid']}` == action.payload.post_id) {
+        if (`${post['pid']}` === action.payload.post_id) {
           post.is_liked = !action.payload.is_like; // Update is_liked
           post.likes = post.likes +(action.payload.is_like ? -1 : 1); // Update like count
         }
@@ -44,7 +52,7 @@ export const authSlice = createSlice({
     },
     setPostCommentCount: (state, action) => {
       const updatedPosts = state.posts.map((post) => {
-        if (`${post['pid']}` == action.payload.post_id) {
+        if (`${post['pid']}` === action.payload.post_id) {
           post.commentCount = action.payload.commentCount;
         }
         return post;
@@ -66,6 +74,6 @@ export const authSlice = createSlice({
   },
 });
 
-export const { setMode, setLogin, setLogout, setFriends, setPosts, setPost, setPostCommentCount, setLike } =
+export const { setMode, setLogin, setLogout, setFriends, updateFriends, setPosts, setPost, setPostCommentCount, setLike } =
   authSlice.actions;
 export default authSlice.reducer;
