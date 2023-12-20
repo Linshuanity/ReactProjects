@@ -48,13 +48,13 @@ const createSubscribe = insertValues => {
   const { user_id, friend_id, is_delete } = insertValues;
   const update_query = is_delete === 'true' ? 
     `DELETE FROM subscribes WHERE subscriber_id = ? AND subscribed_id = ?` : 
-    `INSERT INTO subscribes VALUES (DEFAULT, ?, ?, DEFAULT)`;
+    `INSERT INTO subscribes VALUES (DEFAULT, ?, ?, DEFAULT) ON DUPLICATE KEY UPDATE subscriber_id = subscriber_id`;
 
   const select_query = `SELECT user_id as _id, user_name as name, user_image_path as picturePath from virus_platform_user where user_id = ?`
 
   return executeQuery(update_query, [user_id, friend_id])
       .then(result => {
-          return executeQuery(select_query, [user_id]);
+          return executeQuery(select_query, [friend_id]);
       })
       .catch(error => {
           console.error('Error executing query:', error);

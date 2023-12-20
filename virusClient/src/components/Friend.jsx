@@ -23,7 +23,6 @@ const Friend = ({ friend_id, name, user_picture_path }) => {
 
   const [isFriend, setIsFriend] = useState(friends !== null && Array.isArray(friends) && friends.some((friend) => friend._id === friend_id)); // Should change the naming. Otherwise this can be very confusing. 
   // friend._id is the friend user id while _id is the member of this class, which refers to login user.
-  console.log(isFriend);
 
   const patchFriend = async () => {
     const response = await fetch(
