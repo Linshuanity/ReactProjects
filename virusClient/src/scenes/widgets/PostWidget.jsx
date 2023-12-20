@@ -224,8 +224,8 @@ const PostWidget = ({
       <Friend
         friend_id={author_id}
         name={author_name}
-        subtitle={location}
         user_picture_path={author_profile}
+        action_icon={false}
       />
       <Typography color={main} sx={{ mt: "1rem" }}>
         {description}
