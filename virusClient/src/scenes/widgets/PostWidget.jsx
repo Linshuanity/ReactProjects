@@ -242,6 +242,7 @@ const PostWidget = ({
       <Friend
         friend_id={author_id}
         name={author_name}
+        subscriber={''}
         user_picture_path={author_profile}
         action_icon={false}
       />

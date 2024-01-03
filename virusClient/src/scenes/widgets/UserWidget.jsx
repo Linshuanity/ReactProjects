@@ -45,6 +45,7 @@ const UserWidget = ({ userId, picturePath }) => {
     user_name,
     // picturePath,
     holding,
+    subscriber,
     // postCount,
   } = user;
 
@@ -54,6 +55,7 @@ const UserWidget = ({ userId, picturePath }) => {
       <Friend
           friend_id={userId}
           name={user_name}
+          subscriber={subscriber}
           user_picture_path={picturePath}
           is_main={true}
       />

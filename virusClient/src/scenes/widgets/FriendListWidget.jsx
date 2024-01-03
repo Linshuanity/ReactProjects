@@ -18,6 +18,7 @@ const FriendListWidget = ({ userId }) => {
         key={friend._id}
         friend_id={friend._id}
         name={friend.name}
+        subscriber={''}
         user_picture_path={friend.picturePath}
       />
     ))

@@ -69,6 +69,7 @@ const selectUserById = (userId) => {
           resolve({
             picturePath: result[0].user_image_path,
             _id: result[0].user_id,
+            subscriber: result[0].subscriber,
             user_name: result[0].user_name,
             holding: result[0].virus
           });

@@ -46,20 +46,44 @@ const countBySubscribedId = subscribedId => executeQuery(
 
 const createSubscribe = insertValues => {
   const { user_id, friend_id, is_delete } = insertValues;
-  const update_query = is_delete === 'true' ? 
-    `DELETE FROM subscribes WHERE subscriber_id = ? AND subscribed_id = ?` : 
-    `INSERT INTO subscribes VALUES (DEFAULT, ?, ?, DEFAULT) ON DUPLICATE KEY UPDATE subscriber_id = subscriber_id`;
 
-  const select_query = `SELECT user_id as _id, user_name as name, user_image_path as picturePath from virus_platform_user where user_id = ?`
+  const update_query = is_delete === 'true'
+    ? `DELETE FROM subscribes WHERE subscriber_id = ? AND subscribed_id = ?`
+    : `INSERT INTO subscribes VALUES (DEFAULT, ?, ?, DEFAULT) ON DUPLICATE KEY UPDATE subscriber_id = subscriber_id`;
 
+  const update_user_query = is_delete === 'true'
+    ? `UPDATE virus_platform_user SET subscriber = subscriber - 1 WHERE user_id = ?`
+    : `UPDATE virus_platform_user SET subscriber = subscriber + 1 WHERE user_id = ?`;
+
+  const select_query = `SELECT user_id as _id, user_name as name, user_image_path as picturePath from virus_platform_user where user_id = ?`;
+
+  // Execute update_query first
   return executeQuery(update_query, [user_id, friend_id])
-      .then(result => {
-          return executeQuery(select_query, [friend_id]);
-      })
-      .catch(error => {
-          console.error('Error executing query:', error);
-          throw error; // Propagate the error to the caller
-      });
+    .then(updateResult => {
+      // Check if update_query affected any rows before executing update_user_query
+      if (updateResult && updateResult.affectedRows > 0) {
+        // Execute update_user_query and select_query concurrently
+        return Promise.all([
+          executeQuery(update_user_query, [user_id]),
+          executeQuery(select_query, [friend_id]),
+        ]).then(([updateUserResult, selectResult]) => {
+          // Handle the results if needed
+          console.log('Update Result:', updateResult);
+          console.log('Update User Result:', updateUserResult);
+
+          // Return the select result
+          return selectResult;
+        });
+      } else {
+        // No changes were made by update_query, you may choose to return something else
+        console.log('No changes were made by update_query');
+        return null; // Or some other indication of no changes
+      }
+    })
+    .catch(error => {
+      console.error('Error executing queries:', error);
+      throw error; // Propagate the error to the caller
+    });
 };
 
 const deleteSubscribe = deleteValues => executeQuery(

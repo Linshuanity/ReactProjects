@@ -7,7 +7,7 @@ import { useState } from "react";
 import FlexBetween from "./FlexBetween";
 import UserImage from "./UserImage";
 
-const Friend = ({ friend_id, name, user_picture_path, is_main = false, action_icon = true }) => {
+const Friend = ({ friend_id, name, user_picture_path, subscriber, is_main = false, action_icon = true }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { _id } = useSelector((state) => state.user);
@@ -21,7 +21,7 @@ const Friend = ({ friend_id, name, user_picture_path, is_main = false, action_ic
   const main = palette.neutral.main;
   const medium = palette.neutral.medium;
 
-  const [isFriend, setIsFriend] = useState(friends !== null && Array.isArray(friends) && friends.some((friend) => friend._id === friend_id)); // Should change the naming. Otherwise this can be very confusing. 
+  const [isFriend, setIsFriend] = useState(friends !== null && Array.isArray(friends) && friends.some((friend) => friend._id == friend_id)); // Should change the naming. Otherwise this can be very confusing. 
   // friend._id is the friend user id while _id is the member of this class, which refers to login user.
 
   const patchFriend = async () => {
@@ -66,7 +66,7 @@ const Friend = ({ friend_id, name, user_picture_path, is_main = false, action_ic
             {name}
           </Typography>
           <Typography color={medium} fontSize="0.75rem">
-            {'blank'}
+            {subscriber}
           </Typography>
         </Box>
       </FlexBetween>
