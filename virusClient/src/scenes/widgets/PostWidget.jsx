@@ -212,7 +212,7 @@ const PostWidget = ({
   function calculateProgress(startDate, endDate) {
     const totalTime = end.getTime() - start.getTime();
     const elapsedTime = currentTime.getTime() - start.getTime();
-    const timeLeft = end - currentTime;
+    const timeLeft = end > currentTime ? end - currentTime : currentTime - end;
     const formattedTimeLeft = formatTimeLeft(timeLeft);
     const progress = (elapsedTime / totalTime) * 100;
     
@@ -220,7 +220,7 @@ const PostWidget = ({
   }
 
   return (
-    <WidgetWrapper m="1rem 0">
+    <WidgetWrapper style={{ backgroundColor: isAlive ? 'white' : '#e0e0e0', margin: "1rem 0" }} >
       <Friend
         friend_id={author_id}
         name={author_name}
@@ -287,7 +287,7 @@ const PostWidget = ({
                 )}
               </Box>
               <div style={{ width: '50%', textAlign: "right"}}>
-                {timeLeft} {isAlive ? `left` : 'expired'}
+                {isAlive ? '' : 'Expired'} {timeLeft} {isAlive ? `left` : 'ago'}
               </div>
             </div>
           </div>
@@ -436,6 +436,7 @@ const PostWidget = ({
             backgroundColor: palette.primary.main,
             borderRadius: "3rem",
           }}
+          disabled={!isAlive}
         >
         Send
         </Button>
