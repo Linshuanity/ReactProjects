@@ -7,7 +7,7 @@ import { useState } from "react";
 import FlexBetween from "./FlexBetween";
 import UserImage from "./UserImage";
 
-const Friend = ({ friend_id, name, user_picture_path }) => {
+const Friend = ({ friend_id, name, user_picture_path, is_main = false, action_icon = true }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { _id } = useSelector((state) => state.user);
@@ -47,14 +47,15 @@ const Friend = ({ friend_id, name, user_picture_path }) => {
         gap="1rem"
         onClick={() => {
           navigate(`/profile/${friendId}`);
+          window.location.reload(true); // Force reload, can replace this if a better approach is found.
         }}
       >
-        <UserImage image={user_picture_path} size="55px" />
+        <UserImage image={user_picture_path} size={is_main ? "77px" : "55px"} />
         <Box>
           <Typography
             color={main}
-            variant="h5"
-            fontWeight="500"
+            variant= {is_main ? "h3" : "h5"}
+            fontWeight= {is_main ? "700" : "500"}
             sx={{
               "&:hover": {
                 color: palette.primary.light,
@@ -69,16 +70,18 @@ const Friend = ({ friend_id, name, user_picture_path }) => {
           </Typography>
         </Box>
       </FlexBetween>
-      <IconButton
-        onClick={() => patchFriend()}
-        sx={{ backgroundColor: primaryLight, p: "0.6rem" }}
-      >
+      {action_icon && (
+        <IconButton
+            onClick={() => patchFriend()}
+            sx={{ backgroundColor: primaryLight, p: "0.6rem" }}
+        >
         {isFriend ? (
           <PersonRemoveOutlined sx={{ color: primaryDark }} />
         ) : (
           <PersonAddOutlined sx={{ color: primaryDark }} />
         )}
-      </IconButton>
+        </IconButton>
+      )}
     </FlexBetween>
   );
 };

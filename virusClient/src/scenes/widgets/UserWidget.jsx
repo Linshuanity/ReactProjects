@@ -12,6 +12,7 @@ import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import WalletConnectComponent from '../../WalletConnectComponent';
+import Friend from "components/Friend";
 
 const UserWidget = ({ userId, picturePath }) => {
   const [user, setUser] = useState(null);
@@ -23,7 +24,6 @@ const UserWidget = ({ userId, picturePath }) => {
   const main = palette.neutral.main;
 
   const getUser = async () => {
-    console.log("getUser picturePath" + picturePath);
     const response = await fetch(`http://localhost:3002/users/${userId}`, {
       method: "GET",
       headers: { Authorization: `Bearer ${token}` },
@@ -51,32 +51,12 @@ const UserWidget = ({ userId, picturePath }) => {
   return (
     <WidgetWrapper>
       {/* FIRST ROW */}
-      <FlexBetween
-        gap="0.5rem"
-        pb="1.1rem"
-        onClick={() => navigate(`/profile/${userId}`)}
-      >
-        <FlexBetween gap="1rem">
-          <UserImage image={picturePath} />
-          <Box>
-            <Typography
-              variant="h4"
-              color={dark}
-              fontWeight="500"
-              sx={{
-                "&:hover": {
-                  color: palette.primary.light,
-                  cursor: "pointer",
-                },
-              }}
-            >
-              {user_name}
-            </Typography>
-            {/* <Typography color={medium}>{friends.length} friends</Typography> */}
-          </Box>
-        </FlexBetween>
-        <ManageAccountsOutlined />
-      </FlexBetween>
+      <Friend
+          friend_id={userId}
+          name={user_name}
+          user_picture_path={picturePath}
+          is_main={true}
+      />
 
       <WalletConnectComponent holding={holding}>
       </WalletConnectComponent>

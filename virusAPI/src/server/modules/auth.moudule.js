@@ -4,6 +4,7 @@ import config from '../../config/config';
 import fs from 'fs';
 import path from 'path';
 import jwt from "jsonwebtoken";
+import subscribeModule from '../modules/subscribe.module';
 
 const connectionPool = mysql.createPool({
   connectionLimit: 10,
@@ -87,36 +88,47 @@ const selectUserLogin = (insertValues) => {
       if (connectionError) {
         reject(connectionError); // 若連線有問題回傳錯誤
       } else {
-        connection.query( // User撈取所有欄位的值組
+          connection.query(
           'SELECT * FROM virus_platform_user WHERE user_email = ?',
-          [insertValues.email], (error, result) => {
+          [insertValues.email],
+          (error, result) => {
             if (error) {
               console.error('SQL error: ', error);
-              reject(error); // 寫入資料庫有問題時回傳錯誤
+              reject(error); // Reject if there's an SQL error
             } else if (Object.keys(result).length === 0) {
               resolve(`{"status":"error", "msg":"mail not found"}`);
-            } else {              
-              const dbHashPassword = result[0].user_password; // 資料庫加密後的密碼
-              const userPassword = insertValues.password; // 使用者登入輸入的密碼
-              const picturePath = result[0].user_image_path
-              bcrypt.compare(userPassword, dbHashPassword).then((res) => { // 使用bcrypt做解密驗證
-                if (res) {
-                  const token = jwt.sign({ id: result[0].user_id }, process.env.JWT_SECRET);
-                  const user = {
-                    picturePath: picturePath,
-                    _id: result[0].user_id,
-                    user_name: result[0].user_name,
-                    user_id: result[0].user_id,
-                  };
-                  const response = {
-                    token: token,
-                    status: "ok",
-                    user: user,
-                    msg: "登入成功",
-                  };
+            } else {
+              const dbHashPassword = result[0].user_password;
+              const userPassword = insertValues.password;
+              const picturePath = result[0].user_image_path;
 
-                  const jsonResponse = JSON.stringify(response);
-                  resolve(jsonResponse);
+              bcrypt.compare(userPassword, dbHashPassword).then((res) => {
+                if (res) {
+                  // First query successful, now execute the second query
+                  subscribeModule.getFriends(result[0].user_id)
+                    .then((friends) => {
+                      const token = jwt.sign({ id: result[0].user_id }, process.env.JWT_SECRET);
+                      const user = {
+                        picturePath: picturePath,
+                        _id: result[0].user_id,
+                        user_name: result[0].user_name,
+                        user_id: result[0].user_id,
+                        friends: friends, // Add the friends data to the user object
+                      };
+                      const response = {
+                        token: token,
+                        status: 'ok',
+                        user: user,
+                        msg: '登入成功',
+                      };
+
+                      const jsonResponse = JSON.stringify(response);
+                      resolve(jsonResponse);
+                    })
+                    .catch((friendsError) => {
+                      console.error('Error getting friends: ', friendsError);
+                      reject(friendsError);
+                    });
                 } else {
                   resolve(`{"status":"error", "msg":"password error"}`);
                 }
