@@ -90,12 +90,6 @@ const PostWidget = ({
     // You should replace this logic with your actual state management or API calls.
     if (newComment.trim() !== '') {
       // Assuming `comments` is an array, create a new array with the updated comments
-      const commentObject = {
-        context: newComment,
-        user_name: loggedInUserName,
-        user_image_path: userImagePath
-      };
-      setCommentList([...commentList, commentObject]);
       // Update the state or send the updated comments to your backend
       const response = await fetch(`http://localhost:3002/posts/comment`, {
         method: "POST",
@@ -105,6 +99,15 @@ const PostWidget = ({
         body: JSON.stringify({ user_id: loggedInUserId, post_id: postId, context: newComment }),
       });
       const update = await response.json();
+      const commentObject = {
+        cid: update.cid,
+        context: newComment,
+        user_name: loggedInUserName,
+        user_image_path: userImagePath,
+        isLiked: 0,
+        likes:0
+      };
+      setCommentList([...commentList, commentObject]);
       setCommentCount(commentCount => commentCount + 1);
     }
 
@@ -153,7 +156,7 @@ const PostWidget = ({
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ post_id: postId }),
+        body: JSON.stringify({ user_id: loggedInUserId, post_id: postId }),
       });
       const update = await response.json();
       setCommentList(update);
@@ -172,6 +175,21 @@ const PostWidget = ({
     const update = await response.json();
     setLikes(likesCount + (isLiked ? -1 : 1));
     setLiked(!isLiked);
+  };
+  
+  const patchCommentLike = async (index, commentIsLiked, cid, c_isLiked) => {
+    const response = await fetch(`http://localhost:3002/posts/commentlike`, {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ liker_id: loggedInUserId, comment_id: cid, is_liked: c_isLiked }),
+    });
+    const update = await response.json();
+    const updatedCommentList = commentList.map((comment, i) =>
+      i === index ? { ...comment, isLiked:!commentIsLiked, likes: ((commentIsLiked ? -1 : 1) + comment.likes)} : comment
+    );
+    setCommentList(updatedCommentList);
   };
 
   const handleCopyToClipboard = () => {
@@ -387,7 +405,17 @@ const PostWidget = ({
                   size="22px"
                 />
                 <Box sx={{ ml: '0.5rem' }}>
+                  <FlexBetween gap="0.3rem">
                   <Typography variant="subtitle2">{comment.user_name}</Typography>
+                    <IconButton onClick={() => patchCommentLike(i, comment.isLiked, comment.cid, comment.isLiked)}>
+                      {comment.isLiked ? (
+                        <FavoriteOutlined sx={{ color: primary }} />
+                      ) : (
+                        <FavoriteBorderOutlined />
+                      )}
+                    </IconButton>
+                    <Typography>{comment.likes}</Typography>
+                  </FlexBetween>
                   <Typography color={main}>{comment.context}</Typography>
                 </Box>
               </Box>

@@ -58,6 +58,16 @@ export const userLike = async (req, res, next) => {
   }
 };
 
+export const commentlike = async (req, res, next) => {
+  try {
+    const { liker_id, comment_id, is_liked } = req.body;
+    const result = await addCommentlike(liker_id, comment_id, is_liked);
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const userBid = async (req, res, next) => {
   try {
     const { user_id, post_id, price, is_bid } = req.body;
@@ -90,7 +100,9 @@ export const userComment = async (req, res, next) => {
 
 export const userComments = async (req, res, next) => {
   try {
-    const result = await selectUserComments(req.body.post_id);
+    console.log("req.body.user_id: "+req.body.user_id+"   req.body.post_id: "+ req.body.post_id);
+    const result = await selectUserComments(req.body.user_id, req.body.post_id);
+    // const result = await selectUserComments(req.body.user_id, req.body.post_id);
     res.send(result);
   } catch (error) {
     next(error);
@@ -240,6 +252,86 @@ const selectUserPosts = (insertValues) => {
         }
         const jsonResponse = JSON.stringify(result);
         resolve(jsonResponse);
+      });
+    });
+  });
+};
+
+const addCommentlike = (liker_id, comment_id, is_liked) => {
+  return new Promise((resolve, reject) => {
+    connectionPool.getConnection((connectionError, connection) => {
+      if (connectionError) {
+        reject(connectionError);
+        return;
+      }
+
+      connection.beginTransaction(err => {
+        if (err) {
+          connection.release();
+          reject(err);
+          return;
+        }
+
+        const queries = is_liked ? [
+          {
+            sql: `UPDATE comments SET likes = likes - 1 WHERE cid = ? AND EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = ? AND liker_id = ?)`,
+            params: [comment_id, comment_id, liker_id]
+          },
+          {
+            sql: `DELETE from comment_likes WHERE comment_id = ? and liker_id = ?`,
+            params: [comment_id, liker_id]
+          }
+        ] : [
+          {
+            sql: `UPDATE comments SET likes = likes + 1 WHERE cid = ? AND NOT EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = ? AND liker_id = ?)`,
+            params: [comment_id, comment_id, liker_id]
+          },
+          {
+            sql: `INSERT INTO accounting (from_id, to_id, amount, type) SELECT 0, ?, 1, 0 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = ? AND liker_id = ?)`,
+            params: [liker_id, comment_id, liker_id]
+          },
+          {
+            sql: `UPDATE virus_platform_user SET virus = virus + 1 where user_id = ? AND NOT EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = ? AND liker_id = ?)`,
+            params: [liker_id, comment_id, liker_id]
+          },
+          {
+            sql: `INSERT INTO comment_likes (liker_id, comment_id) select ?, ? FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = ? AND liker_id = ?)`,
+            params: [liker_id, comment_id, comment_id, liker_id]
+          }
+        ];
+
+        const executeQuery = (sql, params) => {
+          return new Promise((resolve, reject) => {
+            console.log(sql, params)
+            connection.query(sql, params, (error, result) => {
+              if (error) {
+                return reject(error);
+              }
+              resolve(result);
+            });
+          });
+        };
+
+        Promise.all(queries.map(query => executeQuery(query.sql, query.params)))
+          .then(results => {
+            connection.commit(err => {
+              if (err) {
+                connection.rollback(() => {
+                  connection.release();
+                  reject(err);
+                });
+                return;
+              }
+              connection.release();
+              resolve(results);
+            });
+          })
+          .catch(error => {
+            connection.rollback(() => {
+              connection.release();
+              reject(error);
+            });
+          });
       });
     });
   });
@@ -490,16 +582,18 @@ const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
 const addUserComment = (user_id, post_id, context) => {
   return new Promise((resolve, reject) => {
     connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
-        const query = `INSERT INTO comments VALUES (DEFAULT, ${user_id}, ${post_id}, "${context}" , DEFAULT)`;
+        const insertQuery = `INSERT INTO comments VALUES (DEFAULT, ${user_id}, ${post_id}, "${context}" , DEFAULT, DEFAULT)`;
       if (connectionError) {
         reject(connectionError); // 若連線有問題回傳錯誤
       } else {
-        connection.query(query, (error, result) => {
+        connection.query(insertQuery,[user_id, post_id, context], (error, result) => {
             if (error) {
               console.error('SQL error: ', error);
               reject(error); // 寫入資料庫有問題時回傳錯誤
 
             } else {
+              const cid = result.insertId; // Get the last inserted ID
+              console.log("cid: "+ cid);
               const update_query = `UPDATE posts SET comments = comments + 1 WHERE pid = ${post_id}`;
               // Assuming you have another query to execute here
               connection.query(update_query,
@@ -517,7 +611,7 @@ const addUserComment = (user_id, post_id, context) => {
                           reject(err);
                         });
                       } else {
-                        const jsonResponse = JSON.stringify(result);
+                        const jsonResponse = { cid: cid};
                         resolve(jsonResponse);
                       }
                     });
@@ -533,25 +627,51 @@ const addUserComment = (user_id, post_id, context) => {
   });
 };
 
-const selectUserComments = (post_id) => {
+const selectUserComments = (user_id, post_id) => {
   return new Promise((resolve, reject) => {
-    connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
-    const query = `SELECT c.context, u.user_name, u.user_image_path FROM comments as c JOIN virus_platform_user as u on c.user_id = u.user_id WHERE c.post_id = ${post_id}`;
+    connectionPool.getConnection((connectionError, connection) => {
       if (connectionError) {
-        reject(connectionError); // 若連線有問題回傳錯誤
+        reject(connectionError);
       } else {
-        connection.query(query, (error, result) => {
-            if (error) {
-              console.error('SQL error: ', error);
-              reject(error); // 寫入資料庫有問題時回傳錯誤
-            } else {              
-              const jsonResponse = JSON.stringify(result);
-              resolve(jsonResponse);
-            }
-            connection.release();
+        const query = `SELECT c.cid, c.context, u.user_name, u.user_image_path, c.likes, 
+        CASE WHEN (SELECT COUNT(1) FROM comment_likes cl WHERE cl.liker_id = ? AND cl.comment_id = c.cid) <> 0 THEN true
+        ELSE false END AS isLiked
+        FROM comments as c JOIN virus_platform_user as u on c.user_id = u.user_id WHERE c.post_id = ?`;
+        connection.query(query, [user_id, post_id], (error, result) => {
+          if (error) {
+            console.error('SQL error: ', error);
+            reject(error);
+          } else {
+            const jsonResponse = JSON.stringify(result);
+            resolve(jsonResponse);
           }
-        );
+          connection.release();
+        });
       }
     });
   });
 };
+
+// const selectUserComments = (user_id, post_id) => {
+//   return new Promise((resolve, reject) => {
+//     connectionPool.getConnection((connectionError, connection) => {
+//       if (connectionError) {
+//         reject(connectionError);
+//       } else {
+//         const query = `SELECT  c.context,  u.user_name,  u.user_image_path,  c.likes,
+//   (SELECT COUNT(*) FROM comment_likes cl WHERE cl.liker_id = ? AND cl.comment_id = c.cid) AS like_count
+// FROM comments AS c JOIN virus_platform_user AS u ON c.user_id = u.user_id WHERE c.post_id = ?`;
+//         connection.query(query, [user_id], [post_id], (error, result) => {
+//           if (error) {
+//             console.error('SQL error: ', error);
+//             reject(error);
+//           } else {
+//             const jsonResponse = JSON.stringify(result);
+//             resolve(jsonResponse);
+//           }
+//           connection.release();
+//         });
+//       }
+//     });
+//   });
+// };
