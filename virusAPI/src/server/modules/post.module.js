@@ -136,7 +136,7 @@ const createPost = (insertValues) => {
         reject(connectionError); // 若連線有問題回傳錯誤
       } else {
         // 'UPDATE virus_platform_user SET ? WHERE user_id = ?', [insertValues, userId]
-        connection.query('INSERT INTO posts (title,content,owner_uid,author_uid,image_path) VALUES (?,?,?,?,?)',  [insertValues.content,insertValues.content,insertValues.userId,insertValues.userId,insertValues.picturePath], (error, result) => { // 資料表寫入一筆資料
+        connection.query('INSERT INTO posts (title,content,owner_uid,author_uid,image_path,expire_date) VALUES (?,?,?,?,?,DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 7 DAY))',  [insertValues.content,insertValues.content,insertValues.userId,insertValues.userId,insertValues.picturePath], (error, result) => { // 資料表寫入一筆資料
           if (error) {
             console.error('SQL error: ', error);
             reject(error); // 寫入資料庫有問題時回傳錯誤
