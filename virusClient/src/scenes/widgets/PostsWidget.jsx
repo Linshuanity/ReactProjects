@@ -22,7 +22,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
       const response = await fetch(`${apiEndpoint}/posts/all`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ as_user: userId, filter_mode: mode }),
+        body: JSON.stringify({ as_user: userId, login_user: loggedInUserId, filter_mode: mode }),
       });
       if (!response.ok) throw new Error('Network response was not ok');
       const data = await response.json();

@@ -216,7 +216,7 @@ const selectUserPosts = (insertValues) => {
       }
 
       let filter_string = "";
-      let queryParams = [insertValues.as_user, insertValues.as_user];
+      let queryParams = [insertValues.login_user, insertValues.as_user];
       switch (insertValues.filter_mode) {
         case 0:
           filter_string = "WHERE p.author_uid = ?";
@@ -226,7 +226,6 @@ const selectUserPosts = (insertValues) => {
           break;
         case 2:
           filter_string = "LEFT JOIN bids AS b ON p.pid = b.post_id WHERE b.user_id = ?";
-          queryParams = [insertValues.as_user, insertValues.as_user];
           break;
       }
 
