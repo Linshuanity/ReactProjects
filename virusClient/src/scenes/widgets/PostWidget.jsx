@@ -345,6 +345,7 @@ const PostWidget = ({
               }}
               variant="contained"
               onClick={() => {purchaseAction()}}
+              disabled={price <= 0}
             >
               {(isSell ? 'Sell @ ' : 'Buy @ ') + price}
             </Button>

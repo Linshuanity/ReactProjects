@@ -455,13 +455,21 @@ const addUserBid = (user_id, post_id, price, is_bid) => {
           },
           {
             sql: `UPDATE posts p
-                SET p.bid_price = (
+                SET
+                p.bid_user_id = (
+                    SELECT user_id
+                    FROM bids
+                    WHERE post_id = p.pid AND is_bid = true
+                    ORDER BY price DESC
+                    LIMIT 1
+                ),
+                p.bid_price = (
                     SELECT MAX(price)
                     FROM bids
                     WHERE post_id = p.pid AND is_bid = true
                 ),
                 p.ask_price = (
-                    SELECT MAX(price)
+                    SELECT price
                     FROM bids
                     WHERE post_id = p.pid AND is_bid = false
                 )
@@ -511,68 +519,102 @@ const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
       if (connectionError) {
         reject(connectionError); // 若連線有問題回傳錯誤
       } else {
+        const trade_price = for_sell ? "bid_price" : "ask_price";
         const queries = [
           {
-            sql: `DELETE FROM bids WHERE user_id = ? and post_id = ?`,
-            params: [user_id, post_id]
+            sql: `DELETE FROM bids
+                    WHERE user_id = ?
+                    AND post_id = ?
+                    AND EXISTS (
+                      SELECT 1
+                      FROM posts
+                      WHERE pid = ?
+                        AND ${trade_price} = ?
+                    )`,
+            params: [user_id, post_id, post_id, price],
+            need_change: true
           },
           {
             sql: `UPDATE virus_platform_user SET virus = virus - ? WHERE user_id = ?`,
-            params: [price, buyer_id]
+            params: [price, buyer_id],
+            need_change: true
           },
           {
             sql: `UPDATE virus_platform_user SET virus = virus + ? WHERE user_id = ?`,
-            params: [price, seller_id]
+            params: [price, seller_id],
+            need_change: true
           },
           {
             sql: `UPDATE posts p
               LEFT JOIN (
                   SELECT post_id, price, user_id
                   FROM bids
-                  WHERE post_id = ?
+                  WHERE post_id = ? AND is_bid = true
                   ORDER BY price DESC
                   LIMIT 1
               ) b ON p.pid = b.post_id
               SET p.bid_price = b.price, p.bid_user_id = b.user_id, p.owner_uid = ? where p.pid = ?`,
-            params: [post_id, buyer_id, post_id]
+            params: [post_id, buyer_id, post_id],
+            need_change: true
           },
           {
             sql: `DELETE FROM bids
-                    WHERE user_id = ? 
-                      AND is_bid = True 
-                      AND price > (SELECT virus FROM virus_platform_user WHERE user_id = ?)`,
-            params: [buyer_id]
+              WHERE post_id = ? AND is_bid = false`,
+            params: [post_id],
+            need_change: false
+          },
+          {
+            sql: `UPDATE posts SET ask_price = 0
+              WHERE pid = ?`,
+            params: [post_id],
+            need_change: false
           }
         ];
 
           const results = []; // Array to store the results of each query
 
-          function executeQueries() {
-            const queryPromises = [];
-            for (const query of queries) {
-              const queryPromise = new Promise((resolve, reject) => {
-                connection.query(query.sql, query.params, (error, result) => {
-                  if (error) {
-                    reject(error); // If there is an error in any query, reject with the error
-                  } else {
-                    results.push(result); // Store the result of the current query
-                    resolve(); // Resolve the Promise after successful query execution
-                  }
-                });
-              });
-              queryPromises.push(queryPromise);
-            }
+        function executeQueries() {
+          const queryPromises = [];
+          let allQueriesSuccessful = true; // Flag to track if all queries are successful
 
-            // Use Promise.all to wait for all queries to complete
-            Promise.all(queryPromises)
-              .then(() => {
+          for (const query of queries) {
+            const queryPromise = new Promise((resolve, reject) => {
+              connection.query(query.sql, query.params, (error, result) => {
+                if (error) {
+                  connection.rollback(() => {
+                    reject(commitError);
+                  });
+                  reject(error); // If there is an error in any query, reject with the error
+                } else {
+                  results.push(result); // Store the result of the current query
+                  if (result.affectedRows === 0 && query.need_change) {
+                    allQueriesSuccessful = false; // Set the flag to false if any query affected 0 rows
+                  }
+                  resolve(); // Resolve the Promise after successful query execution
+                }
+              });
+            });
+            queryPromises.push(queryPromise);
+          }
+
+          // Use Promise.all to wait for all queries to complete
+          Promise.all(queryPromises)
+            .then(() => {
+              if (allQueriesSuccessful) {
                 resolve(results); // All queries have been executed successfully
-              })
-              .catch((error) => {
+              } else {
+                connection.rollback(() => {
+                  reject(new Error('At least one query affected 0 rows.'));
+                });
+              }
+            })
+            .catch((error) => {
+              connection.rollback(() => {
                 reject(error); // If any query encounters an error, reject with the error
               });
-          }
-          executeQueries();
+            });
+        }
+        executeQueries();
       }
     });
   });
