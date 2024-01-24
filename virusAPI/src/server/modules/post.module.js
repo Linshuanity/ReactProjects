@@ -370,8 +370,12 @@ const addUserLike = (liker_id, post_id, is_liked) => {
             params: [liker_id, post_id, liker_id]
           },
           {
-            sql: `UPDATE virus_platform_user SET virus = virus + 1 where user_id = ? AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
+            sql: `UPDATE virus_platform_user SET virus = virus + 1, daily_paid_likes = daily_paid_likes - 1  WHERE user_id = ? AND daily_paid_likes > 0 AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
             params: [liker_id, post_id, liker_id]
+          },
+          {
+            sql: `UPDATE virus_platform_user SET virus = virus + 1 WHERE user_id = (SELECT owner_uid FROM posts WHERE pid = ?) AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
+            params: [post_id, post_id, liker_id]
           },
           {
             sql: `INSERT INTO likes (liker_id, post_id) select ?, ? FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
@@ -381,7 +385,6 @@ const addUserLike = (liker_id, post_id, is_liked) => {
 
         const executeQuery = (sql, params) => {
           return new Promise((resolve, reject) => {
-            console.log(sql, params)
             connection.query(sql, params, (error, result) => {
               if (error) {
                 return reject(error);

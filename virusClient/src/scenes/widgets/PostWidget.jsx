@@ -54,10 +54,10 @@ const PostWidget = ({
   const [isLiked, setLiked] = useState(is_liked);
   const [likesCount, setLikes] = useState(likes);
   const startDate = [create_date];
-  const endDate = [expire_date];
   const currentTime = new Date();
   const start = new Date(startDate);
-  const end = new Date(endDate);
+  const durationInMs = 12 * 3.6e6 * (6 + Math.sqrt(likesCount));
+  const end = new Date(start.getTime() + durationInMs);
   const isAlive = currentTime <= end;
 
   const { palette } = useTheme();
@@ -227,7 +227,7 @@ const PostWidget = ({
   }
 
 
-  function calculateProgress(startDate, endDate) {
+  function calculateProgress() {
     const totalTime = end.getTime() - start.getTime();
     const elapsedTime = currentTime.getTime() - start.getTime();
     const timeLeft = end > currentTime ? end - currentTime : currentTime - end;
@@ -273,8 +273,8 @@ const PostWidget = ({
         </div>
 
       )}
-      {startDate && endDate && (() => {
-        const { progress, timeLeft } = calculateProgress(startDate, endDate);
+      {start && end && (() => {
+        const { progress, timeLeft } = calculateProgress();
 
         return (
           <div style={{ flex: "1", marginLeft: "1rem" }}>
