@@ -31,7 +31,7 @@ export const authSlice = createSlice({
     },
     updateFriends: (state, action) => {
       if (action.payload.is_delete) {
-          state.user.friends = state.user.friends.filter(friend => friend._id !== action.payload.user_id);
+          state.user.friends = state.user.friends.filter(friend => friend._id != action.payload.user_id);
       } else {
           state.user.friends = [...state.user.friends, ...action.payload.friend];
       }

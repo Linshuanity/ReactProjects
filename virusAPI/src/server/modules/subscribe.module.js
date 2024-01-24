@@ -64,7 +64,7 @@ const createSubscribe = insertValues => {
       if (updateResult && updateResult.affectedRows > 0) {
         // Execute update_user_query and select_query concurrently
         return Promise.all([
-          executeQuery(update_user_query, [user_id]),
+          executeQuery(update_user_query, [friend_id]),
           executeQuery(select_query, [friend_id]),
         ]).then(([updateUserResult, selectResult]) => {
           // Handle the results if needed
