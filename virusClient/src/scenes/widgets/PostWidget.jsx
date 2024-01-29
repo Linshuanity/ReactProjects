@@ -59,6 +59,7 @@ const PostWidget = ({
   const durationInMs = 12 * 3.6e6 * (6 + Math.sqrt(likesCount));
   const end = new Date(start.getTime() + durationInMs);
   const isAlive = currentTime <= end;
+  const [showRewardMsgBox, setShowRewardMsgBox] = useState(false);
 
   const { palette } = useTheme();
   const main = palette.neutral.main;
@@ -175,6 +176,7 @@ const PostWidget = ({
     const update = await response.json();
     setLikes(likesCount + (isLiked ? -1 : 1));
     setLiked(!isLiked);
+    showRewardMsg();
   };
   
   const patchCommentLike = async (index, commentIsLiked, cid, c_isLiked) => {
@@ -196,6 +198,13 @@ const PostWidget = ({
     const shareURL = `https://localhost:3000/post/${post_id}`; // Replace with your actual URL
     copyToClipboard(shareURL);
   }
+
+  const showRewardMsg = () => {
+    setShowRewardMsgBox(true);
+    setTimeout(() => {
+      setShowRewardMsgBox(false);
+    }, 1000); // 1000 milliseconds = 1 second
+  };
 
   function copyToClipboard(text) {
     const textarea = document.createElement('textarea');
@@ -271,7 +280,6 @@ const PostWidget = ({
             }}
           />
         </div>
-
       )}
       {start && end && (() => {
         const { progress, timeLeft } = calculateProgress();
@@ -471,6 +479,23 @@ const PostWidget = ({
         Send
         </Button>
       </Box>
+        {showRewardMsgBox && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          padding: '20px',
+          backgroundColor: '#f0f0f0',
+          border: '1px solid #ccc',
+          boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)',
+        }}>
+          <p>You made 1 virus</p>
+        </div>
+        )}
     </WidgetWrapper>
   );
 };
