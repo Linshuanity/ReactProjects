@@ -282,6 +282,22 @@ const addCommentlike = (liker_id, comment_id, is_liked) => {
           }
         ] : [
           {
+            sql: `UPDATE user_achievement
+            SET value = value + 1, last_update_time = NOW()
+            WHERE user_id = ? AND achievement_id = 1 AND DATE(last_update_time) = DATE(CURDATE() - INTERVAL 1 DAY)
+            AND NOT EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = ? AND liker_id = ?)`,
+            params: [liker_id, comment_id, liker_id]
+          },
+          {
+            sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
+            SELECT ?, 1, NOW(), 1, NOW()
+            WHERE NOT EXISTS (
+                SELECT 1 FROM user_achievement
+                WHERE user_id = ? AND achievement_id = 1 AND DATE(last_update_time) = DATE(CURDATE())
+            ) AND NOT EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = ? AND liker_id = ?)`,
+            params: [liker_id, liker_id, comment_id, liker_id]
+          },
+          {
             sql: `UPDATE comments SET likes = likes + 1 WHERE cid = ? AND NOT EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = ? AND liker_id = ?)`,
             params: [comment_id, comment_id, liker_id]
           },
@@ -301,7 +317,6 @@ const addCommentlike = (liker_id, comment_id, is_liked) => {
 
         const executeQuery = (sql, params) => {
           return new Promise((resolve, reject) => {
-            console.log(sql, params)
             connection.query(sql, params, (error, result) => {
               if (error) {
                 return reject(error);
@@ -361,6 +376,22 @@ const addUserLike = (liker_id, post_id, is_liked) => {
             params: [post_id, liker_id]
           }
         ] : [
+          {
+            sql: `UPDATE user_achievement
+            SET value = value + 1, last_update_time = NOW()
+            WHERE user_id = ? AND achievement_id = 1 AND DATE(last_update_time) = DATE(CURDATE() - INTERVAL 1 DAY)
+            AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
+            params: [liker_id, post_id, liker_id]
+          },
+          {
+            sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
+            SELECT ?, 1, NOW(), 1, NOW()
+            WHERE NOT EXISTS (
+                SELECT 1 FROM user_achievement
+                WHERE user_id = ? AND achievement_id = 1 AND DATE(last_update_time) = DATE(CURDATE())
+            ) AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
+            params: [liker_id, liker_id, post_id, liker_id]
+          },
           {
             sql: `UPDATE posts SET likes = likes + 1 WHERE pid = ? AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
             params: [post_id, post_id, liker_id]
