@@ -9,6 +9,7 @@ const connectionPool = mysql.createPool({
   password: config.mysqlPass,
   database: config.mysqlDatabase
 });
+
 const executeQuery = async (sql, params = []) => {
   const connection = await getConnection();
   try {
@@ -366,9 +367,17 @@ const addUserLike = (liker_id, post_id, is_liked) => {
           return;
         }
 
+        const rand = Math.random();
+        let reward = 0;
+          if (rand > 0.9)
+            reward = 5;
+          else if (rand > 0.3)
+            reward = 1;
+
         const queries = is_liked ? [
           {
-            sql: `UPDATE posts SET likes = likes - 1 WHERE pid = ? AND EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
+            sql: `UPDATE posts SET likes = likes - 1
+                    WHERE pid = ? AND EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
             params: [post_id, post_id, liker_id]
           },
           {
@@ -393,23 +402,38 @@ const addUserLike = (liker_id, post_id, is_liked) => {
             params: [liker_id, liker_id, post_id, liker_id]
           },
           {
-            sql: `UPDATE posts SET likes = likes + 1 WHERE pid = ? AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
+            sql: `UPDATE posts SET likes = likes + 1
+                    WHERE pid = ? AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
             params: [post_id, post_id, liker_id]
           },
           {
-            sql: `INSERT INTO accounting (from_id, to_id, amount, type) SELECT 0, ?, 1, 0 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
-            params: [liker_id, post_id, liker_id]
+            sql: `INSERT INTO accounting (from_id, to_id, amount, type) SELECT 0, ?, ?, 0 FROM DUAL
+                    WHERE EXISTS (SELECT 1 FROM virus_platform_user AS liker
+                                    WHERE liker.user_id = ? AND liker.daily_paid_likes > 0)
+                        AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
+            params: [liker_id, reward, liker_id, post_id, liker_id]
           },
           {
-            sql: `UPDATE virus_platform_user SET virus = virus + 1, daily_paid_likes = daily_paid_likes - 1  WHERE user_id = ? AND daily_paid_likes > 0 AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
-            params: [liker_id, post_id, liker_id]
+            // Note: Need two layers of select to avoid error.
+            sql: `UPDATE virus_platform_user
+                    SET virus = virus + ?
+                    WHERE user_id = (SELECT owner_uid FROM posts WHERE pid = ?)
+                        AND EXISTS (SELECT 1 FROM (SELECT user_id AS uid FROM virus_platform_user
+                                    WHERE user_id = ? AND daily_paid_likes > 0) as X)
+                        AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
+            params: [reward, post_id, liker_id, post_id, liker_id]
           },
           {
-            sql: `UPDATE virus_platform_user SET virus = virus + 1 WHERE user_id = (SELECT owner_uid FROM posts WHERE pid = ?) AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
-            params: [post_id, post_id, liker_id]
+            sql: `UPDATE virus_platform_user
+                    SET virus = virus + ?, daily_paid_likes = daily_paid_likes - 1
+                    WHERE user_id = ?
+                        AND daily_paid_likes > 0
+                        AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
+            params: [reward, liker_id, post_id, liker_id]
           },
           {
-            sql: `INSERT INTO likes (liker_id, post_id) select ?, ? FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
+            sql: `INSERT INTO likes (liker_id, post_id) select ?, ? FROM DUAL
+                    WHERE NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
             params: [liker_id, post_id, post_id, liker_id]
           }
         ];
