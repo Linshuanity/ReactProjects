@@ -59,7 +59,7 @@ const PostWidget = ({
   const durationInMs = 12 * 3.6e6 * (6 + Math.sqrt(likesCount));
   const end = new Date(start.getTime() + durationInMs);
   const isAlive = currentTime <= end;
-  const [showRewardMsgBox, setShowRewardMsgBox] = useState(false);
+  const [rewardValueMsg, setRewardValue] = useState(0);
 
   const { palette } = useTheme();
   const main = palette.neutral.main;
@@ -174,9 +174,12 @@ const PostWidget = ({
       body: JSON.stringify({ liker_id: loggedInUserId, post_id: postId, is_liked: isLiked }),
     });
     const update = await response.json();
+    if (!isLiked)
+    {
+        showRewardValue(update.reward);
+    }
     setLikes(likesCount + (isLiked ? -1 : 1));
     setLiked(!isLiked);
-    showRewardMsg();
   };
   
   const patchCommentLike = async (index, commentIsLiked, cid, c_isLiked) => {
@@ -199,10 +202,10 @@ const PostWidget = ({
     copyToClipboard(shareURL);
   }
 
-  const showRewardMsg = () => {
-    setShowRewardMsgBox(true);
+  const showRewardValue = (reward) => {
+    setRewardValue(reward);
     setTimeout(() => {
-      setShowRewardMsgBox(false);
+      setRewardValue(0);
     }, 1000); // 1000 milliseconds = 1 second
   };
 
@@ -479,7 +482,7 @@ const PostWidget = ({
         Send
         </Button>
       </Box>
-        {showRewardMsgBox && (
+        {rewardValueMsg > 0 && (
         <div style={{
           display: 'flex',
           justifyContent: 'center',
@@ -493,7 +496,7 @@ const PostWidget = ({
           border: '1px solid #ccc',
           boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)',
         }}>
-          <p>You made 1 virus</p>
+          <p>You made ${rewardValueMsg} virus</p>
         </div>
         )}
     </WidgetWrapper>

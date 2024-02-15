@@ -369,23 +369,26 @@ const addUserLike = (liker_id, post_id, is_liked) => {
 
         const rand = Math.random();
         let reward = 0;
-          if (rand > 0.9)
-            reward = 5;
+          if (rand > 0.7)
+            reward = 2;
           else if (rand > 0.3)
             reward = 1;
 
         const queries = is_liked ? [
           {
+            tag: "SUB_LK",
             sql: `UPDATE posts SET likes = likes - 1
                     WHERE pid = ? AND EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
             params: [post_id, post_id, liker_id]
           },
           {
+            tag: "DEL_LK",
             sql: `DELETE from likes WHERE post_id = ? and liker_id = ?`,
             params: [post_id, liker_id]
           }
         ] : [
           {
+            tag: "UP_ACH",
             sql: `UPDATE user_achievement
             SET value = value + 1, last_update_time = NOW()
             WHERE user_id = ? AND achievement_id = 1 AND DATE(last_update_time) = DATE(CURDATE() - INTERVAL 1 DAY)
@@ -393,6 +396,7 @@ const addUserLike = (liker_id, post_id, is_liked) => {
             params: [liker_id, post_id, liker_id]
           },
           {
+            tag: "ADD_ACH",
             sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
             SELECT ?, 1, NOW(), 1, NOW()
             WHERE NOT EXISTS (
@@ -402,11 +406,13 @@ const addUserLike = (liker_id, post_id, is_liked) => {
             params: [liker_id, liker_id, post_id, liker_id]
           },
           {
+            tag: "ADD_LK",
             sql: `UPDATE posts SET likes = likes + 1
                     WHERE pid = ? AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
             params: [post_id, post_id, liker_id]
           },
           {
+            tag: "UP_ACC",
             sql: `INSERT INTO accounting (from_id, to_id, amount, type) SELECT 0, ?, ?, 0 FROM DUAL
                     WHERE EXISTS (SELECT 1 FROM virus_platform_user AS liker
                                     WHERE liker.user_id = ? AND liker.daily_paid_likes > 0)
@@ -415,6 +421,7 @@ const addUserLike = (liker_id, post_id, is_liked) => {
           },
           {
             // Note: Need two layers of select to avoid error.
+            tag: "ADD_VIR",
             sql: `UPDATE virus_platform_user
                     SET virus = virus + ?
                     WHERE user_id = (SELECT owner_uid FROM posts WHERE pid = ?)
@@ -424,6 +431,7 @@ const addUserLike = (liker_id, post_id, is_liked) => {
             params: [reward, post_id, liker_id, post_id, liker_id]
           },
           {
+            tag: "ADD_VIR2",
             sql: `UPDATE virus_platform_user
                     SET virus = virus + ?, daily_paid_likes = daily_paid_likes - 1
                     WHERE user_id = ?
@@ -432,24 +440,29 @@ const addUserLike = (liker_id, post_id, is_liked) => {
             params: [reward, liker_id, post_id, liker_id]
           },
           {
+            tag: "INS_LK",
             sql: `INSERT INTO likes (liker_id, post_id) select ?, ? FROM DUAL
                     WHERE NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
             params: [liker_id, post_id, post_id, liker_id]
           }
         ];
 
-        const executeQuery = (sql, params) => {
+        const executeQuery = (tag, sql, params) => {
           return new Promise((resolve, reject) => {
             connection.query(sql, params, (error, result) => {
               if (error) {
                 return reject(error);
+              }
+              if (tag === "ADD_VIR" && result.affectedRows == 0)
+              {
+                reward = 0;
               }
               resolve(result);
             });
           });
         };
 
-        Promise.all(queries.map(query => executeQuery(query.sql, query.params)))
+        Promise.all(queries.map(query => executeQuery(query.tag, query.sql, query.params)))
           .then(results => {
             connection.commit(err => {
               if (err) {
@@ -460,7 +473,7 @@ const addUserLike = (liker_id, post_id, is_liked) => {
                 return;
               }
               connection.release();
-              resolve(results);
+              resolve({ results: results, reward: reward });
             });
           })
           .catch(error => {
