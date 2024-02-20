@@ -178,8 +178,9 @@ const PostWidget = ({
     const update = await response.json();
     if (!isLiked)
     {
-        showRewardValue(update.reward);
-        showMessage('讚讚！');
+        // showRewardValue(update.reward);
+        if(update.reward > 0)
+          showMessage('You made ' + update.reward + ' virus' );
     }
     setLikes(likesCount + (isLiked ? -1 : 1));
     setLiked(!isLiked);
@@ -485,23 +486,6 @@ const PostWidget = ({
         Send
         </Button>
       </Box>
-        {rewardValueMsg > 0 && (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          padding: '20px',
-          backgroundColor: '#f0f0f0',
-          border: '1px solid #ccc',
-          boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)',
-        }}>
-          <p>You made ${rewardValueMsg} virus</p>
-        </div>
-        )}
     </WidgetWrapper>
   );
 };
