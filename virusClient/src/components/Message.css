@@ -1,0 +1,26 @@
+/* 消息框基础样式 */
+.message-box {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000; /* 确保消息框在其他内容之上 */
+    background-color: #4CAF50;
+    color: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    /* display: none; */
+    text-align: center;
+  }
+  
+  /* 动画效果 */
+  .fade-in {
+    animation: fadeIn 0.5s forwards; /* 动画持续时间和效果 */
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  

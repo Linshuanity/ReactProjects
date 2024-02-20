@@ -16,6 +16,7 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPost } from "state";
 
+import { MessageProvider, useMessage } from 'components/MessageContext';
 import "./post_widget.css";
 
 const PostWidget = ({
@@ -69,6 +70,7 @@ const PostWidget = ({
   const [commentList, setCommentList] = useState([]);
   const [bidList, setBidList] = useState([]);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const { showMessage } = useMessage();
 
   const handleAddBid = async () => {
     const response = await fetch(`http://localhost:3002/posts/bid`, {
@@ -177,6 +179,7 @@ const PostWidget = ({
     if (!isLiked)
     {
         showRewardValue(update.reward);
+        showMessage('讚讚！');
     }
     setLikes(likesCount + (isLiked ? -1 : 1));
     setLiked(!isLiked);
