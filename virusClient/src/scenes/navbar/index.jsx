@@ -1,4 +1,5 @@
 import { useState } from "react";
+import LiveSearch from "components/LiveSearch"
 import {
   Box,
   IconButton,
@@ -27,6 +28,9 @@ import FlexBetween from "components/FlexBetween";
 
 const Navbar = () => {
   const [isMobileMenuToggled, setIsMobileMenuToggled] = useState(false);
+  const [results, setResults] = useState([]);
+  const [selectedProfile, setSelectedProfile] = useState(null);
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector((state) => state.user);
@@ -40,6 +44,23 @@ const Navbar = () => {
   const alt = theme.palette.background.alt;
 
   const fullName = `${user.user_name}`;
+
+  const handleSearch = async (e) => {
+    const { value } = e.target;
+    if (!value.trim()) return setResults([]);
+
+    const response = await fetch(`http://localhost:3002/subscribe/search`, {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+          substring: value}),
+    });
+    const update = await response.json();
+    setSelectedProfile(update);
+    return setResults(update);
+  }
 
   return (
     <FlexBetween padding="1rem 6%" backgroundColor={alt}>
@@ -65,10 +86,13 @@ const Navbar = () => {
             gap="3rem"
             padding="0.1rem 1.5rem"
           >
-            <InputBase placeholder="Search..." />
-            <IconButton>
-              <Search />
-            </IconButton>
+            <LiveSearch
+              results={results}
+              value={selectedProfile?.name}
+              renderItem={(item) => <p>{item.name}</p>}
+              onChange={handleSearch}
+              onSelect={(item) => setSelectedProfile(item)}
+            />
           </FlexBetween>
         )}
       </FlexBetween>

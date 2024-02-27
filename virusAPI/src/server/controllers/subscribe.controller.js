@@ -10,6 +10,13 @@ const getFriends = (req, res) => {
   }).catch((err) => { return res.send(err); }); // 失敗回傳錯誤訊息
 };
 
+const getSearch = (req, res) => {
+  const substring = req.body.substring;
+  subscribeModule.getSearch(substring).then((result) => {
+    res.send(result); // 成功回傳result結果
+  }).catch((err) => { return res.send(err); }); // 失敗回傳錯誤訊息
+};
+
 /*  User GET 取得  */
 const subscribeGet = (req, res) => {
   const subscriber_id = req.params.subscriber_id;
@@ -53,6 +60,7 @@ const getCountById = (req, res) => {
 
 export default {
   getFriends,
+  getSearch,
   subscribeGet,
   deleteSubscribe,
   createSubscribe,

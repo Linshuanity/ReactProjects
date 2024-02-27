@@ -34,6 +34,11 @@ const getFriends = userId => executeQuery(
   [userId]
 );
 
+const getSearch = substring => executeQuery(
+  `SELECT user_id as id, user_name as name FROM virus_platform_user WHERE user_name LIKE ?`, 
+  [`%${substring}%`]
+);
+
 const isSubscribed = (suberId, subedId) => executeQuery(
   `SELECT * FROM subscribes WHERE subscriber_id = ? AND subscribed_id = ?`, 
   [suberId, subedId]
@@ -93,6 +98,7 @@ const deleteSubscribe = deleteValues => executeQuery(
 
 export default {
   getFriends,
+  getSearch,
   isSubscribed,
   countBySubscribedId,
   createSubscribe,
