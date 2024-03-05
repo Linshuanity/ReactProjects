@@ -22,6 +22,7 @@ const UserWidget = ({ userId, picturePath }) => {
   const { palette } = useTheme();
   const navigate = useNavigate();
   const token = useSelector((state) => state.token);
+  const login_id = useSelector((state) => state.user._id);
   const dark = palette.neutral.dark;
   const medium = palette.neutral.medium;
   const main = palette.neutral.main;
@@ -106,7 +107,9 @@ const UserWidget = ({ userId, picturePath }) => {
         <Typography fontSize="1rem" color={main} fontWeight="500" mb="1rem">
           <FlexBetween gap="1rem">
             Social Profiles
-            <EditOutlined sx={{ color: main }} onClick={handleEditClick} />
+            {login_id == userId && (
+              <EditOutlined sx={{ color: main }} onClick={handleEditClick} />
+            )}
           </FlexBetween>
         </Typography>
         {editing ? (
