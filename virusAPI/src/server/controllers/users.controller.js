@@ -69,6 +69,15 @@ const userLogin = (req, res, next) => {
   }).catch((error) => { next(error); }); // 失敗回傳錯誤訊息
 };
 
+const userUpdate = (req, res) => {
+  const userId = req.body.user_id;
+  const insertValues = {
+    user_description: req.body.description,
+  };
+  userModule.modifyUser(insertValues, userId).then((result) => {
+    res.send(result); // 成功回傳result結果
+  }).catch((err) => { return res.send(err); }); // 失敗回傳錯誤訊息
+};
 
 export default {
   test,
@@ -77,5 +86,6 @@ export default {
   userPost,
   userPut,
   userDelete,
-  userLogin
+  userLogin,
+  userUpdate
 };

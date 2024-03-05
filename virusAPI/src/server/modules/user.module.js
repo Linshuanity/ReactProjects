@@ -71,7 +71,8 @@ const selectUserById = (userId) => {
             _id: result[0].user_id,
             subscriber: result[0].subscriber,
             user_name: result[0].user_name,
-            holding: result[0].virus
+            holding: result[0].virus,
+            description: result[0].user_description,
           });
         }
       });

@@ -15,6 +15,9 @@ import WalletConnectComponent from '../../WalletConnectComponent';
 import Friend from "components/Friend";
 
 const UserWidget = ({ userId, picturePath }) => {
+  const [editing, setEditing] = useState(false);
+  const [profile, setProfile] = useState("");
+  const [inputValue, setInputValue] = useState("");
   const [user, setUser] = useState(null);
   const { palette } = useTheme();
   const navigate = useNavigate();
@@ -30,6 +33,38 @@ const UserWidget = ({ userId, picturePath }) => {
     });
     const data = await response.json();
     setUser(data);
+    setProfile(data.description);
+    setInputValue(data.description);
+  };
+
+  const handleEditClick = () => {
+    setEditing(!editing); // Toggle the editing state
+    // Add any additional logic you need here
+  };
+
+  const handleCancelClick = () => {
+    setEditing(false); // Exit editing mode
+    setInputValue(profile);
+  };
+
+  const handleSaveClick = async () => {
+    setEditing(false); // Exit editing mode
+    setProfile(inputValue);
+    const response = await fetch(`http://localhost:3002/users/description`, {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+          user_id: userId,
+          description: inputValue,
+      }),
+    });
+    const update = await response.json();
+  };
+
+  const handleInputChange = (e) => {
+    setInputValue(e.target.value); // Update input value
   };
 
   useEffect(() => {
@@ -46,6 +81,7 @@ const UserWidget = ({ userId, picturePath }) => {
     // picturePath,
     holding,
     subscriber,
+    description,
     // postCount,
   } = user;
 
@@ -62,18 +98,37 @@ const UserWidget = ({ userId, picturePath }) => {
 
       <WalletConnectComponent holding={holding}>
       </WalletConnectComponent>
+
       <Divider />
 
       {/* SECOND ROW */}
       <Box p="1rem 0">
-        <Box display="flex" alignItems="center" gap="1rem" mb="0.5rem">
-          <LocationOnOutlined fontSize="large" sx={{ color: main }} />
-          <Typography color={medium}>location</Typography>
-        </Box>
-        <Box display="flex" alignItems="center" gap="1rem">
-          <WorkOutlineOutlined fontSize="large" sx={{ color: main }} />
-          <Typography color={medium}>occupation</Typography>
-        </Box>
+        <Typography fontSize="1rem" color={main} fontWeight="500" mb="1rem">
+          <FlexBetween gap="1rem">
+            Social Profiles
+            <EditOutlined sx={{ color: main }} onClick={handleEditClick} />
+          </FlexBetween>
+        </Typography>
+        {editing ? (
+          // Editing mode components
+          <div>
+            <input
+              type="text"
+              style={{ width: '80%', padding: '0.5rem', marginBottom: '1rem' }}
+              placeholder="Edit your social profile"
+              value={inputValue}
+              onChange={handleInputChange}
+            />
+            <button onClick={handleCancelClick} style={{ marginRight: '0.5rem' }}>Cancel</button>
+            <button onClick={handleSaveClick}>Save</button>
+          </div>
+        ) : (
+          // Display mode components
+          <div>
+            {/* Display social profiles here */}
+            <p>{profile}</p>
+          </div>
+        )}
       </Box>
 
       <Divider />
@@ -91,41 +146,6 @@ const UserWidget = ({ userId, picturePath }) => {
           <Typography color={main} fontWeight="500">
             postWorth
           </Typography>
-        </FlexBetween>
-      </Box>
-
-      <Divider />
-
-      {/* FOURTH ROW */}
-      <Box p="1rem 0">
-        <Typography fontSize="1rem" color={main} fontWeight="500" mb="1rem">
-          Social Profiles
-        </Typography>
-
-        <FlexBetween gap="1rem" mb="0.5rem">
-          <FlexBetween gap="1rem">
-            <img src="../assets/twitter.png" alt="twitter" />
-            <Box>
-              <Typography color={main} fontWeight="500">
-                Twitter
-              </Typography>
-              <Typography color={medium}>Social Network</Typography>
-            </Box>
-          </FlexBetween>
-          <EditOutlined sx={{ color: main }} />
-        </FlexBetween>
-
-        <FlexBetween gap="1rem">
-          <FlexBetween gap="1rem">
-            <img src="../assets/linkedin.png" alt="linkedin" />
-            <Box>
-              <Typography color={main} fontWeight="500">
-                Linkedin
-              </Typography>
-              <Typography color={medium}>Network Platform</Typography>
-            </Box>
-          </FlexBetween>
-          <EditOutlined sx={{ color: main }} />
         </FlexBetween>
       </Box>
     </WidgetWrapper>
