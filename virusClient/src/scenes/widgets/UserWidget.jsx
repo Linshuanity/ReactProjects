@@ -115,21 +115,47 @@ const UserWidget = ({ userId, picturePath }) => {
         {editing ? (
           // Editing mode components
           <div>
-            <input
-              type="text"
-              style={{ width: '80%', padding: '0.5rem', marginBottom: '1rem' }}
+            <textarea
+              style={{ width: '80%', padding: '0.5rem', marginBottom: '1rem', border: 'none', outline: 'none', resize: 'none', fontSize: '14px', whiteSpace: 'pre-wrap' }}
               placeholder="Edit your social profile"
               value={inputValue}
               onChange={handleInputChange}
-            />
-            <button onClick={handleCancelClick} style={{ marginRight: '0.5rem' }}>Cancel</button>
-            <button onClick={handleSaveClick}>Save</button>
+            ></textarea>
+            <button 
+              onClick={handleCancelClick} 
+              style={{ 
+                marginRight: '0.5rem', 
+                padding: '0.5rem 0.5rem', 
+                backgroundColor: '#999999', 
+                color: '#fff', 
+                border: 'none', 
+                borderRadius: '4px', 
+                cursor: 'pointer', 
+                transition: 'background-color 0.3s' 
+              }}
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={handleSaveClick} 
+              style={{ 
+                padding: '0.5rem 1rem', 
+                backgroundColor: '#22bbbb', 
+                color: '#fff', 
+                border: 'none', 
+                borderRadius: '4px', 
+                cursor: 'pointer', 
+                transition: 'background-color 0.3s' 
+              }}
+            >
+              Save
+            </button>
           </div>
         ) : (
           // Display mode components
           <div>
             {/* Display social profiles here */}
-            <p>{profile}</p>
+            <pre>{profile}</pre>
           </div>
         )}
       </Box>

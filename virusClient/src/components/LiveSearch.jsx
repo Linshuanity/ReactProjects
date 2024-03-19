@@ -88,7 +88,7 @@ const LiveSearch = ({
           value={defaultValue}
           onChange={handleChange}
           type="text"
-          className="w-[600px] px-5 py-3 text-lg rounded-full border-2 border-gray-500 focus:border-gray-700 outline-none transition"
+          style={{ border: 'none', outline: 'none', resize: 'none', backgroundColor: 'transparent' }}
           placeholder="Search your query..."
         />
 
@@ -96,6 +96,7 @@ const LiveSearch = ({
         {showResults && (
           <div style={{
             position: "absolute",
+            zIndex: '9999',
           }}>
             {results.map((item, index) => (
                 <div
@@ -106,11 +107,15 @@ const LiveSearch = ({
                   }}
                   ref={index === focusedIndex ? resultContainer : null}
                   style={{
-                    backgroundColor:
-                      index === focusedIndex ? "rgba(196,196,196,1)" : "rgba(255,255,255,1)",
-                  }}
-                  className="cursor-pointer hover:bg-black hover:bg-opacity-10"
-                >
+                    border: '1px solid #ccc',
+                    borderRadius: '8px',
+                    padding: '10px',
+                    fontSize: '16px',
+                    color: 'rgba(100,100,200,1)',
+                    backgroundColor: index === focusedIndex ? "rgba(180,180,180,1)" : "rgba(225,225,225,1)",
+                }}
+                className="cursor-pointer hover:bg-gray-200"
+                            >
                   {item.name}
                 </div>
             ))}
