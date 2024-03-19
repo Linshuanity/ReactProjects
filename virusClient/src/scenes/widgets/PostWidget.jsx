@@ -254,7 +254,7 @@ const PostWidget = ({
   }
 
   return (
-    <WidgetWrapper style={{ backgroundColor: isAlive ? 'white' : '#e0e0e0', margin: "1rem 0" }} >
+    <WidgetWrapper style={{ backgroundColor: isAlive ? palette.neutral.gray : '#888888', margin: "1rem 0" }} >
       <Friend
         friend_id={author_id}
         name={author_name}
