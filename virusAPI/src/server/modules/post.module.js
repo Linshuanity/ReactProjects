@@ -132,21 +132,89 @@ export const createUserPost = async (req, res, next) => {
 /* POST 新增 */
 const createPost = (insertValues) => {
   return new Promise((resolve, reject) => {
-    connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
+    connectionPool.getConnection((connectionError, connection) => {
       if (connectionError) {
-        reject(connectionError); // 若連線有問題回傳錯誤
-      } else {
-        // 'UPDATE virus_platform_user SET ? WHERE user_id = ?', [insertValues, userId]
-        connection.query('INSERT INTO posts (title,content,owner_uid,author_uid,image_path,expire_date) VALUES (?,?,?,?,?,DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 7 DAY))',  [insertValues.content,insertValues.content,insertValues.userId,insertValues.userId,insertValues.picturePath], (error, result) => { // 資料表寫入一筆資料
-          if (error) {
-            console.error('SQL error: ', error);
-            reject(error); // 寫入資料庫有問題時回傳錯誤
-          } else if (result.affectedRows === 1) {
-            resolve(`{"status":"ok", "msg":"成功！"}`);
-          }
-          connection.release();
-        });
+        reject(connectionError);
+        return;
       }
+
+      connection.beginTransaction(err => {
+        if (err) {
+          connection.release();
+          reject(err);
+          return;
+        }
+
+        const queries = [
+          {
+            tag: "INS_POST",
+            sql: `INSERT INTO posts (title, content, owner_uid, author_uid, image_path, expire_date) 
+                  VALUES (?, ?, ?, ?, ?, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 7 DAY))`,
+            params: [insertValues.content, insertValues.content, insertValues.userId, insertValues.userId, insertValues.picturePath]
+          },
+          {
+            tag: "INC_SUBS",
+            sql: `UPDATE virus_platform_user SET user_post_count = user_post_count + 1 WHERE user_id = ?`,
+            params: [insertValues.userId]
+          },
+          {
+            tag: "ADD_ACH",
+            sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
+            SELECT ?, 4, NOW(), (SELECT user_post_count FROM virus_platform_user WHERE user_id = ?), NOW()
+            FROM DUAL
+            WHERE NOT EXISTS (
+              SELECT 1
+              FROM user_achievement
+              WHERE user_id = ? AND achievement_id = 4 AND value >= (
+                SELECT user_post_count FROM virus_platform_user WHERE user_id = ?
+              )
+            )`,
+            params: [insertValues.userId, insertValues.userId, insertValues.userId, insertValues.userId]
+          }
+        ];
+
+        const executeQuery = (tag, sql, params) => {
+          return new Promise((resolve, reject) => {
+            connection.query(sql, params, (error, result) => {
+              if (error) {
+                return reject(error);
+              }
+              resolve(result);
+            });
+          });
+        };
+
+        Promise.all(queries.map(query => executeQuery(query.tag, query.sql, query.params)))
+          .then(results => {
+            // Check if the post was inserted successfully
+            const affectedRows = results[0].affectedRows;
+            if (affectedRows === 0) {
+              connection.rollback(() => {
+                connection.release();
+                resolve(null); // No changes made
+              });
+              return;
+            }
+
+            connection.commit(err => {
+              if (err) {
+                connection.rollback(() => {
+                  connection.release();
+                  reject(err);
+                });
+                return;
+              }
+              connection.release();
+              resolve(`{"status":"ok", "msg":"成功！"}`);
+            });
+          })
+          .catch(error => {
+            connection.rollback(() => {
+              connection.release();
+              reject(error);
+            });
+          });
+      });
     });
   });
 };
@@ -373,6 +441,8 @@ const addUserLike = (liker_id, post_id, is_liked) => {
             reward = 2;
           else if (rand > 0.3)
             reward = 1;
+          
+        let user_achievement_like = 0;
 
         const queries = is_liked ? [
           {
@@ -473,7 +543,7 @@ const addUserLike = (liker_id, post_id, is_liked) => {
                 return;
               }
               connection.release();
-              resolve({ results: results, reward: reward });
+              resolve({ results: results, reward: reward,  });
             });
           })
           .catch(error => {

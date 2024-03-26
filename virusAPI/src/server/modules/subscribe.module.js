@@ -48,47 +48,139 @@ const countBySubscribedId = subscribedId => executeQuery(
   `SELECT COUNT(subscriber_id) as result FROM subscribes WHERE subscribed_id = ?`, 
   [subscribedId]
 );
-
-const createSubscribe = insertValues => {
-  const { user_id, friend_id, is_delete } = insertValues;
-
-  const update_query = is_delete === 'true'
-    ? `DELETE FROM subscribes WHERE subscriber_id = ? AND subscribed_id = ?`
-    : `INSERT INTO subscribes VALUES (DEFAULT, ?, ?, DEFAULT) ON DUPLICATE KEY UPDATE subscriber_id = subscriber_id`;
-
-  const update_user_query = is_delete === 'true'
-    ? `UPDATE virus_platform_user SET subscriber = subscriber - 1 WHERE user_id = ?`
-    : `UPDATE virus_platform_user SET subscriber = subscriber + 1 WHERE user_id = ?`;
-
-  const select_query = `SELECT user_id as _id, user_name as name, user_image_path as picturePath from virus_platform_user where user_id = ?`;
-
-  // Execute update_query first
-  return executeQuery(update_query, [user_id, friend_id])
-    .then(updateResult => {
-      // Check if update_query affected any rows before executing update_user_query
-      if (updateResult && updateResult.affectedRows > 0) {
-        // Execute update_user_query and select_query concurrently
-        return Promise.all([
-          executeQuery(update_user_query, [friend_id]),
-          executeQuery(select_query, [friend_id]),
-        ]).then(([updateUserResult, selectResult]) => {
-          // Handle the results if needed
-          console.log('Update Result:', updateResult);
-          console.log('Update User Result:', updateUserResult);
-
-          // Return the select result
-          return selectResult;
-        });
-      } else {
-        // No changes were made by update_query, you may choose to return something else
-        console.log('No changes were made by update_query');
-        return null; // Or some other indication of no changes
+const createSubscribe = (user_id, friend_id, is_delete) => {
+  return new Promise((resolve, reject) => {
+    connectionPool.getConnection((connectionError, connection) => {
+      if (connectionError) {
+        reject(connectionError);
+        return;
       }
-    })
-    .catch(error => {
-      console.error('Error executing queries:', error);
-      throw error; // Propagate the error to the caller
+
+      connection.beginTransaction(err => {
+        if (err) {
+          connection.release();
+          reject(err);
+          return;
+        }
+
+        const queries = is_delete === 'true' ? [
+          {
+            tag: "DEL_SUB",
+            sql: `DELETE FROM subscribes WHERE subscriber_id = ? AND subscribed_id = ?`,
+            params: [user_id, friend_id]
+          },
+          {
+            tag: "DEC_SUBS",
+            sql: `UPDATE virus_platform_user SET subscribed = subscribed - 1 WHERE user_id = ?`,
+            params: [user_id]
+          },
+          {
+            tag: "DEC_SUBS_2",
+            sql: `UPDATE virus_platform_user SET subscriber = subscriber - 1 WHERE user_id = ?`,
+            params: [friend_id]
+          }
+        ] : [
+          {
+            tag: "INS_SUB",
+            sql: `INSERT INTO subscribes VALUES (DEFAULT, ?, ?, DEFAULT) ON DUPLICATE KEY UPDATE subscriber_id = subscriber_id`,
+            params: [user_id, friend_id]
+          },
+          {
+            tag: "INC_SUBS",
+            sql: `UPDATE virus_platform_user SET subscribed = subscribed + 1 WHERE user_id = ?`,
+            params: [user_id]
+          },
+          {
+            tag: "INC_SUBS_2",
+            sql: `UPDATE virus_platform_user SET subscriber = subscriber + 1 WHERE user_id = ?`,
+            params: [friend_id]
+          },
+          {
+            tag: "ADD_ACH",
+            sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
+            SELECT ?, 2, NOW(), (SELECT subscriber FROM virus_platform_user WHERE user_id = ?), NOW()
+            FROM DUAL
+            WHERE NOT EXISTS (
+              SELECT 1
+              FROM user_achievement
+              WHERE user_id = ? AND achievement_id = 2 AND value >= (
+                SELECT subscriber FROM virus_platform_user WHERE user_id = ?
+              )
+            )`,
+            params: [user_id, user_id, user_id, user_id]
+          },
+          {
+            tag: "ADD_ACH_2",
+            sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
+            SELECT ?, 3, NOW(), (SELECT subscribed FROM virus_platform_user WHERE user_id = ?), NOW()
+            FROM DUAL
+            WHERE NOT EXISTS (
+              SELECT 1
+              FROM user_achievement
+              WHERE user_id = ? AND achievement_id = 3 AND value >= (
+                SELECT subscribed FROM virus_platform_user WHERE user_id = ?
+              )
+            )`,
+            params: [friend_id, friend_id, friend_id, friend_id]
+          }
+        ];
+
+        const executeQuery = (tag, sql, params) => {
+          return new Promise((resolve, reject) => {
+            connection.query(sql, params, (error, result) => {
+              if (error) {
+                return reject(error);
+              }
+              resolve(result);
+            });
+          });
+        };
+
+        Promise.all(queries.map(query => executeQuery(query.tag, query.sql, query.params)))
+          .then(results => {
+            // Check if any changes were made
+            const affectedRows = results.reduce((total, result) => total + result.affectedRows, 0);
+            if (affectedRows === 0) {
+              connection.rollback(() => {
+                connection.release();
+                resolve(null); // No changes made
+              });
+              return;
+            }
+
+            // Fetch the updated user data
+            const selectQuery = `SELECT user_id as _id, user_name as name, user_image_path as picturePath from virus_platform_user where user_id = ?`;
+            connection.query(selectQuery, [friend_id], (error, selectResult) => {
+              if (error) {
+                connection.rollback(() => {
+                  connection.release();
+                  reject(error);
+                });
+                return;
+              }
+
+              connection.commit(err => {
+                if (err) {
+                  connection.rollback(() => {
+                    connection.release();
+                    reject(err);
+                  });
+                  return;
+                }
+                connection.release();
+                resolve(selectResult);
+              });
+            });
+          })
+          .catch(error => {
+            connection.rollback(() => {
+              connection.release();
+              reject(error);
+            });
+          });
+      });
     });
+  });
 };
 
 const deleteSubscribe = deleteValues => executeQuery(

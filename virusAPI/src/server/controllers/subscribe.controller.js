@@ -46,7 +46,7 @@ const createSubscribe = (req, res) => {
     friend_id: req.params.subscribed_id,
     is_delete: req.headers.is_delete,
   };
-  subscribeModule.createSubscribe(insertValues).then((result) => {
+  subscribeModule.createSubscribe(insertValues.user_id, insertValues.friend_id,insertValues.is_delete).then((result) => {
     res.send(result); // 成功回傳result結果
   }).catch((err) => { return res.send(err); }); // 失敗回傳錯誤訊息
 };
