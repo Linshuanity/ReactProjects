@@ -25,7 +25,7 @@
 }
 
 .yes-button {
-  background-color: #4caf50;
+  background-color: #22BBBB;
   color: white;
   border: none;
   border-radius: 4px;
@@ -35,7 +35,7 @@
 }
 
 .no-button {
-  background-color: #f44336;
+  background-color: #999999;
   color: white;
   border: none;
   border-radius: 4px;

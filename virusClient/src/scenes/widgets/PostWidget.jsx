@@ -51,7 +51,7 @@ const PostWidget = ({
   const userImagePath = useSelector((state) => state.user.picturePath);
   const isSell = loggedInUserId === owner_id;
   const price = isSell ? bid_price : ask_price;
-  const [bid, setBid] = useState("");
+  const [bid, setBid] = useState('0');
   const [isLiked, setLiked] = useState(is_liked);
   const [likesCount, setLikes] = useState(likes);
   const startDate = [create_date];
@@ -353,7 +353,7 @@ const PostWidget = ({
             </IconButton>
             <Button
               sx={{
-                backgroundColor: isSell ? 'red' : 'green',
+                backgroundColor: isSell ? '#FFAF00' : '#00AFFF',
                 padding: '2px 4px',
                 color: 'white',
                 marginLeft: '0.5rem',
@@ -366,13 +366,17 @@ const PostWidget = ({
             </Button>
             <Button
               sx={{
-                backgroundColor: isSell ? 'orange' : 'blue',
+                backgroundColor: isSell ? '#FFAF00' : '#00AFFF',
                 padding: '2px 4px',
                 color: 'white',
                 minWidth: "50px",
+                '&:hover': {
+                  backgroundColor: isSell ? '#FFD98D !important' : '#6DD4FF !important',
+                }
               }}
               variant="contained"
               onClick={() => setIsConfirmationOpen(true)}
+              disabled={bid <= 0}
             >
               {isSell ? 'Ask' : 'Bid'}
             </Button>
@@ -396,7 +400,7 @@ const PostWidget = ({
                 className="custom-modal" // Apply your custom CSS class
               >
                 <div className="custom-modal-content">
-                  <p>Are you sure you want to place this bid?</p>
+                  <p style={{ color: 'black' }}>Are you sure you want to place a bid at ${bid}?</p>
                   <div className="button-container">
                     <button className="yes-button" onClick={handleAddBid}>Yes</button>
                     <button className="no-button" onClick={() => setIsConfirmationOpen(false)}>No</button>
