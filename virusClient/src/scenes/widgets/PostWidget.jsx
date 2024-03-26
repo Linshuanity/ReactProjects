@@ -69,7 +69,7 @@ const PostWidget = ({
   const [commentCount, setCommentCount] = useState(comments);
   const [commentList, setCommentList] = useState([]);
   const [bidList, setBidList] = useState([]);
-  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [ConfirmationState, setConfirmationState] = useState(0);
   const { showMessage } = useMessage();
 
   const handleAddBid = async () => {
@@ -85,7 +85,7 @@ const PostWidget = ({
           is_bid: loggedInUserId !== owner_id }),
     });
     const update = await response.json();
-    setIsConfirmationOpen(false);
+    setConfirmationState(false);
   }
 
   const handleAddComment = async () => {
@@ -133,6 +133,7 @@ const PostWidget = ({
           price: price }),
     });
     const update = await response.json();
+    setConfirmationState(false);
   };
 
   const fetchBids = async () => {
@@ -360,9 +361,10 @@ const PostWidget = ({
               }}
               variant="contained"
               onClick={() => {purchaseAction()}}
+              onClick={() => setConfirmationState(1)}
               disabled={price <= 0}
             >
-              {(isSell ? 'Sell @ ' : 'Buy @ ') + price}
+              {(isSell ? 'Sell @ ' : 'Buy @ ') + (price <= 0 ? 0 : price) }
             </Button>
             <Button
               sx={{
@@ -375,7 +377,7 @@ const PostWidget = ({
                 }
               }}
               variant="contained"
-              onClick={() => setIsConfirmationOpen(true)}
+              onClick={() => setConfirmationState(2)}
               disabled={bid <= 0}
             >
               {isSell ? 'Ask' : 'Bid'}
@@ -394,18 +396,28 @@ const PostWidget = ({
               }}
             />
               <Modal
-                isOpen={isConfirmationOpen}
-                onRequestClose={() => setIsConfirmationOpen(false)}
+                isOpen={ConfirmationState > 0}
+                onRequestClose={() => setConfirmationState(0)}
                 ariaHideApp={false}
                 className="custom-modal" // Apply your custom CSS class
               >
-                <div className="custom-modal-content">
-                  <p style={{ color: 'black' }}>Are you sure you want to place a bid at ${bid}?</p>
-                  <div className="button-container">
-                    <button className="yes-button" onClick={handleAddBid}>Yes</button>
-                    <button className="no-button" onClick={() => setIsConfirmationOpen(false)}>No</button>
+              {ConfirmationState === 1 ? (
+                  <div className="custom-modal-content">
+                    <p style={{ color: 'black' }}>Are you sure you want to {(isSell ? 'sell' : 'buy')} at ${price}?</p>
+                    <div className="button-container">
+                      <button className="yes-button" onClick={purchaseAction}>Yes</button>
+                      <button className="no-button" onClick={() => setConfirmationState(0)}>No</button>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="custom-modal-content">
+                    <p style={{ color: 'black' }}>Are you sure you want to place {(isSell ? 'an ask' : 'a bid')} at ${bid}?</p>
+                    <div className="button-container">
+                      <button className="yes-button" onClick={handleAddBid}>Yes</button>
+                      <button className="no-button" onClick={() => setConfirmationState(0)}>No</button>
+                    </div>
+                  </div>
+                )}
               </Modal>
           </FlexBetween>
           
