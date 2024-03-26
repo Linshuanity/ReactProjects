@@ -752,7 +752,7 @@ const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
       if (connectionError) {
         reject(connectionError); // 若連線有問題回傳錯誤
       } else {
-        const trade_price = for_sell ? "bid_price" : "ask_price";
+        const is_bid = for_sell ? true : false;
         const queries = [
           {
             sql: `DELETE FROM bids
@@ -762,9 +762,10 @@ const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
                       SELECT 1
                       FROM posts
                       WHERE pid = ?
-                        AND ${trade_price} = ?
+                        AND is_bid = ?
+                        AND price = ?
                     )`,
-            params: [user_id, post_id, post_id, price],
+            params: [user_id, post_id, post_id, is_bid, price],
             need_change: true
           },
           {
