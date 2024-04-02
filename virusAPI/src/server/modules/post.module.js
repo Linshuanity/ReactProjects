@@ -223,19 +223,21 @@ const selectUserPost = (insertValues) => {
   return new Promise((resolve, reject) => {
     connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
     const query = `
-      SELECT DISTINCT p.*,
-             v1.user_name AS owner_name,
-             v1.user_image_path AS owner_profile,
-             v2.user_name AS author_name,
-             v2.user_image_path AS author_profile,
-             CASE WHEN l.post_id IS NOT NULL THEN 1 ELSE 0 END AS is_liked
-      FROM posts AS p
-      JOIN virus_platform_user AS v1 ON p.owner_uid = v1.user_id
-      JOIN virus_platform_user AS v2 ON p.author_uid = v2.user_id
-      LEFT JOIN likes AS l ON p.pid = l.post_id AND l.liker_id = ?
+        SELECT DISTINCT p.*,
+               v1.user_name AS owner_name,
+               v1.user_image_path AS owner_profile,
+               v2.user_name AS author_name,
+               v2.user_image_path AS author_profile,
+               CASE WHEN b.price IS NOT NULL THEN b.price ELSE 0 END AS my_bid,
+               CASE WHEN l.post_id IS NOT NULL THEN 1 ELSE 0 END AS is_liked
+        FROM posts AS p
+        JOIN virus_platform_user AS v1 ON p.owner_uid = v1.user_id
+        JOIN virus_platform_user AS v2 ON p.author_uid = v2.user_id
+        LEFT JOIN bids AS b ON p.pid = b.post_id and b.user_id = ?
+        LEFT JOIN likes AS l ON p.pid = l.post_id AND l.liker_id = ?
 
       WHERE p.pid = ? `;
-      let queryParams = [insertValues.login_user, insertValues.post_id];
+      let queryParams = [insertValues.login_user, insertValues.login_user, insertValues.post_id];
       if (connectionError) {
         reject(connectionError); // 若連線有問題回傳錯誤
       } else {
