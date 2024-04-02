@@ -667,9 +667,9 @@ const addUserBid = (user_id, post_id, price, is_bid) => {
         const queries = [
           {
             sql: `INSERT INTO bids (user_id, post_id, is_bid, price) SELECT ?, ?, ?, ?
-                    WHERE ? <= (SELECT virus FROM virus_platform_user WHERE user_id = ?)
+                    WHERE ? <= (SELECT virus FROM virus_platform_user WHERE user_id = ?) or ? = False
                     ON DUPLICATE KEY UPDATE price = ?, create_time = DEFAULT`,
-            params: [user_id, post_id, is_bid, price, price, user_id, price]
+            params: [user_id, post_id, is_bid, price, price, user_id, is_bid, price]
           },
           {
             sql: `UPDATE posts p
