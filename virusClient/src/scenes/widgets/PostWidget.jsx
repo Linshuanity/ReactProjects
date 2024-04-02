@@ -38,6 +38,7 @@ const PostWidget = ({
   likes,
   bid_price,
   ask_price,
+  my_bid,
   comments,
 }) => {
   const [listMode, setListMode] = useState(0);
@@ -52,6 +53,7 @@ const PostWidget = ({
   const isSell = loggedInUserId === owner_id;
   const price = isSell ? bid_price : ask_price;
   const [bid, setBid] = useState('0');
+  const [myBid, setMyBid] = useState(my_bid);
   const [isLiked, setLiked] = useState(is_liked);
   const [likesCount, setLikes] = useState(likes);
   const startDate = [create_date];
@@ -380,7 +382,7 @@ const PostWidget = ({
               onClick={() => setConfirmationState(2)}
               disabled={bid <= 0}
             >
-              {isSell ? 'Ask' : 'Bid'}
+              {(isSell ? 'Ask (' : 'Bid (') + my_bid + ')'}
             </Button>
             <InputBase
               type="number"
