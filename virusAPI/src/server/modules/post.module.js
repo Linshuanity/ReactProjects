@@ -232,7 +232,7 @@ const selectUserPost = (post_id) => {
       FROM posts AS p
       JOIN virus_platform_user AS v1 ON p.owner_uid = v1.user_id
       JOIN virus_platform_user AS v2 ON p.author_uid = v2.user_id
-      LEFT JOIN likes AS l ON p.pid = l.post_id 
+      LEFT JOIN likes AS l ON p.pid = l.post_id
       WHERE p.pid = ? `;
       if (connectionError) {
         reject(connectionError); // 若連線有問題回傳錯誤
@@ -285,7 +285,7 @@ const selectUserPosts = (insertValues) => {
       }
 
       let filter_string = "";
-      let queryParams = [insertValues.login_user, insertValues.as_user];
+      let queryParams = [insertValues.login_user, insertValues.login_user, insertValues.as_user];
       switch (insertValues.filter_mode) {
         case 0:
           filter_string = "WHERE p.author_uid = ?";
@@ -294,7 +294,7 @@ const selectUserPosts = (insertValues) => {
           filter_string = "WHERE p.owner_uid = ?";
           break;
         case 2:
-          filter_string = "LEFT JOIN bids AS b ON p.pid = b.post_id WHERE b.user_id = ?";
+          filter_string = "WHERE b.user_id = ?";
           break;
       }
 
@@ -304,10 +304,12 @@ const selectUserPosts = (insertValues) => {
                v1.user_image_path AS owner_profile,
                v2.user_name AS author_name,
                v2.user_image_path AS author_profile,
+               CASE WHEN b.price IS NOT NULL THEN b.price ELSE 0 END AS my_bid,
                CASE WHEN l.post_id IS NOT NULL THEN 1 ELSE 0 END AS is_liked
         FROM posts AS p
         JOIN virus_platform_user AS v1 ON p.owner_uid = v1.user_id
         JOIN virus_platform_user AS v2 ON p.author_uid = v2.user_id
+        LEFT JOIN bids AS b ON p.pid = b.post_id and b.user_id = ?
         LEFT JOIN likes AS l ON p.pid = l.post_id AND l.liker_id = ?
         ${filter_string} order by p.pid desc`;
 
