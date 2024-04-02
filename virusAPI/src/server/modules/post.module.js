@@ -42,7 +42,7 @@ export const userPosts = async (req, res, next) => {
 
 export const getPost = async (req, res, next) => {
   try {
-    const result = await selectUserPost(req.params.post_id);
+    const result = await selectUserPost(req.body);
     res.send(result);
   } catch (error) {
     next(error);
@@ -219,7 +219,7 @@ const createPost = (insertValues) => {
   });
 };
 
-const selectUserPost = (post_id) => {
+const selectUserPost = (insertValues) => {
   return new Promise((resolve, reject) => {
     connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
     const query = `
@@ -232,41 +232,21 @@ const selectUserPost = (post_id) => {
       FROM posts AS p
       JOIN virus_platform_user AS v1 ON p.owner_uid = v1.user_id
       JOIN virus_platform_user AS v2 ON p.author_uid = v2.user_id
-      LEFT JOIN likes AS l ON p.pid = l.post_id 
+      LEFT JOIN likes AS l ON p.pid = l.post_id AND l.liker_id = ?
       WHERE p.pid = ? `;
+      let queryParams = [insertValues.login_user, insertValues.post_id];
       if (connectionError) {
         reject(connectionError); // 若連線有問題回傳錯誤
       } else {
-        connection.query(query,[post_id], (error, result) => {
+        connection.query(query,queryParams, (error, result) => {
             if (error) {
               console.error('SQL error: ', error);
               reject(error); // 寫入資料庫有問題時回傳錯誤
             } else if (Object.keys(result).length === 0) {
               resolve(`{"status":"error", "msg":"post not found"}`);
-            } else {              
-              // const jsonResponse = JSON.stringify(result);
-              // resolve(jsonResponse);
-              resolve({
-                pid: result[0].pid,
-                title: result[0].title,
-                content: result[0].content,
-                owner_uid: result[0].owner_uid,
-                author_uid: result[0].author_uid,
-                status: result[0].status,
-                expire_date: result[0].expire_date,
-                bid_user_id: result[0].bid_user_id,
-                bid_price: result[0].bid_price,
-                likes: result[0].likes,
-                image_path: result[0].image_path,
-                create_date: result[0].create_date,
-                comments: result[0].comments,
-                level: result[0].level,
-                ask_price: result[0].ask_price,
-                owner_name: result[0].owner_name,
-                owner_profile: result[0].owner_profile,
-                author_name: result[0].author_name,
-                author_profile: result[0].author_profile
-              });
+            } else {
+              const jsonResponse = JSON.stringify(result);
+              resolve(jsonResponse);
             }
             connection.release();
           }

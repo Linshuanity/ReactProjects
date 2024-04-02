@@ -360,8 +360,7 @@ const PostWidget = ({
                 marginLeft: '0.5rem',
               }}
               variant="contained"
-              onClick={() => {purchaseAction()}}
-              onClick={() => setConfirmationState(1)}
+              onClick={() => {setConfirmationState(1)}}
               disabled={price <= 0}
             >
               {(isSell ? 'Sell @ ' : 'Buy @ ') + (price <= 0 ? 0 : price) }
