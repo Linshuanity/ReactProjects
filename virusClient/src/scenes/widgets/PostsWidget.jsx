@@ -85,6 +85,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
           ask_price={post.ask_price}
           is_liked={post.is_liked}
           likes={post.likes}
+          my_bid={post.my_bid}
           comments={post.comments}
         />
       ))}
