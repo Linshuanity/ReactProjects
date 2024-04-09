@@ -21,7 +21,6 @@ const registerSchema = yup.object().shape({
   lastName: yup.string().required("required"),
   email: yup.string().email("invalid email").required("required"),
   password: yup.string().required("required"),
-  picture: yup.string().required("required"),
 });
 
 const loginSchema = yup.object().shape({
@@ -52,6 +51,11 @@ const Form = () => {
   const isRegister = pageType === "register";
 
   const register = async (values, onSubmitProps) => {
+    console.log(values);
+    if (!values.picture) {
+      alert("Please upload a profile picture.");
+      return;
+    }
     // this allows us to send form info with image
     const formData = new FormData();
     for (let value in values) {
