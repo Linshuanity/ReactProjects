@@ -28,6 +28,10 @@ const loginSchema = yup.object().shape({
   password: yup.string().required("required"),
 });
 
+const resetSchema = yup.object().shape({
+  email: yup.string().email("invalid email").required("required"),
+});
+
 const initialValuesRegister = {
   firstName: "",
   lastName: "",
@@ -49,6 +53,7 @@ const Form = () => {
   const isNonMobile = useMediaQuery("(min-width:600px)");
   const isLogin = pageType === "login";
   const isRegister = pageType === "register";
+  const isForgotPassword = pageType === "forgotPassword";
 
   const register = async (values, onSubmitProps) => {
     console.log(values);
@@ -74,9 +79,9 @@ const Form = () => {
     onSubmitProps.resetForm();
 
     if (savedUser) {
-      if(savedUser.status === "error") 
-          return alert(savedUser.msg? savedUser.msg : "server disconnected");
-      else{
+      if (savedUser.status === "error")
+        return alert(savedUser.msg ? savedUser.msg : "server disconnected");
+      else {
         alert("User registered successfully");
         setPageType("login");
       }
@@ -92,8 +97,8 @@ const Form = () => {
     const loggedIn = await loggedInResponse.json();
     onSubmitProps.resetForm();
     if (loggedIn) {
-      if(loggedIn.status === "error") 
-          return alert(loggedIn.msg? loggedIn.msg : "Invalid email or password");
+      if (loggedIn.status === "error")
+        return alert(loggedIn.msg ? loggedIn.msg : "Invalid email or password");
       dispatch(
         setLogin({
           user: loggedIn.user,
@@ -101,7 +106,7 @@ const Form = () => {
         })
       );
       navigate("/home");
-    } else{
+    } else {
       alert("server disconnected");
     }
   };
@@ -109,13 +114,35 @@ const Form = () => {
   const handleFormSubmit = async (values, onSubmitProps) => {
     if (isLogin) await login(values, onSubmitProps);
     if (isRegister) await register(values, onSubmitProps);
+    if (isForgotPassword) await forgotPassword(values, onSubmitProps);
   };
 
+  const forgotPassword = async (values, onSubmitProps) => {
+    alert("重設密碼的連結暫時還沒做好，仔細想想你的密碼吧！");
+    
+    const forgetPasswordResponse = await fetch(
+      "http://localhost:3002/auth/forget-password",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      }
+    );
+    const forgetPassword = await forgetPasswordResponse.json();
+    onSubmitProps.resetForm();
+    console.log(forgetPassword);
+    if (forgetPassword.status === "success") {
+      alert("重設密碼的連結已寄到您的信箱,請查收。");
+      setPageType("login");
+    } else {
+      alert(forgetPassword.msg);
+    }
+  };
   return (
     <Formik
       onSubmit={handleFormSubmit}
       initialValues={isLogin ? initialValuesLogin : initialValuesRegister}
-      validationSchema={isLogin ? loginSchema : registerSchema}
+      validationSchema={isLogin ? loginSchema : isForgotPassword ? resetSchema: registerSchema}
     >
       {({
         values,
@@ -193,30 +220,67 @@ const Form = () => {
                     )}
                   </Dropzone>
                 </Box>
+                <TextField
+                  label="Email"
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  value={values.email}
+                  name="email"
+                  error={Boolean(touched.email) && Boolean(errors.email)}
+                  helperText={touched.email && errors.email}
+                  sx={{ gridColumn: "span 4" }}
+                />
+                <TextField
+                  label="Password"
+                  type="password"
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  value={values.password}
+                  name="password"
+                  error={Boolean(touched.password) && Boolean(errors.password)}
+                  helperText={touched.password && errors.password}
+                  sx={{ gridColumn: "span 4" }}
+                />
+              </>
+            )}
+            {isForgotPassword && (
+              <>
+                <TextField
+                  label="Email"
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  value={values.email}
+                  name="email"
+                  error={Boolean(touched.email) && Boolean(errors.email)}
+                  helperText={touched.email && errors.email}
+                  sx={{ gridColumn: "span 4" }}
+                />
               </>
             )}
 
-            <TextField
-              label="Email"
-              onBlur={handleBlur}
-              onChange={handleChange}
-              value={values.email}
-              name="email"
-              error={Boolean(touched.email) && Boolean(errors.email)}
-              helperText={touched.email && errors.email}
-              sx={{ gridColumn: "span 4" }}
-            />
-            <TextField
-              label="Password"
-              type="password"
-              onBlur={handleBlur}
-              onChange={handleChange}
-              value={values.password}
-              name="password"
-              error={Boolean(touched.password) && Boolean(errors.password)}
-              helperText={touched.password && errors.password}
-              sx={{ gridColumn: "span 4" }}
-            />
+            {isLogin && (<>
+              <TextField
+                label="Email"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                value={values.email}
+                name="email"
+                error={Boolean(touched.email) && Boolean(errors.email)}
+                helperText={touched.email && errors.email}
+                sx={{ gridColumn: "span 4" }}
+              />
+              <TextField
+                label="Password"
+                type="password"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                value={values.password}
+                name="password"
+                error={Boolean(touched.password) && Boolean(errors.password)}
+                helperText={touched.password && errors.password}
+                sx={{ gridColumn: "span 4" }}
+              /></>
+            )}
           </Box>
 
           {/* BUTTONS */}
@@ -232,7 +296,7 @@ const Form = () => {
                 "&:hover": { color: palette.primary.main },
               }}
             >
-              {isLogin ? "LOGIN" : "REGISTER"}
+              {isLogin ? "LOGIN" : isForgotPassword ? "reset password" : "REGISTER"}
             </Button>
             <Typography
               onClick={() => {
@@ -252,6 +316,24 @@ const Form = () => {
                 ? "Don't have an account? Sign Up here."
                 : "Already have an account? Login here."}
             </Typography>
+            {isLogin && (
+              <Typography
+                onClick={() => {
+                  setPageType("forgotPassword");
+                  resetForm();
+                }}
+                sx={{
+                  textDecoration: "underline",
+                  color: palette.primary.main,
+                  "&:hover": {
+                    cursor: "pointer",
+                    color: palette.primary.light,
+                  },
+                }}
+              >
+                Forgot password?
+              </Typography>
+            )}
           </Box>
         </form>
       )}

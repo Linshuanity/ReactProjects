@@ -9,6 +9,7 @@ import { CssBaseline, ThemeProvider } from "@mui/material";
 import { createTheme } from "@mui/material/styles";
 import { themeSettings } from "./theme";
 import { MessageProvider, useMessage } from 'components/MessageContext';
+import ResetPassword from "scenes/loginPage/ResetPassword";
 
 const Message = () => {
   const { message, isVisible } = useMessage();
@@ -47,6 +48,7 @@ function App() {
                 path="/profile/:userId"
                 element={isAuth ? <ProfilePage /> : <Navigate to="/" />}
               />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
             </Routes>
           </ThemeProvider>
         </BrowserRouter>
