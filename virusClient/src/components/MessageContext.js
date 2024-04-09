@@ -7,10 +7,10 @@ export const MessageProvider = ({ children }) => {
   const [message, setMessage] = useState('');
   const [isVisible, setIsVisible] = useState(false);
 
-  const showMessage = (msg) => {
+  const showMessage = (msg, timeout) => {
     setMessage(msg);
     setIsVisible(true);
-    setTimeout(() => setIsVisible(false), 3000); // 3秒后隐藏消息
+    setTimeout(() => setIsVisible(false), timeout); // 3秒后隐藏消息
   };
 
   return (

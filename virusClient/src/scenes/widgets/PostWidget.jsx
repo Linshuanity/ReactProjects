@@ -181,9 +181,8 @@ const PostWidget = ({
     const update = await response.json();
     if (!isLiked)
     {
-        // showRewardValue(update.reward);
         if(update.reward > 0)
-          showMessage('You made ' + update.reward + ' virus' );
+          showMessage('You made ' + update.reward + ' virus', 3000);
     }
     setLikes(likesCount + (isLiked ? -1 : 1));
     setLiked(!isLiked);
@@ -209,13 +208,6 @@ const PostWidget = ({
     copyToClipboard(shareURL);
   }
 
-  const showRewardValue = (reward) => {
-    setRewardValue(reward);
-    setTimeout(() => {
-      setRewardValue(0);
-    }, 1000); // 1000 milliseconds = 1 second
-  };
-
   function copyToClipboard(text) {
     const textarea = document.createElement('textarea');
     textarea.value = text;
@@ -223,6 +215,7 @@ const PostWidget = ({
     textarea.select();
     document.execCommand('copy');
     document.body.removeChild(textarea);
+    showMessage('Url copied to clipboard.', 1000);
   }
 
   function formatTimeLeft(time) {
