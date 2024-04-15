@@ -88,7 +88,7 @@ const LiveSearch = ({
           value={defaultValue}
           onChange={handleChange}
           type="text"
-          style={{ border: 'none', outline: 'none', resize: 'none', backgroundColor: 'transparent' }}
+          style={{ border: 'none', outline: 'none', resize: 'none', backgroundColor: 'transparent', color: 'grey' }}
           placeholder="Search your query..."
         />
 

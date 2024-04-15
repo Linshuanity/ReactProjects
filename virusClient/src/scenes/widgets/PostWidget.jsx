@@ -87,6 +87,10 @@ const PostWidget = ({
           is_bid: loggedInUserId !== owner_id }),
     });
     const update = await response.json();
+    if (update.status == 'ok')
+    {
+        setMyBid(bid);
+    }
     setConfirmationState(false);
   }
 
@@ -187,8 +191,12 @@ const PostWidget = ({
           showMessage('You made ' + update.reward + ' virus', 3000);
     }
   };
-  
+
   const patchCommentLike = async (index, commentIsLiked, cid, c_isLiked) => {
+    const updatedCommentList = commentList.map((comment, i) =>
+      i === index ? { ...comment, isLiked:!commentIsLiked, likes: ((commentIsLiked ? -1 : 1) + comment.likes)} : comment
+    );
+    setCommentList(updatedCommentList);
     const response = await fetch(`http://localhost:3002/posts/commentlike`, {
       method: "POST",
       headers: {
@@ -197,10 +205,6 @@ const PostWidget = ({
       body: JSON.stringify({ liker_id: loggedInUserId, comment_id: cid, is_liked: c_isLiked }),
     });
     const update = await response.json();
-    const updatedCommentList = commentList.map((comment, i) =>
-      i === index ? { ...comment, isLiked:!commentIsLiked, likes: ((commentIsLiked ? -1 : 1) + comment.likes)} : comment
-    );
-    setCommentList(updatedCommentList);
   };
 
   const handleCopyToClipboard = () => {
@@ -374,7 +378,7 @@ const PostWidget = ({
               onClick={() => setConfirmationState(2)}
               disabled={bid <= 0}
             >
-              {(isSell ? 'Ask (' : 'Bid (') + my_bid + ')'}
+              {(isSell ? 'Ask (' : 'Bid (') + myBid + ')'}
             </Button>
             <InputBase
               type="number"

@@ -311,19 +311,12 @@ const selectUserPosts = (insertValues) => {
 };
 
 const addCommentlike = (liker_id, comment_id, is_liked) => {
-  return new Promise((resolve, reject) => {
-    connectionPool.getConnection((connectionError, connection) => {
-      if (connectionError) {
-        reject(connectionError);
-        return;
-      }
-
-      connection.beginTransaction(err => {
-        if (err) {
-          connection.release();
-          reject(err);
-          return;
-        }
+    return new Promise((resolve, reject) => {
+        connectionPool.getConnection((connectionError, connection) => {
+            if (connectionError) {
+                reject(connectionError);
+                return;
+            }
 
         const queries = is_liked ? [
           {
@@ -414,40 +407,61 @@ const addCommentlike = (liker_id, comment_id, is_liked) => {
           }
         ];
 
-        const executeQuery = (sql, params) => {
-          return new Promise((resolve, reject) => {
-            connection.query(sql, params, (error, result) => {
-              if (error) {
-                return reject(error);
-              }
-              resolve(result);
+        const executeQuery = async (query) => {
+            return new Promise((resolve, reject) => {
+                connection.query(query.sql, query.params, (error, result) => {
+                    if (error) {
+                        return reject(error);
+                    }
+                    resolve(result);
+                });
             });
-          });
         };
 
-        Promise.all(queries.map(query => executeQuery(query.sql, query.params)))
-          .then(results => {
-            connection.commit(err => {
-              if (err) {
-                connection.rollback(() => {
-                  connection.release();
-                  reject(err);
+        const executeQueriesWithTransaction = async (queries) => {
+            try {
+                await new Promise((resolve, reject) => {
+                    connection.beginTransaction((err) => {
+                        if (err) {
+                            return reject(err);
+                        }
+                        resolve();
+                    });
                 });
-                return;
-              }
-              connection.release();
-              resolve(results);
-            });
-          })
-          .catch(error => {
-            connection.rollback(() => {
-              connection.release();
-              reject(error);
-            });
-          });
-      });
+
+                const results = [];
+                for (const query of queries) {
+                    const result = await executeQuery(query);
+                    results.push(result);
+                }
+
+                await new Promise((resolve, reject) => {
+                    connection.commit((err) => {
+                        if (err) {
+                            return reject(err);
+                        }
+                        resolve();
+                    });
+                });
+
+                connection.release();
+                resolve({ results });
+            } catch (error) {
+                await new Promise((resolve, reject) => {
+                    connection.rollback(() => {
+                        connection.release();
+                        resolve();
+                    });
+                });
+                reject(error);
+            }
+        };
+
+        executeQueriesWithTransaction(queries)
+            .then((result) => resolve(result))
+            .catch((error) => reject(error));
     });
-  });
+});
 };
 
 const addUserLike = async (liker_id, post_id, is_liked) => {
@@ -646,98 +660,134 @@ const addUserLike = async (liker_id, post_id, is_liked) => {
 };
 
 const selectUserBids = (post_id) => {
-  return new Promise((resolve, reject) => {
-    connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
-      const query = `SELECT * FROM bids as b JOIN virus_platform_user as u on b.user_id = u.user_id WHERE b.post_id = ? and b.is_bid = 1 ORDER BY b.price DESC`;
-      if (connectionError) {
-        reject(connectionError); // 若連線有問題回傳錯誤
-      } else {
-        connection.query(query, [post_id], (error, result) => {
-            if (error) {
-              console.error('SQL error: ', error);
-              reject(error); // 寫入資料庫有問題時回傳錯誤
-
-            } else {
-              const jsonResponse = JSON.stringify(result);
-              resolve(jsonResponse);
+    return new Promise((resolve, reject) => {
+        connectionPool.getConnection((connectionError, connection) => {
+            if (connectionError) {
+                reject(connectionError);
+                return;
             }
-            connection.release();
-          }
-        );
-      }
+            const query = `SELECT * FROM bids as b 
+                            JOIN virus_platform_user as u on b.user_id = u.user_id 
+                            WHERE b.post_id = ? and b.is_bid = 1 
+                            ORDER BY b.price DESC`;
+
+            const params = [post_id]
+
+            connection.query(query, params, (error, result) => {
+                if (error) {
+                  console.error('SQL error: ', error);
+                  reject(error); // 寫入資料庫有問題時回傳錯誤
+
+                } else {
+                  const jsonResponse = JSON.stringify(result);
+                  resolve(jsonResponse);
+                }
+                connection.release();
+            });
+        });
     });
-  });
 };
 
 const addUserBid = (user_id, post_id, price, is_bid) => {
-  return new Promise((resolve, reject) => {
-    connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
-      if (connectionError) {
-        reject(connectionError); // 若連線有問題回傳錯誤
-      } else {
-        const queries = [
-          {
-            sql: `INSERT INTO bids (user_id, post_id, is_bid, price) SELECT ?, ?, ?, ?
-                    WHERE ? <= (SELECT virus FROM virus_platform_user WHERE user_id = ?) or ? = False
-                    ON DUPLICATE KEY UPDATE price = ?, create_time = DEFAULT`,
-            params: [user_id, post_id, is_bid, price, price, user_id, is_bid, price]
-          },
-          {
-            sql: `UPDATE posts p
-                SET
-                p.bid_user_id = (
-                    SELECT user_id
-                    FROM bids
-                    WHERE post_id = p.pid AND is_bid = true
-                    ORDER BY price DESC
-                    LIMIT 1
-                ),
-                p.bid_price = (
-                    SELECT MAX(price)
-                    FROM bids
-                    WHERE post_id = p.pid AND is_bid = true
-                ),
-                p.ask_price = (
-                    SELECT price
-                    FROM bids
-                    WHERE post_id = p.pid AND is_bid = false
-                )
-                WHERE p.pid = ?`,
-            params: [post_id]
-          }
-        ];
-
-          const results = []; // Array to store the results of each query
-
-          function executeQueries() {
-            const queryPromises = [];
-            for (const query of queries) {
-              const queryPromise = new Promise((resolve, reject) => {
-                connection.query(query.sql, query.params, (error, result) => {
-                  if (error) {
-                    reject(error); // If there is an error in any query, reject with the error
-                  } else {
-                    results.push(result); // Store the result of the current query
-                    resolve(); // Resolve the Promise after successful query execution
-                  }
-                });
-              });
-              queryPromises.push(queryPromise);
+    return new Promise((resolve, reject) => {
+        connectionPool.getConnection((connectionError, connection) => {
+            if (connectionError) {
+                reject(connectionError);
+                return;
             }
+            const queries = [
+                {
+                    sql: `INSERT INTO bids (user_id, post_id, is_bid, price) SELECT ?, ?, ?, ?
+                        WHERE ? <= (SELECT virus FROM virus_platform_user WHERE user_id = ?) or ? = False
+                        ON DUPLICATE KEY UPDATE price = ?, create_time = DEFAULT`,
+                    params: [user_id, post_id, is_bid, price, price, user_id, is_bid, price]
+                },
+                {
+                    sql: `UPDATE posts p
+                        SET
+                        p.bid_user_id = (
+                            SELECT user_id
+                            FROM bids
+                            WHERE post_id = p.pid AND is_bid = true
+                            ORDER BY price DESC
+                            LIMIT 1
+                        ),
+                        p.bid_price = (
+                            SELECT MAX(price)
+                            FROM bids
+                            WHERE post_id = p.pid AND is_bid = true
+                        ),
+                        p.ask_price = (
+                            SELECT price
+                            FROM bids
+                            WHERE post_id = p.pid AND is_bid = false
+                        )
+                        WHERE p.pid = ?`,
+                    params: [post_id]
+                }
+            ];
+            const executeQuery = async (query) => {
+                return new Promise((resolve, reject) => {
+                    connection.query(query.sql, query.params, (error, result) => {
+                        if (error) {
+                            return reject(error);
+                        }
+                        resolve(result);
+                    });
+                });
+            };
 
-            // Use Promise.all to wait for all queries to complete
-            Promise.all(queryPromises)
-              .then(() => {
-                resolve(results); // All queries have been executed successfully
-              })
-              .catch((error) => {
-                reject(error); // If any query encounters an error, reject with the error
-              });
-          }
-          executeQueries();
-      }
+            const executeQueriesWithTransaction = async (queries) => {
+                try {
+                    await new Promise((resolve, reject) => {
+                        connection.beginTransaction((err) => {
+                            if (err) {
+                                return reject(err);
+                            }
+                            resolve();
+                        });
+                    });
+
+                    const results = [];
+                    for (const query of queries) {
+                        const result = await executeQuery(query);
+                        if (result.affectedRows > 0) {
+                            results.push(result);
+                        }
+                    }
+                    if (results.length == 2)
+                    {
+                        await new Promise((resolve, reject) => {
+                            connection.commit((err) => {
+                                if (err) {
+                                    return reject(err);
+                                }
+                                resolve();
+                            });
+                        });
+                        resolve({"status" : "ok"});
+                    }
+                    else
+                    {
+                        resolve({"status" : "bad"});
+                    } 
+                    connection.release();
+                } catch (error) {
+                    await new Promise((resolve, reject) => {
+                        connection.rollback(() => {
+                            connection.release();
+                            resolve();
+                        });
+                    });
+                    reject(error);
+                }
+            };
+
+            executeQueriesWithTransaction(queries)
+                .then((result) => resolve(result))
+                .catch((error) => reject(error));
+        });
     });
-  });
 };
 
 const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
@@ -851,51 +901,77 @@ const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
 };
 
 const addUserComment = (user_id, post_id, context) => {
-  return new Promise((resolve, reject) => {
-    connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
-        const insertQuery = `INSERT INTO comments VALUES (DEFAULT, ${user_id}, ${post_id}, "${context}" , DEFAULT, DEFAULT)`;
-      if (connectionError) {
-        reject(connectionError); // 若連線有問題回傳錯誤
-      } else {
-        connection.query(insertQuery,[user_id, post_id, context], (error, result) => {
-            if (error) {
-              console.error('SQL error: ', error);
-              reject(error); // 寫入資料庫有問題時回傳錯誤
-
-            } else {
-              const cid = result.insertId; // Get the last inserted ID
-              console.log("cid: "+ cid);
-              const update_query = `UPDATE posts SET comments = comments + 1 WHERE pid = ${post_id}`;
-              // Assuming you have another query to execute here
-              connection.query(update_query,
-                (error, result) => {
-                  if (error) {
-                    console.error('Second query error:', error);
-                    connection.rollback(() => {
-                      reject(error);
-                    });
-                  } else {
-                    connection.commit((err) => {
-                      if (err) {
-                        console.error('Commit error:', err);
-                        connection.rollback(() => {
-                          reject(err);
-                        });
-                      } else {
-                        const jsonResponse = { cid: cid};
-                        resolve(jsonResponse);
-                      }
-                    });
-                  }
-                }
-              );
+    return new Promise((resolve, reject) => {
+        connectionPool.getConnection((connectionError, connection) => {
+            if (connectionError) {
+                reject(connectionError);
+                return;
             }
-            connection.release();
-          }
-        );
-      }
+            const queries = [
+              {
+                sql: `INSERT INTO comments VALUES (DEFAULT, ?, ?, "?" , DEFAULT, DEFAULT)`,
+                params: [user_id, post_id, context]
+              },
+              {
+                sql: `UPDATE posts SET comments = comments + 1 WHERE pid = ?`,
+                params: [post_id]
+              }
+            ]
+            const executeQuery = async (query) => {
+                return new Promise((resolve, reject) => {
+                    connection.query(query.sql, query.params, (error, result) => {
+                        if (error) {
+                            return reject(error);
+                        }
+                        resolve(result);
+                    });
+                });
+            };
+
+            const executeQueriesWithTransaction = async (queries) => {
+                try {
+                    await new Promise((resolve, reject) => {
+                        connection.beginTransaction((err) => {
+                            if (err) {
+                                return reject(err);
+                            }
+                            resolve();
+                        });
+                    });
+
+                    const results = [];
+                    for (const query of queries) {
+                        const result = await executeQuery(query);
+                        results.push(result);
+                    }
+
+                    await new Promise((resolve, reject) => {
+                        connection.commit((err) => {
+                            if (err) {
+                                return reject(err);
+                            }
+                            resolve();
+                        });
+                    });
+
+                    connection.release();
+                    resolve({ results });
+                } catch (error) {
+                    await new Promise((resolve, reject) => {
+                        connection.rollback(() => {
+                            connection.release();
+                            resolve();
+                        });
+                    });
+                    reject(error);
+                }
+            };
+
+            executeQueriesWithTransaction(queries)
+                .then((result) => resolve(result))
+                .catch((error) => reject(error));
+        });
     });
-  });
 };
 
 const selectUserComments = (user_id, post_id) => {
