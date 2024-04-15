@@ -171,6 +171,8 @@ const PostWidget = ({
   };
 
   const patchLike = async () => {
+    setLikes(likesCount + (isLiked ? -1 : 1));
+    setLiked(!isLiked);
     const response = await fetch(`http://localhost:3002/posts/like`, {
       method: "POST",
       headers: {
@@ -184,8 +186,6 @@ const PostWidget = ({
         if(update.reward > 0)
           showMessage('You made ' + update.reward + ' virus', 3000);
     }
-    setLikes(likesCount + (isLiked ? -1 : 1));
-    setLiked(!isLiked);
   };
   
   const patchCommentLike = async (index, commentIsLiked, cid, c_isLiked) => {
