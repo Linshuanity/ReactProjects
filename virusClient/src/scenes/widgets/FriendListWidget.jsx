@@ -50,7 +50,7 @@ const FriendListWidget = ({ userId }) => {
         fontWeight="500"
         sx={{ mb: "1.5rem" }}
       >
-        Friends
+        Following
       </Typography>
       <Box display="flex" flexDirection="column" gap="1.5rem">
         {friendDiv}
