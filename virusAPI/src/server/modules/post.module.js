@@ -767,10 +767,30 @@ const addUserBid = (user_id, post_id, price, is_bid) => {
             }
             const queries = [
                 {
+                    sql: `UPDATE virus_platform_user
+                        SET virus = virus + COALESCE((SELECT price FROM bids WHERE user_id = ? 
+                                                        AND post_id = ?
+                                                        AND is_bid = True), 0)
+                        WHERE user_id = ?`,
+                    params: [user_id, post_id, user_id]
+                },
+                {
+                    sql: `DELETE FROM bids WHERE user_id = ? AND post_id = ? AND is_bid = True`,
+                    params: [user_id, post_id]
+                },
+                {
                     sql: `INSERT INTO bids (user_id, post_id, is_bid, price) SELECT ?, ?, ?, ?
                         WHERE ? <= (SELECT virus FROM virus_platform_user WHERE user_id = ?) or ? = False
                         ON DUPLICATE KEY UPDATE price = ?, create_time = DEFAULT`,
                     params: [user_id, post_id, is_bid, price, price, user_id, is_bid, price]
+                },
+                {
+                    sql: `UPDATE virus_platform_user
+                        SET virus = virus - (SELECT price FROM bids WHERE user_id = ? 
+                                                        AND post_id = ?
+                                                        AND is_bid = True)
+                        WHERE user_id = ?`,
+                    params: [user_id, post_id, user_id]
                 },
                 {
                     sql: `UPDATE posts p
@@ -825,7 +845,7 @@ const addUserBid = (user_id, post_id, price, is_bid) => {
                             results.push(result);
                         }
                     }
-                    if (results.length == 2)
+                    if (results.length >= 2)
                     {
                         await new Promise((resolve, reject) => {
                             connection.commit((err) => {
@@ -860,101 +880,155 @@ const addUserBid = (user_id, post_id, price, is_bid) => {
     });
 };
 
-const transfer_post = async (traderId, postId, userId, forSell, price) => {
-  const sellerId = forSell ? traderId : userId;
-  const buyerId = forSell ? userId : traderId;
-  console.log(`seller_id: ${sellerId}, buyer_id: ${buyerId}, post_id: ${postId}, for_sell: ${forSell}, price: ${price}, user_id: ${userId}, trader_id: ${traderId}`);
+const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
+    return new Promise((resolve, reject) => {
+        connectionPool.getConnection((connectionError, connection) => {
+            if (connectionError) {
+                reject(connectionError);
+                return;
+            }
+            const seller_id = for_sell ? trader_id : user_id;
+            const buyer_id = for_sell ? user_id : trader_id;
+            const queries = [
+              {
+                sql: `DELETE FROM bids
+                        WHERE user_id = ?
+                        AND post_id = ?
+                        AND (? <= (SELECT virus FROM virus_platform_user WHERE user_id = ?) OR ? = True)
+                        AND EXISTS (
+                          SELECT 1
+                          FROM posts
+                          WHERE pid = ?
+                            AND is_bid = ?
+                            AND price = ?
+                        )`,
+                params: [user_id, post_id, price, trader_id, for_sell, post_id, for_sell, price],
+                need_change: true
+              },
+              {
+                sql: `UPDATE virus_platform_user SET virus = virus - ? WHERE user_id = ?`,
+                params: [price, buyer_id],
+                need_change: true
+              },
+              {
+                sql: `UPDATE virus_platform_user SET virus = virus + ? WHERE user_id = ?`,
+                params: [price, seller_id],
+                need_change: true
+              },
+              {
+                sql: `UPDATE posts p
+                  LEFT JOIN (
+                      SELECT post_id, price, user_id
+                      FROM bids
+                      WHERE post_id = ? AND is_bid = true
+                      ORDER BY price DESC
+                      LIMIT 1
+                  ) b ON p.pid = b.post_id
+                  SET p.bid_price = b.price, p.bid_user_id = b.user_id, p.owner_uid = ? where p.pid = ?`,
+                params: [post_id, buyer_id, post_id],
+                need_change: true
+              },
+              {
+                sql: `DELETE FROM bids
+                  WHERE post_id = ? AND is_bid = false`,
+                params: [post_id],
+                need_change: false
+              },
+              {
+                sql: `UPDATE posts SET ask_price = 0
+                  WHERE pid = ?`,
+                params: [post_id],
+                need_change: false
+              }
+            ];
 
-  const connection = await getConnection();
-  try {
-    await connection.beginTransaction();
+            const parallelQueries = [
+              {
+                sql: `UPDATE virus_platform_user SET user_buy_post_count = user_buy_post_count + 1 WHERE user_id = ?`,
+                params: [buyerId]
+              },
+              {
+                sql: `UPDATE virus_platform_user SET user_sell_post_count = user_sell_post_count + 1 WHERE user_id = ?`,
+                params: [sellerId]
+              },
+              {
+                sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
+                  SELECT ?, 7, NOW(), 1, NOW()
+                  ON DUPLICATE KEY UPDATE value = value + 1, last_update_time = NOW()`,
+                params: [buyerId]
+              },
+              {
+                sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
+                  SELECT ?, 8, NOW(), 1, NOW()
+                  ON DUPLICATE KEY UPDATE value = value + 1, last_update_time = NOW()`,
+                params: [sellerId]
+              }
+            ];
 
-    const isBid = forSell ? true : false;
-    const queries = [
-      {
-        sql: `DELETE FROM bids
-              WHERE user_id = ?
-                AND post_id = ?
-                AND EXISTS (
-                  SELECT 1
-                  FROM posts
-                  WHERE pid = ?
-                    AND is_bid = ?
-                    AND price = ?
-                )`,
-        params: [userId, postId, postId, isBid, price]
-      },
-      {
-        sql: `UPDATE virus_platform_user SET virus = virus - ? WHERE user_id = ?`,
-        params: [price, buyerId]
-      },
-      {
-        sql: `UPDATE virus_platform_user SET virus = virus + ? WHERE user_id = ?`,
-        params: [price, sellerId]
-      },
-      {
-        sql: `UPDATE posts p
-          LEFT JOIN (
-              SELECT post_id, price, user_id
-              FROM bids
-              WHERE post_id = ? AND is_bid = true
-              ORDER BY price DESC
-              LIMIT 1
-          ) b ON p.pid = b.post_id
-          SET p.bid_price = b.price, p.bid_user_id = b.user_id, p.owner_uid = ? 
-          WHERE p.pid = ?`,
-        params: [postId, buyerId, postId]
-      }
-    ];
+            const executeQuery = async (query) => {
+                return new Promise((resolve, reject) => {
+                    connection.query(query.sql, query.params, (error, result) => {
+                        if (error) {
+                            return reject(error);
+                        }
+                        const affectedRows = result.affectedRows;
+                        if (affectedRows === 0 && query.need_change) {
+                            return reject("no change");
+                        }
+                        resolve(result);
+                    });
+                });
+            };
 
-    for (const query of queries) {
-      await connection.query(query.sql, query.params);
-    }
+            const executeQueriesWithTransaction = async (queries) => {
+                try {
+                    await new Promise((resolve, reject) => {
+                        connection.beginTransaction((err) => {
+                            if (err) {
+                                return reject(err);
+                            }
+                            resolve();
+                        });
+                    });
 
-    const parallelQueries = [
-      {
-        sql: `DELETE FROM bids WHERE post_id = ? AND is_bid = false`,
-        params: [postId]
-      },
-      {
-        sql: `UPDATE posts SET ask_price = 0 WHERE pid = ?`,
-        params: [postId]
-      },
-      {
-        sql: `UPDATE virus_platform_user SET user_buy_post_count = user_buy_post_count + 1 WHERE user_id = ?`,
-        params: [buyerId]
-      },
-      {
-        sql: `UPDATE virus_platform_user SET user_sell_post_count = user_sell_post_count + 1 WHERE user_id = ?`,
-        params: [sellerId]
-      },
-      {
-        sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
-          SELECT ?, 7, NOW(), 1, NOW()
-          ON DUPLICATE KEY UPDATE value = value + 1, last_update_time = NOW()`,
-        params: [buyerId]
-      },
-      {
-        sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
-          SELECT ?, 8, NOW(), 1, NOW()
-          ON DUPLICATE KEY UPDATE value = value + 1, last_update_time = NOW()`,
-        params: [sellerId]
-      }
-    ];
+                    // Execute sequential queries
+                    const results = [];
+                    for (const query of queries) {
+                        const result = await executeQuery(query);
+                        results.push(result);
+                    }
 
-    await Promise.all(parallelQueries.map(query =>
-      connection.query(query.sql, query.params)
-    ));
+                    // Execute parallel queries
+                    const parallelPromises = parallelQueries.map(query => executeQuery(query));
+                    const parallelResults = await Promise.all(parallelPromises);
 
-    await connection.commit();
-    console.log('Transaction committed successfully.');
-  } catch (error) {
-    await connection.rollback();
-    console.error('Transaction rolled back:', error);
-    throw error;
-  } finally {
-    connection.release();
-  }
+                    await new Promise((resolve, reject) => {
+                        connection.commit((err) => {
+                            if (err) {
+                                return reject(err);
+                            }
+                            resolve();
+                        });
+                    });
+
+                    connection.release();
+                    resolve({ results });
+                } catch (error) {
+                    await new Promise((resolve, reject) => {
+                        connection.rollback(() => {
+                            connection.release();
+                            resolve();
+                        });
+                    });
+                    reject(error);
+                }
+            };
+
+            executeQueriesWithTransaction(queries)
+                .then((result) => resolve(result))
+                .catch((error) => reject(error));
+        });
+    });
 };
 
 const addUserComment = (user_id, post_id, context) => {

@@ -87,6 +87,7 @@ const PostWidget = ({
           is_bid: loggedInUserId !== owner_id }),
     });
     const update = await response.json();
+    console.log(update);
     if (update.status == 'ok')
     {
         setMyBid(bid);
@@ -125,7 +126,6 @@ const PostWidget = ({
   };
 
   const purchaseAction = async () => {
-
     const response = await fetch(`http://localhost:3002/posts/purchase`, {
       method: "POST",
       headers: {
@@ -134,7 +134,7 @@ const PostWidget = ({
       body: JSON.stringify({ 
           trader_id: loggedInUserId, 
           post_id: postId, 
-          user_id: bid_user_id,
+          user_id: isSell ? bid_user_id : owner_id,
           for_sell: isSell,
           price: price }),
     });
