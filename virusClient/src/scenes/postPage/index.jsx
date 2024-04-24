@@ -51,7 +51,7 @@ const PostPage = () => {
           {post == null ? '' : post.map((_post) => (
             <PostWidget
               key={_post.pid}
-              _post_id={_post.pid}
+              post_id={_post.pid}
               owner_id={_post.owner_uid}
               owner_name={_post.owner_name}
               owner_profile={_post.owner_profile}

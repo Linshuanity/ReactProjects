@@ -101,7 +101,7 @@ export const userComment = async (req, res, next) => {
 
 export const userComments = async (req, res, next) => {
   try {
-    console.log("req.body.user_id: "+req.body.user_id+"   req.body.post_id: "+ req.body.post_id);
+    console.log("req.body.user_id: " + req.body.user_id + "   req.body.post_id: " + req.body.post_id);
     const result = await selectUserComments(req.body.user_id, req.body.post_id);
     // const result = await selectUserComments(req.body.user_id, req.body.post_id);
     res.send(result);
@@ -222,7 +222,7 @@ const createPost = (insertValues) => {
 const selectUserPost = (insertValues) => {
   return new Promise((resolve, reject) => {
     connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
-    const query = `
+      const query = `
         SELECT DISTINCT p.*,
                v1.user_name AS owner_name,
                v1.user_image_path AS owner_profile,
@@ -241,18 +241,18 @@ const selectUserPost = (insertValues) => {
       if (connectionError) {
         reject(connectionError); // 若連線有問題回傳錯誤
       } else {
-        connection.query(query,queryParams, (error, result) => {
-            if (error) {
-              console.error('SQL error: ', error);
-              reject(error); // 寫入資料庫有問題時回傳錯誤
-            } else if (Object.keys(result).length === 0) {
-              resolve(`{"status":"error", "msg":"post not found"}`);
-            } else {
-              const jsonResponse = JSON.stringify(result);
-              resolve(jsonResponse);
-            }
-            connection.release();
+        connection.query(query, queryParams, (error, result) => {
+          if (error) {
+            console.error('SQL error: ', error);
+            reject(error); // 寫入資料庫有問題時回傳錯誤
+          } else if (Object.keys(result).length === 0) {
+            resolve(`{"status":"error", "msg":"post not found"}`);
+          } else {
+            const jsonResponse = JSON.stringify(result);
+            resolve(jsonResponse);
           }
+          connection.release();
+        }
         );
       }
     });
@@ -325,6 +325,7 @@ const addCommentlike = (liker_id, comment_id, is_liked) => {
           return;
         }
 
+        try {
         const queries = is_liked ? [
           {
             sql: `UPDATE comments SET likes = likes - 1 WHERE cid = ? AND EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = ? AND liker_id = ?)`,
@@ -352,6 +353,10 @@ const addCommentlike = (liker_id, comment_id, is_liked) => {
             params: [liker_id, liker_id, comment_id, liker_id]
           },
           {
+            sql: `UPDATE comments SET likes = likes + 1 WHERE cid = ? AND NOT EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = ? AND liker_id = ?)`,
+            params: [comment_id, comment_id, liker_id]
+          },
+          {
             sql: `UPDATE virus_platform_user SET user_total_likes_count = user_total_likes_count + 1 WHERE user_id = ?`,
             params: [liker_id]
           },
@@ -360,8 +365,13 @@ const addCommentlike = (liker_id, comment_id, is_liked) => {
             params: [comment_id]
           },
           {
-            sql: `UPDATE comments SET likes = likes + 1 WHERE cid = ? AND NOT EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = ? AND liker_id = ?)`,
-            params: [comment_id, comment_id, liker_id]
+            sql: `UPDATE virus_platform_user SET user_most_liked_count = 
+            CASE WHEN (SELECT likes FROM comments WHERE cid = ?) > user_most_liked_count
+                  THEN (SELECT likes FROM comments WHERE cid = ?)
+                  ELSE user_most_liked_count
+            END
+            WHERE user_id = (SELECT user_id FROM comments WHERE cid = ?)`,
+            params: [comment_id, comment_id, comment_id]
           },
           {
             sql: `INSERT INTO accounting (from_id, to_id, amount, type) SELECT 0, ?, 1, 0 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = ? AND liker_id = ?)`,
@@ -411,6 +421,29 @@ const addCommentlike = (liker_id, comment_id, is_liked) => {
                   )
               )`,
             params: [comment_id, comment_id, comment_id, comment_id]
+          },
+          {
+            tag: "ADD_ACH_3",
+            sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time) 
+            SELECT 
+              (SELECT user_id FROM comments WHERE cid = ?) AS user_id, 
+              9 AS achievement_id, 
+              NOW() AS create_time, 
+              (SELECT user_most_liked_count FROM virus_platform_user 
+                WHERE user_id = (SELECT user_id FROM comments WHERE cid = ?)
+              ) AS value, 
+              NOW() AS last_update_time 
+            FROM DUAL 
+            WHERE NOT EXISTS (
+                SELECT 1 FROM user_achievement WHERE 
+                  user_id = (SELECT user_id FROM comments WHERE cid = ?) 
+                  AND achievement_id = 9 
+                  AND value >= (
+                    SELECT user_most_liked_count FROM virus_platform_user 
+                    WHERE user_id = (SELECT user_id FROM comments WHERE cid = ?)
+                  )
+              )`,
+            params: [comment_id, comment_id, comment_id, comment_id]
           }
         ];
 
@@ -445,110 +478,126 @@ const addCommentlike = (liker_id, comment_id, is_liked) => {
               reject(error);
             });
           });
+        } catch (error) {
+          connection.rollback(() => {
+            connection.release();
+            reject(error);
+          });
+        }
       });
     });
   });
 };
 
 const addUserLike = async (liker_id, post_id, is_liked) => {
-    return new Promise((resolve, reject) => {
-        connectionPool.getConnection((connectionError, connection) => {
-            if (connectionError) {
-                reject(connectionError);
-                return;
-            }
+  return new Promise((resolve, reject) => {
+    connectionPool.getConnection((connectionError, connection) => {
+      if (connectionError) {
+        reject(connectionError);
+        return;
+      }
 
-            const rand = Math.random();
-            let reward = 0;
-            if (rand > 0.7)
-                reward = 2;
-            else if (rand > 0.3)
-                reward = 1;
+      const rand = Math.random();
+      let reward = 0;
+      if (rand > 0.7)
+        reward = 2;
+      else if (rand > 0.3)
+        reward = 1;
 
-            const queries = is_liked ? [
-              {
-                tag: "SUB_LK",
-                sql: `UPDATE posts SET likes = likes - 1
+      const queries = is_liked ? [
+        {
+          tag: "SUB_LK",
+          sql: `UPDATE posts SET likes = likes - 1
                         WHERE pid = ? AND EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
-                params: [post_id, post_id, liker_id]
-              },
-              {
-                tag: "DEL_LK",
-                sql: `DELETE from likes WHERE post_id = ? and liker_id = ?`,
-                params: [post_id, liker_id]
-              }
-            ] : [
-              {
-                tag: "UP_ACH",
-                sql: `UPDATE user_achievement
+          params: [post_id, post_id, liker_id]
+        },
+        {
+          tag: "DEL_LK",
+          sql: `DELETE from likes WHERE post_id = ? and liker_id = ?`,
+          params: [post_id, liker_id]
+        }
+      ] : [
+        {
+          tag: "UP_ACH",
+          sql: `UPDATE user_achievement
                 SET value = value + 1, last_update_time = NOW()
                 WHERE user_id = ? AND achievement_id = 1 AND DATE(last_update_time) = DATE(CURDATE() - INTERVAL 1 DAY)
                 AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
-                params: [liker_id, post_id, liker_id]
-              },
-              {
-                tag: "ADD_ACH",
-                sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
+          params: [liker_id, post_id, liker_id]
+        },
+        {
+          tag: "ADD_ACH",
+          sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
                 SELECT ?, 1, NOW(), 1, NOW()
                 WHERE NOT EXISTS (
                     SELECT 1 FROM user_achievement
                     WHERE user_id = ? AND achievement_id = 1 AND DATE(last_update_time) = DATE(CURDATE())
                 ) AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
-                params: [liker_id, liker_id, post_id, liker_id]
-              },
-              {
-                tag: "ADD_LK",
-                sql: `UPDATE posts SET likes = likes + 1
+          params: [liker_id, liker_id, post_id, liker_id]
+        },
+        {
+          tag: "ADD_LK",
+          sql: `UPDATE posts SET likes = likes + 1
                         WHERE pid = ? AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
-                params: [post_id, post_id, liker_id]
-              },
-              {
-                tag: "ADD_LK_CNT1",
-                sql: `UPDATE virus_platform_user SET user_total_likes_count = user_total_likes_count + 1 WHERE user_id = ?`,
-                params: [liker_id]
-              },
-              {
-                tag: "ADD_LK_CNT2",
-                sql: `UPDATE virus_platform_user SET user_total_liked_count = user_total_liked_count + 1 WHERE user_id = (SELECT author_uid FROM posts WHERE pid = ?)`,
-                params: [post_id]
-              },
-              {
-                tag: "UP_ACC",
-                sql: `INSERT INTO accounting (from_id, to_id, amount, type) SELECT 0, ?, ?, 0 FROM DUAL
+          params: [post_id, post_id, liker_id]
+        },
+        {
+          tag: "ADD_LK_CNT1",
+          sql: `UPDATE virus_platform_user SET user_total_likes_count = user_total_likes_count + 1 WHERE user_id = ?`,
+          params: [liker_id]
+        },
+        {
+          tag: "ADD_LK_CNT2",
+          sql: `UPDATE virus_platform_user SET user_total_liked_count = user_total_liked_count + 1 WHERE user_id = (SELECT author_uid FROM posts WHERE pid = ?)`,
+          params: [post_id]
+        },
+        {
+          tag: "ADD_LK_CNT3",
+          sql: `UPDATE virus_platform_user SET user_most_liked_count = 
+            CASE WHEN (SELECT likes FROM posts WHERE pid = ?) > user_most_liked_count
+                  THEN (SELECT likes FROM posts WHERE pid = ?)
+                  ELSE user_most_liked_count
+            END
+          WHERE user_id = (SELECT author_uid FROM posts WHERE pid = ?)`,
+          params: [post_id,post_id,post_id]
+        },
+        {
+          tag: "UP_ACC",
+          sql: `INSERT INTO accounting (from_id, to_id, amount, type) SELECT 0, ?, ?, 0 FROM DUAL
                         WHERE EXISTS (SELECT 1 FROM virus_platform_user AS liker
                                         WHERE liker.user_id = ? AND liker.daily_paid_likes > 0)
                             AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
-                params: [liker_id, reward, liker_id, post_id, liker_id]
-              },
-              {
-                // Note: Need two layers of select to avoid error.
-                tag: "ADD_VIR",
-                sql: `UPDATE virus_platform_user
+          params: [liker_id, reward, liker_id, post_id, liker_id]
+        },
+        {
+          // Note: Need two layers of select to avoid error.
+          tag: "ADD_VIR",
+          sql: `UPDATE virus_platform_user
                         SET virus = virus + ?
                         WHERE user_id = (SELECT owner_uid FROM posts WHERE pid = ?)
                             AND EXISTS (SELECT 1 FROM (SELECT user_id AS uid FROM virus_platform_user
                                         WHERE user_id = ? AND daily_paid_likes > 0) as X)
                             AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
-                params: [reward, post_id, liker_id, post_id, liker_id]
-              },
-              {
-                tag: "ADD_VIR2",
-                sql: `UPDATE virus_platform_user
+          params: [reward, post_id, liker_id, post_id, liker_id]
+        },
+        {
+          tag: "ADD_VIR2",
+          sql: `UPDATE virus_platform_user
                         SET virus = virus + ?, daily_paid_likes = daily_paid_likes - 1
                         WHERE user_id = ?
                             AND daily_paid_likes > 0
                             AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
-                params: [reward, liker_id, post_id, liker_id]
-              },
-              {
-                tag: "INS_LK",
-                sql: `INSERT INTO likes (liker_id, post_id) select ?, ? FROM DUAL
+          params: [reward, liker_id, post_id, liker_id]
+        },
+        {
+          tag: "INS_LK",
+          sql: `INSERT INTO likes (liker_id, post_id) select ?, ? FROM DUAL
                         WHERE NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
-                params: [liker_id, post_id, post_id, liker_id]
-              },
-              {
-                tag: "ADD_ACH",
-                sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
+          params: [liker_id, post_id, post_id, liker_id]
+        },
+        {
+          tag: "ADD_ACH_1",
+          sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
                 SELECT ?, 6, NOW(), (SELECT user_total_likes_count FROM virus_platform_user WHERE user_id = ?), NOW()
                 FROM DUAL
                 WHERE NOT EXISTS (
@@ -558,11 +607,11 @@ const addUserLike = async (liker_id, post_id, is_liked) => {
                     SELECT user_total_likes_count FROM virus_platform_user WHERE user_id = ?
                   )
                 )`,
-                params: [liker_id, liker_id, liker_id, liker_id]
-              },
-              {
-                tag: "ADD_ACH_2",
-                sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time) 
+          params: [liker_id, liker_id, liker_id, liker_id]
+        },
+        {
+          tag: "ADD_ACH_2",
+          sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time) 
                 SELECT 
                  (SELECT author_uid FROM posts WHERE pid = ?) AS user_id, 
                   5 AS achievement_id, 
@@ -581,68 +630,96 @@ const addUserLike = async (liker_id, post_id, is_liked) => {
                         WHERE user_id = (SELECT author_uid FROM posts WHERE pid = ?)
                       )
                   )`,
-                params: [post_id, post_id, post_id, post_id]
-              }
-            ];
+          params: [post_id, post_id, post_id, post_id]
+        },
+        {
+          tag: "ADD_ACH_3",
+          sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time) 
+                SELECT 
+                 (SELECT author_uid FROM posts WHERE pid = ?) AS user_id, 
+                  9 AS achievement_id, 
+                  NOW() AS create_time, 
+                  (SELECT user_most_liked_count FROM virus_platform_user 
+                    WHERE user_id = (SELECT author_uid FROM posts WHERE pid = ?)
+                  ) AS value, 
+                  NOW() AS last_update_time 
+                FROM DUAL 
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM user_achievement WHERE 
+                      user_id = (SELECT author_uid FROM posts WHERE pid = ?) 
+                      AND achievement_id = 9 
+                      AND value >= (
+                        SELECT user_most_liked_count FROM virus_platform_user 
+                        WHERE user_id = (SELECT author_uid FROM posts WHERE pid = ?)
+                      )
+                  )`,
+          params: [post_id, post_id, post_id, post_id]
+        }
+      ];
 
-            const executeQuery = async (query) => {
-                return new Promise((resolve, reject) => {
-                    connection.query(query.sql, query.params, (error, result) => {
-                        if (error) {
-                            return reject(error);
-                        }
-                        if (query.tag === "ADD_VIR" && result.affectedRows === 0) {
-                            reward = 0;
-                        }
-                        resolve(result);
-                    });
-                });
-            };
-
-            const executeQueriesWithTransaction = async (queries) => {
-                try {
-                    await new Promise((resolve, reject) => {
-                        connection.beginTransaction((err) => {
-                            if (err) {
-                                return reject(err);
-                            }
-                            resolve();
-                        });
-                    });
-
-                    const results = [];
-                    for (const query of queries) {
-                        const result = await executeQuery(query);
-                        results.push(result);
-                    }
-
-                    await new Promise((resolve, reject) => {
-                        connection.commit((err) => {
-                            if (err) {
-                                return reject(err);
-                            }
-                            resolve();
-                        });
-                    });
-
-                    connection.release();
-                    resolve({ results: results, reward: reward });
-                } catch (error) {
-                    await new Promise((resolve, reject) => {
-                        connection.rollback(() => {
-                            connection.release();
-                            resolve();
-                        });
-                    });
-                    reject(error);
-                }
-            };
-
-            executeQueriesWithTransaction(queries)
-                .then((result) => resolve(result))
-                .catch((error) => reject(error));
+      const executeQuery = async (query) => {
+        return new Promise((resolve, reject) => {
+          connection.query(query.sql, query.params, (error, result) => {
+            if (error) {
+              return reject(error);
+            }
+            if (query.tag === "ADD_VIR" && result.affectedRows === 0) {
+              reward = 0;
+            }
+            resolve(result);
+          });
         });
+      };
+
+      const executeQueriesWithTransaction = async (queries) => {
+        try {
+          await new Promise((resolve, reject) => {
+            connection.beginTransaction((err) => {
+              if (err) {
+                return reject(err);
+              }
+              connection.query("SET autocommit=0", (err) => {
+                if (err) {
+                  return reject(err);
+                }
+                resolve();
+              });
+            });
+          });
+
+          const results = [];
+          for (const query of queries) {
+            const result = await executeQuery(query);
+            results.push(result);
+          }
+
+          await new Promise((resolve, reject) => {
+            connection.commit((err) => {
+              if (err) {
+                return reject(err);
+              }
+              resolve();
+            });
+          });
+
+          connection.release();
+          resolve({ results: results, reward: reward });
+        } catch (error) {
+          await new Promise((resolve, reject) => {
+            connection.rollback(() => {
+              connection.release();
+              resolve();
+            });
+          });
+          reject(error);
+        }
+      };
+
+      executeQueriesWithTransaction(queries)
+        .then((result) => resolve(result))
+        .catch((error) => reject(error));
     });
+  });
 };
 
 const selectUserBids = (post_id) => {
@@ -653,16 +730,16 @@ const selectUserBids = (post_id) => {
         reject(connectionError); // 若連線有問題回傳錯誤
       } else {
         connection.query(query, [post_id], (error, result) => {
-            if (error) {
-              console.error('SQL error: ', error);
-              reject(error); // 寫入資料庫有問題時回傳錯誤
+          if (error) {
+            console.error('SQL error: ', error);
+            reject(error); // 寫入資料庫有問題時回傳錯誤
 
-            } else {
-              const jsonResponse = JSON.stringify(result);
-              resolve(jsonResponse);
-            }
-            connection.release();
+          } else {
+            const jsonResponse = JSON.stringify(result);
+            resolve(jsonResponse);
           }
+          connection.release();
+        }
         );
       }
     });
@@ -671,6 +748,7 @@ const selectUserBids = (post_id) => {
 
 const addUserBid = (user_id, post_id, price, is_bid) => {
   return new Promise((resolve, reject) => {
+    console.log("user_id: " + user_id + " post_id: " + post_id + " price: " + price + " is_bid: " + is_bid)
     connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
       if (connectionError) {
         reject(connectionError); // 若連線有問題回傳錯誤
@@ -707,119 +785,17 @@ const addUserBid = (user_id, post_id, price, is_bid) => {
           }
         ];
 
-          const results = []; // Array to store the results of each query
-
-          function executeQueries() {
-            const queryPromises = [];
-            for (const query of queries) {
-              const queryPromise = new Promise((resolve, reject) => {
-                connection.query(query.sql, query.params, (error, result) => {
-                  if (error) {
-                    reject(error); // If there is an error in any query, reject with the error
-                  } else {
-                    results.push(result); // Store the result of the current query
-                    resolve(); // Resolve the Promise after successful query execution
-                  }
-                });
-              });
-              queryPromises.push(queryPromise);
-            }
-
-            // Use Promise.all to wait for all queries to complete
-            Promise.all(queryPromises)
-              .then(() => {
-                resolve(results); // All queries have been executed successfully
-              })
-              .catch((error) => {
-                reject(error); // If any query encounters an error, reject with the error
-              });
-          }
-          executeQueries();
-      }
-    });
-  });
-};
-
-const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
-  const seller_id = for_sell ? trader_id : user_id;
-  const buyer_id = for_sell ? user_id : trader_id;
-  return new Promise((resolve, reject) => {
-    connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
-      if (connectionError) {
-        reject(connectionError); // 若連線有問題回傳錯誤
-      } else {
-        const is_bid = for_sell ? true : false;
-        const queries = [
-          {
-            sql: `DELETE FROM bids
-                    WHERE user_id = ?
-                    AND post_id = ?
-                    AND EXISTS (
-                      SELECT 1
-                      FROM posts
-                      WHERE pid = ?
-                        AND is_bid = ?
-                        AND price = ?
-                    )`,
-            params: [user_id, post_id, post_id, is_bid, price],
-            need_change: true
-          },
-          {
-            sql: `UPDATE virus_platform_user SET virus = virus - ? WHERE user_id = ?`,
-            params: [price, buyer_id],
-            need_change: true
-          },
-          {
-            sql: `UPDATE virus_platform_user SET virus = virus + ? WHERE user_id = ?`,
-            params: [price, seller_id],
-            need_change: true
-          },
-          {
-            sql: `UPDATE posts p
-              LEFT JOIN (
-                  SELECT post_id, price, user_id
-                  FROM bids
-                  WHERE post_id = ? AND is_bid = true
-                  ORDER BY price DESC
-                  LIMIT 1
-              ) b ON p.pid = b.post_id
-              SET p.bid_price = b.price, p.bid_user_id = b.user_id, p.owner_uid = ? where p.pid = ?`,
-            params: [post_id, buyer_id, post_id],
-            need_change: true
-          },
-          {
-            sql: `DELETE FROM bids
-              WHERE post_id = ? AND is_bid = false`,
-            params: [post_id],
-            need_change: false
-          },
-          {
-            sql: `UPDATE posts SET ask_price = 0
-              WHERE pid = ?`,
-            params: [post_id],
-            need_change: false
-          }
-        ];
-
-          const results = []; // Array to store the results of each query
+        const results = []; // Array to store the results of each query
 
         function executeQueries() {
           const queryPromises = [];
-          let allQueriesSuccessful = true; // Flag to track if all queries are successful
-
           for (const query of queries) {
             const queryPromise = new Promise((resolve, reject) => {
               connection.query(query.sql, query.params, (error, result) => {
                 if (error) {
-                  connection.rollback(() => {
-                    reject(commitError);
-                  });
                   reject(error); // If there is an error in any query, reject with the error
                 } else {
                   results.push(result); // Store the result of the current query
-                  if (result.affectedRows === 0 && query.need_change) {
-                    allQueriesSuccessful = false; // Set the flag to false if any query affected 0 rows
-                  }
                   resolve(); // Resolve the Promise after successful query execution
                 }
               });
@@ -830,18 +806,10 @@ const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
           // Use Promise.all to wait for all queries to complete
           Promise.all(queryPromises)
             .then(() => {
-              if (allQueriesSuccessful) {
-                resolve(results); // All queries have been executed successfully
-              } else {
-                connection.rollback(() => {
-                  reject(new Error('At least one query affected 0 rows.'));
-                });
-              }
+              resolve(results); // All queries have been executed successfully
             })
             .catch((error) => {
-              connection.rollback(() => {
-                reject(error); // If any query encounters an error, reject with the error
-              });
+              reject(error); // If any query encounters an error, reject with the error
             });
         }
         executeQueries();
@@ -850,48 +818,145 @@ const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
   });
 };
 
+const transfer_post = async (traderId, postId, userId, forSell, price) => {
+  const sellerId = forSell ? traderId : userId;
+  const buyerId = forSell ? userId : traderId;
+  console.log(`seller_id: ${sellerId}, buyer_id: ${buyerId}, post_id: ${postId}, for_sell: ${forSell}, price: ${price}, user_id: ${userId}, trader_id: ${traderId}`);
+
+  const connection = await getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const isBid = forSell ? true : false;
+    const queries = [
+      {
+        sql: `DELETE FROM bids
+              WHERE user_id = ?
+                AND post_id = ?
+                AND EXISTS (
+                  SELECT 1
+                  FROM posts
+                  WHERE pid = ?
+                    AND is_bid = ?
+                    AND price = ?
+                )`,
+        params: [userId, postId, postId, isBid, price]
+      },
+      {
+        sql: `UPDATE virus_platform_user SET virus = virus - ? WHERE user_id = ?`,
+        params: [price, buyerId]
+      },
+      {
+        sql: `UPDATE virus_platform_user SET virus = virus + ? WHERE user_id = ?`,
+        params: [price, sellerId]
+      },
+      {
+        sql: `UPDATE posts p
+          LEFT JOIN (
+              SELECT post_id, price, user_id
+              FROM bids
+              WHERE post_id = ? AND is_bid = true
+              ORDER BY price DESC
+              LIMIT 1
+          ) b ON p.pid = b.post_id
+          SET p.bid_price = b.price, p.bid_user_id = b.user_id, p.owner_uid = ? 
+          WHERE p.pid = ?`,
+        params: [postId, buyerId, postId]
+      }
+    ];
+
+    for (const query of queries) {
+      await connection.query(query.sql, query.params);
+    }
+
+    const parallelQueries = [
+      {
+        sql: `DELETE FROM bids WHERE post_id = ? AND is_bid = false`,
+        params: [postId]
+      },
+      {
+        sql: `UPDATE posts SET ask_price = 0 WHERE pid = ?`,
+        params: [postId]
+      },
+      {
+        sql: `UPDATE virus_platform_user SET user_buy_post_count = user_buy_post_count + 1 WHERE user_id = ?`,
+        params: [buyerId]
+      },
+      {
+        sql: `UPDATE virus_platform_user SET user_sell_post_count = user_sell_post_count + 1 WHERE user_id = ?`,
+        params: [sellerId]
+      },
+      {
+        sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
+          SELECT ?, 7, NOW(), 1, NOW()
+          ON DUPLICATE KEY UPDATE value = value + 1, last_update_time = NOW()`,
+        params: [buyerId]
+      },
+      {
+        sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
+          SELECT ?, 8, NOW(), 1, NOW()
+          ON DUPLICATE KEY UPDATE value = value + 1, last_update_time = NOW()`,
+        params: [sellerId]
+      }
+    ];
+
+    await Promise.all(parallelQueries.map(query =>
+      connection.query(query.sql, query.params)
+    ));
+
+    await connection.commit();
+    console.log('Transaction committed successfully.');
+  } catch (error) {
+    await connection.rollback();
+    console.error('Transaction rolled back:', error);
+    throw error;
+  } finally {
+    connection.release();
+  }
+};
+
 const addUserComment = (user_id, post_id, context) => {
   return new Promise((resolve, reject) => {
     connectionPool.getConnection((connectionError, connection) => { // 資料庫連線
-        const insertQuery = `INSERT INTO comments VALUES (DEFAULT, ${user_id}, ${post_id}, "${context}" , DEFAULT, DEFAULT)`;
+      const insertQuery = `INSERT INTO comments VALUES (DEFAULT, ${user_id}, ${post_id}, "${context}" , DEFAULT, DEFAULT)`;
       if (connectionError) {
         reject(connectionError); // 若連線有問題回傳錯誤
       } else {
-        connection.query(insertQuery,[user_id, post_id, context], (error, result) => {
-            if (error) {
-              console.error('SQL error: ', error);
-              reject(error); // 寫入資料庫有問題時回傳錯誤
+        connection.query(insertQuery, [user_id, post_id, context], (error, result) => {
+          if (error) {
+            console.error('SQL error: ', error);
+            reject(error); // 寫入資料庫有問題時回傳錯誤
 
-            } else {
-              const cid = result.insertId; // Get the last inserted ID
-              console.log("cid: "+ cid);
-              const update_query = `UPDATE posts SET comments = comments + 1 WHERE pid = ${post_id}`;
-              // Assuming you have another query to execute here
-              connection.query(update_query,
-                (error, result) => {
-                  if (error) {
-                    console.error('Second query error:', error);
-                    connection.rollback(() => {
-                      reject(error);
-                    });
-                  } else {
-                    connection.commit((err) => {
-                      if (err) {
-                        console.error('Commit error:', err);
-                        connection.rollback(() => {
-                          reject(err);
-                        });
-                      } else {
-                        const jsonResponse = { cid: cid};
-                        resolve(jsonResponse);
-                      }
-                    });
-                  }
+          } else {
+            const cid = result.insertId; // Get the last inserted ID
+            console.log("cid: " + cid);
+            const update_query = `UPDATE posts SET comments = comments + 1 WHERE pid = ${post_id}`;
+            // Assuming you have another query to execute here
+            connection.query(update_query,
+              (error, result) => {
+                if (error) {
+                  console.error('Second query error:', error);
+                  connection.rollback(() => {
+                    reject(error);
+                  });
+                } else {
+                  connection.commit((err) => {
+                    if (err) {
+                      console.error('Commit error:', err);
+                      connection.rollback(() => {
+                        reject(err);
+                      });
+                    } else {
+                      const jsonResponse = { cid: cid };
+                      resolve(jsonResponse);
+                    }
+                  });
                 }
-              );
-            }
-            connection.release();
+              }
+            );
           }
+          connection.release();
+        }
         );
       }
     });
