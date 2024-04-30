@@ -94,52 +94,71 @@ const PostWidget = ({
     }
     setConfirmationState(false);
   }
-
   const handleAddComment = async () => {
-    // Add the new comment to the list of comments, for example:
-    // You should replace this logic with your actual state management or API calls.
-    if (newComment.trim() !== '') {
-      // Assuming `comments` is an array, create a new array with the updated comments
-      // Update the state or send the updated comments to your backend
-      const response = await fetch(`http://localhost:3002/posts/comment`, {
+    try {
+      if (newComment.trim() !== '') {
+        const response = await fetch(`http://localhost:3002/posts/comment`, {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            user_id: loggedInUserId,
+            post_id: postId,
+            context: newComment
+          }),
+        });
+  
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+  
+        const update = await response.json();
+        const commentObject = {
+          cid: update.cid,
+          context: newComment,
+          user_name: loggedInUserName,
+          user_image_path: userImagePath,
+          isLiked: 0,
+          likes: 0
+        };
+        setCommentList([...commentList, commentObject]);
+        setCommentCount(commentCount => commentCount + 1);
+      }
+  
+      setNewComment('');
+    } catch (error) {
+      console.error('Error occurred:', error);
+      showMessage(`An error occurredwhile adding the comment: ${error.message}`, 3000);
+    }
+  };
+
+  const purchaseAction = async () => {
+    try {
+      const response = await fetch(`http://localhost:3002/posts/purchase`, {
         method: "POST",
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ user_id: loggedInUserId, post_id: postId, context: newComment }),
-      });
-      const update = await response.json();
-      const commentObject = {
-        cid: update.cid,
-        context: newComment,
-        user_name: loggedInUserName,
-        user_image_path: userImagePath,
-        isLiked: 0,
-        likes:0
-      };
-      setCommentList([...commentList, commentObject]);
-      setCommentCount(commentCount => commentCount + 1);
-    }
-
-    // Clear the input field after adding the comment
-    setNewComment('');
-  };
-
-  const purchaseAction = async () => {
-    const response = await fetch(`http://localhost:3002/posts/purchase`, {
-      method: "POST",
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ 
-          trader_id: loggedInUserId, 
-          post_id: postId, 
+        body: JSON.stringify({
+          trader_id: loggedInUserId,
+          post_id: postId,
           user_id: isSell ? bid_user_id : owner_id,
           for_sell: isSell,
-          price: price }),
-    });
-    const update = await response.json();
-    setConfirmationState(false);
+          price: price
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+  
+      const update = await response.json();
+      setConfirmationState(false);
+    } catch (error) {
+      console.error('Error occurred:', error);
+      showMessage(`An error occurred: ${error.message}`, 3000);
+    }
   };
 
   const fetchBids = async () => {

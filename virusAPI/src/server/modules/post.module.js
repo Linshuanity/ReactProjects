@@ -1037,7 +1037,7 @@ const addUserComment = (user_id, post_id, context) => {
             }
             const queries = [
               {
-                sql: `INSERT INTO comments VALUES (DEFAULT, ?, ?, "?" , DEFAULT, DEFAULT)`,
+                sql: `INSERT INTO comments (cid, user_id, post_id, context, create_time, likes)  VALUES (DEFAULT, ?, ?, ? , Now(), DEFAULT)`,
                 params: [user_id, post_id, context]
               },
               {
