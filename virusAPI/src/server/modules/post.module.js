@@ -786,11 +786,8 @@ const addUserBid = (user_id, post_id, price, is_bid) => {
                 },
                 {
                     sql: `UPDATE virus_platform_user
-                        SET virus = virus - (SELECT price FROM bids WHERE user_id = ? 
-                                                        AND post_id = ?
-                                                        AND is_bid = True)
-                        WHERE user_id = ?`,
-                    params: [user_id, post_id, user_id]
+                        SET virus = virus - ? WHERE user_id = ? AND ? = True`,
+                    params: [price, user_id, is_bid]
                 },
                 {
                     sql: `UPDATE posts p
@@ -906,8 +903,8 @@ const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
                 need_change: true
               },
               {
-                sql: `UPDATE virus_platform_user SET virus = virus - ? WHERE user_id = ?`,
-                params: [price, buyer_id],
+                sql: `UPDATE virus_platform_user SET virus = virus - ? WHERE user_id = ? and ? = False`,
+                params: [price, buyer_id, for_sell],
                 need_change: true
               },
               {
@@ -945,23 +942,23 @@ const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
             const parallelQueries = [
               {
                 sql: `UPDATE virus_platform_user SET user_buy_post_count = user_buy_post_count + 1 WHERE user_id = ?`,
-                params: [buyerId]
+                params: [buyer_id]
               },
               {
                 sql: `UPDATE virus_platform_user SET user_sell_post_count = user_sell_post_count + 1 WHERE user_id = ?`,
-                params: [sellerId]
+                params: [seller_id]
               },
               {
                 sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
                   SELECT ?, 7, NOW(), 1, NOW()
                   ON DUPLICATE KEY UPDATE value = value + 1, last_update_time = NOW()`,
-                params: [buyerId]
+                params: [buyer_id]
               },
               {
                 sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
                   SELECT ?, 8, NOW(), 1, NOW()
                   ON DUPLICATE KEY UPDATE value = value + 1, last_update_time = NOW()`,
-                params: [sellerId]
+                params: [seller_id]
               }
             ];
 
