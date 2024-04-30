@@ -140,6 +140,10 @@ const PostWidget = ({
     });
     const update = await response.json();
     setConfirmationState(false);
+    if (update.successful)
+        showMessage('Transaction done.', 1000, 'message-box-green');
+    else
+        showMessage('Not enough virus.', 1000, 'message-box-red');
   };
 
   const fetchBids = async () => {
@@ -188,7 +192,7 @@ const PostWidget = ({
     if (!isLiked)
     {
         if(update.reward > 0)
-          showMessage('You made ' + update.reward + ' virus', 3000);
+          showMessage('You made ' + update.reward + ' virus', 3000, 'message-box-green');
     }
   };
 
@@ -219,7 +223,7 @@ const PostWidget = ({
     textarea.select();
     document.execCommand('copy');
     document.body.removeChild(textarea);
-    showMessage('Url copied to clipboard.', 1000);
+    showMessage('Url copied to clipboard.', 1000, 'message-box-green');
   }
 
   function formatTimeLeft(time) {
