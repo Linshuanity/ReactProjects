@@ -216,6 +216,9 @@ const PostWidget = ({
     }
 
     const patchLike = async () => {
+        // Disable unlike
+        if (isLiked)
+            return;
         setLikes(likesCount + (isLiked ? -1 : 1))
         setLiked(!isLiked)
         const response = await fetch(`http://localhost:3002/posts/like`, {
@@ -241,6 +244,9 @@ const PostWidget = ({
     }
 
     const patchCommentLike = async (index, commentIsLiked, cid, c_isLiked) => {
+        // Disable unlike
+        if (commentIsLiked)
+            return;
         const updatedCommentList = commentList.map((comment, i) =>
             i === index
                 ? {
