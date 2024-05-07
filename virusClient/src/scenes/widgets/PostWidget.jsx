@@ -135,54 +135,27 @@ const PostWidget = ({
 
   const purchaseAction = async () => {
     try {
-      const response = await fetch(`http://localhost:3002/posts/purchase`, {
-        method: "POST",
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          trader_id: loggedInUserId,
-          post_id: postId,
-          user_id: isSell ? bid_user_id : owner_id,
-          for_sell: isSell,
-          price: price
-        }),
-      });
-  
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-  
-      const update = await response.json();
-      setConfirmationState(false);
+        const response = await fetch(`http://localhost:3002/posts/purchase`, {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ 
+              trader_id: loggedInUserId, 
+              post_id: postId, 
+              user_id: isSell ? bid_user_id : owner_id,
+              for_sell: isSell,
+              price: price }),
+        });
+        const update = await response.json();
+        setConfirmationState(false);
+        if (update.successful)
+            showMessage('Transaction done.', 1000, 'message-box-green');
+        else
+            showMessage('Not enough virus.', 1000, 'message-box-red');
     } catch (error) {
-      console.error('Error occurred:', error);
-      showMessage(`An error occurred: ${error.message}`, 3000);
+        showMessage(`Server error: ${error.message}`, 3000, 'message-box-red');
     }
-
-    // Clear the input field after adding the comment
-    setNewComment('');
-  };
-
-  const purchaseAction = async () => {
-    const response = await fetch(`http://localhost:3002/posts/purchase`, {
-      method: "POST",
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ 
-          trader_id: loggedInUserId, 
-          post_id: postId, 
-          user_id: isSell ? bid_user_id : owner_id,
-          for_sell: isSell,
-          price: price }),
-    });
-    const update = await response.json();
-    setConfirmationState(false);
-    if (update.successful)
-        showMessage('Transaction done.', 1000, 'message-box-green');
-    else
-        showMessage('Not enough virus.', 1000, 'message-box-red');
   };
 
   const fetchBids = async () => {
