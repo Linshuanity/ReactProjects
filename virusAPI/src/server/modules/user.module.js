@@ -8,7 +8,8 @@ const connectionPool = mysql.createPool({
   host: config.mysqlHost,
   user: config.mysqlUserName,
   password: config.mysqlPass,
-  database: config.mysqlDatabase
+  database: config.mysqlDatabase,
+  charset: 'utf8mb4'
 });
 
 const selectUser = () => {
