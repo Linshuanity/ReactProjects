@@ -5,37 +5,57 @@ import subscribeModule from '../modules/subscribe.module';
  */
 const getFriends = (req, res) => {
   const user_id = req.params.user_id;
-  subscribeModule.getFriends(user_id).then((result) => {
-    res.send(result); // 成功回傳result結果
-  }).catch((err) => { return res.send(err); }); // 失敗回傳錯誤訊息
+  subscribeModule
+    .getFriends(user_id)
+    .then((result) => {
+      res.send(result); // 成功回傳result結果
+    })
+    .catch((err) => {
+      return res.send(err);
+    }); // 失敗回傳錯誤訊息
 };
 
 const getSearch = (req, res) => {
   const substring = req.body.substring;
-  subscribeModule.getSearch(substring).then((result) => {
-    res.send(result); // 成功回傳result結果
-  }).catch((err) => { return res.send(err); }); // 失敗回傳錯誤訊息
+  subscribeModule
+    .getSearch(substring)
+    .then((result) => {
+      res.send(result); // 成功回傳result結果
+    })
+    .catch((err) => {
+      return res.send(err);
+    }); // 失敗回傳錯誤訊息
 };
 
 /*  User GET 取得  */
 const subscribeGet = (req, res) => {
   const subscriber_id = req.params.subscriber_id;
   const subscribed_id = req.params.subscribed_id;
-  subscribeModule.isSubscribed(subscriber_id, subscribed_id).then((result) => {
-    res.send(result); // 成功回傳result結果
-  }).catch((err) => { return res.send(err); }); // 失敗回傳錯誤訊息
+  subscribeModule
+    .isSubscribed(subscriber_id, subscribed_id)
+    .then((result) => {
+      res.send(result); // 成功回傳result結果
+    })
+    .catch((err) => {
+      return res.send(err);
+    }); // 失敗回傳錯誤訊息
 };
 
 /*  User DELETE  */
 const deleteSubscribe = (req, res) => {
   // 取得修改id
   const deleteValues = {
-    subscriber_id: req.params.subscriber_id, 
+    subscriber_id: req.params.subscriber_id,
     subscribed_id: req.params.subscribed_id,
   };
-  subscribeModule.deleteSubscribe(deleteValues).then((result) => {
-    res.send(result); // 成功回傳result結果
-  }).catch((err) => { return res.send(err); }); // 失敗回傳錯誤訊息
+  subscribeModule
+    .deleteSubscribe(deleteValues)
+    .then((result) => {
+      res.send(result); // 成功回傳result結果
+    })
+    .catch((err) => {
+      return res.send(err);
+    }); // 失敗回傳錯誤訊息
 };
 
 /* User  POST 新增 */
@@ -46,16 +66,30 @@ const createSubscribe = (req, res) => {
     friend_id: req.params.subscribed_id,
     is_delete: req.headers.is_delete,
   };
-  subscribeModule.createSubscribe(insertValues.user_id, insertValues.friend_id,insertValues.is_delete).then((result) => {
-    res.send(result); // 成功回傳result結果
-  }).catch((err) => { return res.send(err); }); // 失敗回傳錯誤訊息
+  subscribeModule
+    .createSubscribe(
+      insertValues.user_id,
+      insertValues.friend_id,
+      insertValues.is_delete,
+    )
+    .then((result) => {
+      res.send(result); // 成功回傳result結果
+    })
+    .catch((err) => {
+      return res.send(err);
+    }); // 失敗回傳錯誤訊息
 };
 
 const getCountById = (req, res) => {
   const subscribed_id = req.params.subscribed_id;
-  subscribeModule.countBySubscribedId(subscribed_id).then((result) => {
-    res.send(result); // 成功回傳result結果
-  }).catch((err) => { return res.send(err); }); // 失敗回傳錯誤訊息
+  subscribeModule
+    .countBySubscribedId(subscribed_id)
+    .then((result) => {
+      res.send(result); // 成功回傳result結果
+    })
+    .catch((err) => {
+      return res.send(err);
+    }); // 失敗回傳錯誤訊息
 };
 
 export default {
@@ -64,5 +98,5 @@ export default {
   subscribeGet,
   deleteSubscribe,
   createSubscribe,
-  getCountById
+  getCountById,
 };

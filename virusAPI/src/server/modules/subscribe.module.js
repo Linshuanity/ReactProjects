@@ -6,7 +6,7 @@ const connectionPool = mysql.createPool({
   host: config.mysqlHost,
   user: config.mysqlUserName,
   password: config.mysqlPass,
-  database: config.mysqlDatabase
+  database: config.mysqlDatabase,
 });
 
 const executeQuery = (sql, params) => {
@@ -29,25 +29,33 @@ const executeQuery = (sql, params) => {
   });
 };
 
-const getFriends = userId => executeQuery(
-  `SELECT s.subscribed_id as _id, u.user_name as name, u.user_image_path as picturePath FROM subscribes as s JOIN virus_platform_user as u ON u.user_id = s.subscribed_id where s.subscriber_id = ? limit 5`, 
-  [userId]
-);
+const getFriends = (userId) =>
+  executeQuery(
+    `SELECT s.subscribed_id as _id, u.user_name as name, u.user_image_path as picturePath FROM subscribes as s JOIN virus_platform_user as u ON u.user_id = s.subscribed_id where s.subscriber_id = ? limit 5`,
+    [userId],
+  );
 
-const getSearch = substring => executeQuery(
-  `SELECT user_id as id, user_name as name FROM virus_platform_user WHERE user_name LIKE ?`, 
-  [`%${substring}%`]
-);
+const getSearch = (substring) =>
+  executeQuery(
+    `SELECT user_id as id, user_name as name FROM virus_platform_user WHERE user_name LIKE ?`,
+    [`%${substring}%`],
+  );
 
-const isSubscribed = (suberId, subedId) => executeQuery(
-  `SELECT * FROM subscribes WHERE subscriber_id = ? AND subscribed_id = ?`, 
-  [suberId, subedId]
-).then(result => result.length > 0 ? { status: 'ok', msg: 'subscribed', subscribed: true } : { status: 'ok', msg: 'not subscribed', subscribed: false });
+const isSubscribed = (suberId, subedId) =>
+  executeQuery(
+    `SELECT * FROM subscribes WHERE subscriber_id = ? AND subscribed_id = ?`,
+    [suberId, subedId],
+  ).then((result) =>
+    result.length > 0
+      ? { status: 'ok', msg: 'subscribed', subscribed: true }
+      : { status: 'ok', msg: 'not subscribed', subscribed: false },
+  );
 
-const countBySubscribedId = subscribedId => executeQuery(
-  `SELECT COUNT(subscriber_id) as result FROM subscribes WHERE subscribed_id = ?`, 
-  [subscribedId]
-);
+const countBySubscribedId = (subscribedId) =>
+  executeQuery(
+    `SELECT COUNT(subscriber_id) as result FROM subscribes WHERE subscribed_id = ?`,
+    [subscribedId],
+  );
 const createSubscribe = (user_id, friend_id, is_delete) => {
   return new Promise((resolve, reject) => {
     connectionPool.getConnection((connectionError, connection) => {
@@ -56,48 +64,51 @@ const createSubscribe = (user_id, friend_id, is_delete) => {
         return;
       }
 
-      connection.beginTransaction(err => {
+      connection.beginTransaction((err) => {
         if (err) {
           connection.release();
           reject(err);
           return;
         }
 
-        const queries = is_delete === 'true' ? [
-          {
-            tag: "DEL_SUB",
-            sql: `DELETE FROM subscribes WHERE subscriber_id = ? AND subscribed_id = ?`,
-            params: [user_id, friend_id]
-          },
-          {
-            tag: "DEC_SUBS",
-            sql: `UPDATE virus_platform_user SET subscribed = subscribed - 1 WHERE user_id = ?`,
-            params: [user_id]
-          },
-          {
-            tag: "DEC_SUBS_2",
-            sql: `UPDATE virus_platform_user SET subscriber = subscriber - 1 WHERE user_id = ?`,
-            params: [friend_id]
-          }
-        ] : [
-          {
-            tag: "INS_SUB",
-            sql: `INSERT INTO subscribes VALUES (DEFAULT, ?, ?, DEFAULT) ON DUPLICATE KEY UPDATE subscriber_id = subscriber_id`,
-            params: [user_id, friend_id]
-          },
-          {
-            tag: "INC_SUBS",
-            sql: `UPDATE virus_platform_user SET subscribed = subscribed + 1 WHERE user_id = ?`,
-            params: [user_id]
-          },
-          {
-            tag: "INC_SUBS_2",
-            sql: `UPDATE virus_platform_user SET subscriber = subscriber + 1 WHERE user_id = ?`,
-            params: [friend_id]
-          },
-          {
-            tag: "ADD_ACH",
-            sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
+        const queries =
+          is_delete === 'true'
+            ? [
+                {
+                  tag: 'DEL_SUB',
+                  sql: `DELETE FROM subscribes WHERE subscriber_id = ? AND subscribed_id = ?`,
+                  params: [user_id, friend_id],
+                },
+                {
+                  tag: 'DEC_SUBS',
+                  sql: `UPDATE virus_platform_user SET subscribed = subscribed - 1 WHERE user_id = ?`,
+                  params: [user_id],
+                },
+                {
+                  tag: 'DEC_SUBS_2',
+                  sql: `UPDATE virus_platform_user SET subscriber = subscriber - 1 WHERE user_id = ?`,
+                  params: [friend_id],
+                },
+              ]
+            : [
+                {
+                  tag: 'INS_SUB',
+                  sql: `INSERT INTO subscribes VALUES (DEFAULT, ?, ?, DEFAULT) ON DUPLICATE KEY UPDATE subscriber_id = subscriber_id`,
+                  params: [user_id, friend_id],
+                },
+                {
+                  tag: 'INC_SUBS',
+                  sql: `UPDATE virus_platform_user SET subscribed = subscribed + 1 WHERE user_id = ?`,
+                  params: [user_id],
+                },
+                {
+                  tag: 'INC_SUBS_2',
+                  sql: `UPDATE virus_platform_user SET subscriber = subscriber + 1 WHERE user_id = ?`,
+                  params: [friend_id],
+                },
+                {
+                  tag: 'ADD_ACH',
+                  sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
             SELECT ?, 2, NOW(), (SELECT subscriber FROM virus_platform_user WHERE user_id = ?), NOW()
             FROM DUAL
             WHERE NOT EXISTS (
@@ -107,11 +118,11 @@ const createSubscribe = (user_id, friend_id, is_delete) => {
                 SELECT subscriber FROM virus_platform_user WHERE user_id = ?
               )
             )`,
-            params: [user_id, user_id, user_id, user_id]
-          },
-          {
-            tag: "ADD_ACH_2",
-            sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
+                  params: [user_id, user_id, user_id, user_id],
+                },
+                {
+                  tag: 'ADD_ACH_2',
+                  sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
             SELECT ?, 3, NOW(), (SELECT subscribed FROM virus_platform_user WHERE user_id = ?), NOW()
             FROM DUAL
             WHERE NOT EXISTS (
@@ -121,9 +132,9 @@ const createSubscribe = (user_id, friend_id, is_delete) => {
                 SELECT subscribed FROM virus_platform_user WHERE user_id = ?
               )
             )`,
-            params: [friend_id, friend_id, friend_id, friend_id]
-          }
-        ];
+                  params: [friend_id, friend_id, friend_id, friend_id],
+                },
+              ];
 
         const executeQuery = (tag, sql, params) => {
           return new Promise((resolve, reject) => {
@@ -136,10 +147,17 @@ const createSubscribe = (user_id, friend_id, is_delete) => {
           });
         };
 
-        Promise.all(queries.map(query => executeQuery(query.tag, query.sql, query.params)))
-          .then(results => {
+        Promise.all(
+          queries.map((query) =>
+            executeQuery(query.tag, query.sql, query.params),
+          ),
+        )
+          .then((results) => {
             // Check if any changes were made
-            const affectedRows = results.reduce((total, result) => total + result.affectedRows, 0);
+            const affectedRows = results.reduce(
+              (total, result) => total + result.affectedRows,
+              0,
+            );
             if (affectedRows === 0) {
               connection.rollback(() => {
                 connection.release();
@@ -150,29 +168,33 @@ const createSubscribe = (user_id, friend_id, is_delete) => {
 
             // Fetch the updated user data
             const selectQuery = `SELECT user_id as _id, user_name as name, user_image_path as picturePath from virus_platform_user where user_id = ?`;
-            connection.query(selectQuery, [friend_id], (error, selectResult) => {
-              if (error) {
-                connection.rollback(() => {
-                  connection.release();
-                  reject(error);
-                });
-                return;
-              }
-
-              connection.commit(err => {
-                if (err) {
+            connection.query(
+              selectQuery,
+              [friend_id],
+              (error, selectResult) => {
+                if (error) {
                   connection.rollback(() => {
                     connection.release();
-                    reject(err);
+                    reject(error);
                   });
                   return;
                 }
-                connection.release();
-                resolve(selectResult);
-              });
-            });
+
+                connection.commit((err) => {
+                  if (err) {
+                    connection.rollback(() => {
+                      connection.release();
+                      reject(err);
+                    });
+                    return;
+                  }
+                  connection.release();
+                  resolve(selectResult);
+                });
+              },
+            );
           })
-          .catch(error => {
+          .catch((error) => {
             connection.rollback(() => {
               connection.release();
               reject(error);
@@ -183,10 +205,11 @@ const createSubscribe = (user_id, friend_id, is_delete) => {
   });
 };
 
-const deleteSubscribe = deleteValues => executeQuery(
-  `DELETE FROM subscribes WHERE subscriber_id = ? AND subscribed_id = ?`, 
-  deleteValues
-);
+const deleteSubscribe = (deleteValues) =>
+  executeQuery(
+    `DELETE FROM subscribes WHERE subscriber_id = ? AND subscribed_id = ?`,
+    deleteValues,
+  );
 
 export default {
   getFriends,
@@ -194,5 +217,5 @@ export default {
   isSubscribed,
   countBySubscribedId,
   createSubscribe,
-  deleteSubscribe
+  deleteSubscribe,
 };

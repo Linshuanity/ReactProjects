@@ -9,7 +9,7 @@ const connectionPool = mysql.createPool({
   user: config.mysqlUserName,
   password: config.mysqlPass,
   database: config.mysqlDatabase,
-  charset: 'utf8mb4'
+  charset: 'utf8mb4',
 });
 
 const selectUser = () => {
@@ -35,7 +35,6 @@ const selectUser = () => {
     });
   });
 };
-
 
 /*  User GET 取得  */
 const selectUserById = (userId) => {
@@ -64,7 +63,7 @@ const selectUserById = (userId) => {
         } else if (result.length === 0) {
           resolve({
             status: 'error',
-            msg: 'user not found'
+            msg: 'user not found',
           });
         } else {
           resolve({
@@ -102,7 +101,7 @@ const createUser = (insertValues) => {
           resolve({
             status: 'ok',
             msg: '註冊成功！',
-            user_id: result.insertId
+            user_id: result.insertId,
           });
         } else {
           // Consider rejecting with an error if the expected number of affected rows is not met
@@ -124,29 +123,33 @@ const modifyUser = (insertValues, userId) => {
 
       const updateQuery = 'UPDATE virus_platform_user SET ? WHERE user_id = ?';
 
-      connection.query(updateQuery, [insertValues, userId], (queryError, result) => {
-        connection.release();
+      connection.query(
+        updateQuery,
+        [insertValues, userId],
+        (queryError, result) => {
+          connection.release();
 
-        if (queryError) {
-          console.error('SQL error:', queryError);
-          reject(queryError);
-        } else if (result.affectedRows === 0) {
-          resolve({
-            status: 'fail',
-            msg: '請確認修改Id！'
-          });
-        } else if (result.message && result.message.match('Changed: 1')) {
-          resolve({
-            status: 'ok',
-            msg: '資料修改成功'
-          });
-        } else {
-          resolve({
-            status: 'ok',
-            msg: '資料無異動'
-          });
-        }
-      });
+          if (queryError) {
+            console.error('SQL error:', queryError);
+            reject(queryError);
+          } else if (result.affectedRows === 0) {
+            resolve({
+              status: 'fail',
+              msg: '請確認修改Id！',
+            });
+          } else if (result.message && result.message.match('Changed: 1')) {
+            resolve({
+              status: 'ok',
+              msg: '資料修改成功',
+            });
+          } else {
+            resolve({
+              status: 'ok',
+              msg: '資料無異動',
+            });
+          }
+        },
+      );
     });
   });
 };
@@ -171,12 +174,12 @@ const deleteUser = (userId) => {
         } else if (result.affectedRows === 1) {
           resolve({
             status: 'ok',
-            msg: '刪除成功！'
+            msg: '刪除成功！',
           });
         } else {
           resolve({
             status: 'fail',
-            msg: '刪除失敗！'
+            msg: '刪除失敗！',
           });
         }
       });
@@ -193,42 +196,47 @@ const selectUserLogin = (insertValues) => {
         return; // Early return after rejecting to avoid continuing execution
       }
 
-      const selectQuery = 'SELECT * FROM virus_platform_user WHERE user_email = ?';
+      const selectQuery =
+        'SELECT * FROM virus_platform_user WHERE user_email = ?';
 
-      connection.query(selectQuery, insertValues.user_email, (queryError, result) => {
-        if (queryError) {
-          console.error('SQL error:', queryError);
-          reject(queryError);
-        } else if (result.length === 0) {
-          resolve({
-            status: 'false',
-            msg: '信箱尚未註冊！'
-          });
-        } else {
-          const dbHashPassword = result[0].user_password;
-          const userPassword = insertValues.user_password;
+      connection.query(
+        selectQuery,
+        insertValues.user_email,
+        (queryError, result) => {
+          if (queryError) {
+            console.error('SQL error:', queryError);
+            reject(queryError);
+          } else if (result.length === 0) {
+            resolve({
+              status: 'false',
+              msg: '信箱尚未註冊！',
+            });
+          } else {
+            const dbHashPassword = result[0].user_password;
+            const userPassword = insertValues.user_password;
 
-          console.log('dbHashPassword:', dbHashPassword);
-          console.log('userPassword:', userPassword);
+            console.log('dbHashPassword:', dbHashPassword);
+            console.log('userPassword:', userPassword);
 
-          bcrypt.compare(userPassword, dbHashPassword).then((res) => {
-            if (res) {
-              resolve({
-                status: 'ok',
-                msg: '登入成功',
-                user_name: result[0].user_name,
-                user_id: result[0].user_id
-              });
-            } else {
-              resolve({
-                status: 'false',
-                msg: '帳號或密碼有誤！'
-              });
-            }
-          });
-        }
-        connection.release();
-      });
+            bcrypt.compare(userPassword, dbHashPassword).then((res) => {
+              if (res) {
+                resolve({
+                  status: 'ok',
+                  msg: '登入成功',
+                  user_name: result[0].user_name,
+                  user_id: result[0].user_id,
+                });
+              } else {
+                resolve({
+                  status: 'false',
+                  msg: '帳號或密碼有誤！',
+                });
+              }
+            });
+          }
+          connection.release();
+        },
+      );
     });
   });
 };
@@ -243,29 +251,33 @@ const addRemoveFriend = (id, insertValues, userId) => {
 
       const updateQuery = 'UPDATE virus_platform_user SET ? WHERE user_id = ?';
 
-      connection.query(updateQuery, [insertValues, userId], (queryError, result) => {
-        connection.release();
+      connection.query(
+        updateQuery,
+        [insertValues, userId],
+        (queryError, result) => {
+          connection.release();
 
-        if (queryError) {
-          console.error('SQL error:', queryError);
-          reject(queryError);
-        } else if (result.affectedRows === 0) {
-          resolve({
-            status: 'fail',
-            msg: '請確認修改Id！'
-          });
-        } else if (result.message && result.message.match('Changed: 1')) {
-          resolve({
-            status: 'ok',
-            msg: '資料修改成功'
-          });
-        } else {
-          resolve({
-            status: 'ok',
-            msg: '資料無異動'
-          });
-        }
-      });
+          if (queryError) {
+            console.error('SQL error:', queryError);
+            reject(queryError);
+          } else if (result.affectedRows === 0) {
+            resolve({
+              status: 'fail',
+              msg: '請確認修改Id！',
+            });
+          } else if (result.message && result.message.match('Changed: 1')) {
+            resolve({
+              status: 'ok',
+              msg: '資料修改成功',
+            });
+          } else {
+            resolve({
+              status: 'ok',
+              msg: '資料無異動',
+            });
+          }
+        },
+      );
     });
   });
 };
@@ -276,5 +288,5 @@ export default {
   createUser,
   modifyUser,
   deleteUser,
-  selectUserLogin
+  selectUserLogin,
 };

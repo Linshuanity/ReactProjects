@@ -27,7 +27,12 @@ class APIError extends ExtendableError {
    * @param {number} status - HTTP status code of error.
    * @param {boolean} isPublic - Whether the message should be visible to user or not.
    */
-  constructor(message, status = httpStatus.INTERNAL_SERVER_ERROR, isPublic = false, code) {
+  constructor(
+    message,
+    status = httpStatus.INTERNAL_SERVER_ERROR,
+    isPublic = false,
+    code,
+  ) {
     super(message, status, isPublic, code);
     this.name = 'APIError';
   }
@@ -44,7 +49,12 @@ class MySQLError extends ExtendableError {
    * @param {number} status - HTTP status code of error.
    * @param {boolean} isPublic - Whether the message should be visible to user or not.
    */
-  constructor(message = 'Backend Error', status = httpStatus.INTERNAL_SERVER_ERROR, isPublic = true, code = 500) {
+  constructor(
+    message = 'Backend Error',
+    status = httpStatus.INTERNAL_SERVER_ERROR,
+    isPublic = true,
+    code = 500,
+  ) {
     super(message, status, isPublic, code);
     this.name = 'MySQLError';
   }
@@ -61,7 +71,12 @@ class LoginError1 extends ExtendableError {
    * @param {number} status - HTTP status code of error.
    * @param {boolean} isPublic - Whether the message should be visible to user or not.
    */
-  constructor(message = '信箱尚未註冊！', status = httpStatus.UNAUTHORIZED, isPublic = true, code = 401) {
+  constructor(
+    message = '信箱尚未註冊！',
+    status = httpStatus.UNAUTHORIZED,
+    isPublic = true,
+    code = 401,
+  ) {
     super(message, status, isPublic, code);
     this.name = 'LoginError';
   }
@@ -77,16 +92,20 @@ class LoginError2 extends ExtendableError {
    * @param {number} status - HTTP status code of error.
    * @param {boolean} isPublic - Whether the message should be visible to user or not.
    */
-  constructor(message = '您輸入的密碼有誤！', status = httpStatus.UNAUTHORIZED, isPublic = true, code = 401) {
+  constructor(
+    message = '您輸入的密碼有誤！',
+    status = httpStatus.UNAUTHORIZED,
+    isPublic = true,
+    code = 401,
+  ) {
     super(message, status, isPublic, code);
     this.name = 'LoginError';
   }
 }
 
-
 export default {
   APIError,
   MySQLError,
   LoginError1,
-  LoginError2
+  LoginError2,
 };

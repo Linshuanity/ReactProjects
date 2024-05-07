@@ -5,16 +5,20 @@ import paramValidation from '../../config/param-validation';
 
 const router = express.Router();
 
-router.route('/')
+router
+  .route('/')
   .get(userCtrl.userGet) /** 取得 User 所有值組 */
-  .post(validate(paramValidation.createUser), userCtrl.userPost); /** 新增 User 值組 */
+  .post(
+    validate(paramValidation.createUser),
+    userCtrl.userPost,
+  ); /** 新增 User 值組 */
 
-router.route('/:user_id')
+router
+  .route('/:user_id')
   .get(userCtrl.userGetById) /** 取得 User 所有值組 */
   .put(userCtrl.userPut) /** 修改 User 值組 */
   .delete(userCtrl.userDelete); /** 刪除 User 值組 */
 
 router.route('/login').post(userCtrl.userLogin); /** User 登入 */
-
 
 export default router;
