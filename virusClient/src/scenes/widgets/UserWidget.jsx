@@ -86,7 +86,9 @@ const UserWidget = ({ userId, picturePath }) => {
         holding,
         subscriber,
         description,
-        // postCount,
+        postCount,
+        totalLiked,
+        maxLike,
     } = user
 
     return (
@@ -186,13 +188,19 @@ const UserWidget = ({ userId, picturePath }) => {
                 <FlexBetween mb="0.5rem">
                     <Typography color={medium}>Number of posts</Typography>
                     <Typography color={main} fontWeight="500">
-                        {/* {postCount} */}
+                        {postCount}
                     </Typography>
                 </FlexBetween>
-                <FlexBetween>
-                    <Typography color={medium}>Total post worth</Typography>
+                <FlexBetween mb="0.5rem">
+                    <Typography color={medium}>Likes received</Typography>
                     <Typography color={main} fontWeight="500">
-                        postWorth
+                        {totalLiked}
+                    </Typography>
+                </FlexBetween>
+                <FlexBetween mb="0.5rem">
+                    <Typography color={medium}>Top post</Typography>
+                    <Typography color={main} fontWeight="500">
+                        {maxLike} likes
                     </Typography>
                 </FlexBetween>
             </Box>

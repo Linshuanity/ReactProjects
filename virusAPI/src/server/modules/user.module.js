@@ -72,6 +72,9 @@ const selectUserById = (userId) => {
             subscriber: result[0].subscriber,
             user_name: result[0].user_name,
             holding: result[0].virus,
+            totalLiked: result[0].user_total_liked_count,
+            maxLike: result[0].user_most_liked_count,
+            postCount: result[0].user_post_count,
             description: result[0].user_description,
           });
         }
