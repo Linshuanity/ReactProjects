@@ -5,13 +5,20 @@
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 1000; /* 确保消息框在其他内容之上 */
-    background-color: #4CAF50;
     color: white;
     padding: 20px;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0,0,0,0.5);
     /* display: none; */
     text-align: center;
+  }
+
+  .message-box-green {
+    background-color: #4CAF50; /* green color */
+  }
+
+  .message-box-red {
+    background-color: #f44336; /* red color */
   }
   
   /* 动画效果 */

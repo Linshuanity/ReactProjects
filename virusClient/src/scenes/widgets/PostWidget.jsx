@@ -159,6 +159,30 @@ const PostWidget = ({
       console.error('Error occurred:', error);
       showMessage(`An error occurred: ${error.message}`, 3000);
     }
+
+    // Clear the input field after adding the comment
+    setNewComment('');
+  };
+
+  const purchaseAction = async () => {
+    const response = await fetch(`http://localhost:3002/posts/purchase`, {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+          trader_id: loggedInUserId, 
+          post_id: postId, 
+          user_id: isSell ? bid_user_id : owner_id,
+          for_sell: isSell,
+          price: price }),
+    });
+    const update = await response.json();
+    setConfirmationState(false);
+    if (update.successful)
+        showMessage('Transaction done.', 1000, 'message-box-green');
+    else
+        showMessage('Not enough virus.', 1000, 'message-box-red');
   };
 
   const fetchBids = async () => {
@@ -207,7 +231,7 @@ const PostWidget = ({
     if (!isLiked)
     {
         if(update.reward > 0)
-          showMessage('You made ' + update.reward + ' virus', 3000);
+          showMessage('You made ' + update.reward + ' virus', 3000, 'message-box-green');
     }
   };
 
@@ -238,7 +262,7 @@ const PostWidget = ({
     textarea.select();
     document.execCommand('copy');
     document.body.removeChild(textarea);
-    showMessage('Url copied to clipboard.', 1000);
+    showMessage('Url copied to clipboard.', 1000, 'message-box-green');
   }
 
   function formatTimeLeft(time) {

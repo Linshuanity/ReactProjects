@@ -905,7 +905,7 @@ const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
               {
                 sql: `UPDATE virus_platform_user SET virus = virus - ? WHERE user_id = ? and ? = False`,
                 params: [price, buyer_id, for_sell],
-                need_change: true
+                need_change: false
               },
               {
                 sql: `UPDATE virus_platform_user SET virus = virus + ? WHERE user_id = ?`,
@@ -940,7 +940,7 @@ const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
             ];
 
             const parallelQueries = [
-              {
+            {
                 sql: `UPDATE virus_platform_user SET user_buy_post_count = user_buy_post_count + 1 WHERE user_id = ?`,
                 params: [buyer_id]
               },
@@ -970,7 +970,7 @@ const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
                         }
                         const affectedRows = result.affectedRows;
                         if (affectedRows === 0 && query.need_change) {
-                            return reject("no change");
+                            return reject('transfer failed');
                         }
                         resolve(result);
                     });
@@ -989,10 +989,13 @@ const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
                     });
 
                     // Execute sequential queries
-                    const results = [];
                     for (const query of queries) {
-                        const result = await executeQuery(query);
-                        results.push(result);
+                        try {
+                            await executeQuery(query);
+                        } catch (error) {
+                            // Handle error here
+                            return resolve({ successful: false, reason: 1 });
+                        }
                     }
 
                     // Execute parallel queries
@@ -1009,7 +1012,7 @@ const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
                     });
 
                     connection.release();
-                    resolve({ results });
+                    resolve({ successful: true, reason: 0 });
                 } catch (error) {
                     await new Promise((resolve, reject) => {
                         connection.rollback(() => {
