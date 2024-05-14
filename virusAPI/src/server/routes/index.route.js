@@ -6,6 +6,7 @@ import subscribe from './subscribe.route';
 import auth from './auth.route';
 import posts from './post.route';
 import notification from './notification.route';
+import achievement from './achievement.route';
 import config from './../../config/config';
 
 const router = express.Router();
@@ -26,6 +27,8 @@ router.use('/auth', auth);
 router.use('/posts', posts);
 /** Subscribe Router */
 router.use('/subscribe', subscribe);
+/** Subscribe Router */
+router.use('/achievement', achievement);
 
 router.use('/notification', notification);
 

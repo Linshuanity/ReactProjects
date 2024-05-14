@@ -1,6 +1,10 @@
-import { Box, Typography, useTheme, Button } from '@mui/material'
+import { Box, Typography, LinearProgress, useTheme, Button, IconButton } from '@mui/material'
+import CoronavirusIcon from '@mui/icons-material/Coronavirus'
 import FlexBetween from 'components/FlexBetween'
 import WidgetWrapper from 'components/WidgetWrapper'
+import { useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { ExpandMore, ExpandLess } from '@mui/icons-material';
 
 const MissionWidget = () => {
     const { palette } = useTheme()
@@ -8,82 +12,80 @@ const MissionWidget = () => {
     const main = palette.neutral.main
     const medium = palette.neutral.medium
 
-    const listItems = [
-        {
-            id: 1,
-            content: 'Follow 10 people',
-            reward: '100 coins',
-            progress: '2/10',
-        },
-        {
-            id: 2,
-            content: 'Make 10 posts',
-            reward: '100 coins',
-            progress: '2/10',
-        },
-        {
-            id: 3,
-            content: 'Buy 10 post',
-            reward: '100 coins',
-            progress: '0/10',
-        },
-    ]
+    const loggedInUserId = useSelector((state) => state.user._id)
+    const [displayCount, setDisplayCount] = useState(3); // Number of items to display initially
+    const [listItems, setListItems] = useState([]);
+    const apiEndpoint = 'http://localhost:3002'
+
+    const getAchievement = async () => {
+        try {
+            const response = await fetch(`${apiEndpoint}/achievement/fetch`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: loggedInUserId,
+                }),
+            })
+            if (!response.ok) throw new Error('Network response was not ok')
+            const data = await response.json()
+            setListItems(data)
+        } catch (error) {
+            console.error('Error fetching posts:', error)
+        }
+    }
+
+    useEffect(() => {
+        getAchievement()
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
     return (
         <WidgetWrapper>
             <FlexBetween>
                 <Typography color={dark} variant="h3" fontWeight="500">
-                    Tasks
+                    Achievement
                 </Typography>
             </FlexBetween>
-            {listItems.map((item) => (
-                <Typography key={item.id} sx={{ margin: '16px 0' }}>
-                    <FlexBetween>
-                        <Typography
-                            color={main}
-                            variant="h5"
-                            fontWeight="500"
-                            sx={{
-                                width: '100%',
-                            }}
-                        >
-                            {item.content}
+
+            {listItems.slice(0, displayCount).map((item, index) => (
+                <div key={item.a_id} style={{ margin: '16px 0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
+                        <Typography variant="h5" fontWeight="500">
+                            {item.name}
                         </Typography>
-                        <Typography
-                            color={main}
-                            variant="h5"
-                            fontWeight="500"
-                            sx={{
-                                width: '50%',
-                            }}
-                        >
-                            {item.progress}
+                        <Typography variant="h6" fontWeight="500">
+                            <CoronavirusIcon color="blue"/>
+                            100
                         </Typography>
-                        <Typography
-                            color={main}
-                            variant="h6"
-                            fontWeight="500"
-                            sx={{
-                                width: '50%',
-                            }}
-                        >
-                            {item.reward}
-                        </Typography>
-                        <Button
-                            sx={{
-                                color: palette.background.alt,
-                                backgroundColor: palette.primary.main,
-                                borderRadius: '2rem',
-                            }}
-                        >
-                            get
-                        </Button>
-                    </FlexBetween>
-                </Typography>
+                    </div>
+                    <div>
+                        <div style={{ width: '100%', marginTop: '8px' }}>
+                            <LinearProgress variant="determinate" value={item.value} />
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
+                            <Typography variant="h6" fontWeight="500">
+                                Progress: {item.value}%
+                            </Typography>
+                        </div>
+                    </div>
+                </div>
             ))}
-            <Typography color={medium} m="0.5rem 0">
-                Completing the task will entitle you to receive additional
-                rewards.
-            </Typography>
+
+            {listItems.length !== displayCount && (
+                <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                    <IconButton onClick={() => setDisplayCount(listItems.length)}>
+                        <ExpandMore />
+                    </IconButton>
+                </div>
+            )}
+
+            {listItems.length > 3 && listItems.length === displayCount && (
+                <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                    <IconButton onClick={() => setDisplayCount(3)}>
+                        <ExpandLess />
+                    </IconButton>
+                </div>
+            )}
+
         </WidgetWrapper>
     )
 }
