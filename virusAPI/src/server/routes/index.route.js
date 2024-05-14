@@ -5,7 +5,7 @@ import users from './users.route';
 import subscribe from './subscribe.route';
 import auth from './auth.route';
 import posts from './post.route';
-import path from 'path';
+import notification from './notification.route';
 import config from './../../config/config';
 
 const router = express.Router();
@@ -26,5 +26,7 @@ router.use('/auth', auth);
 router.use('/posts', posts);
 /** Subscribe Router */
 router.use('/subscribe', subscribe);
+
+router.use('/notification', notification);
 
 export default router;

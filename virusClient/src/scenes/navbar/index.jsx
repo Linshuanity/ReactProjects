@@ -25,11 +25,39 @@ import { useDispatch, useSelector } from 'react-redux'
 import { setMode, setLogout } from 'state'
 import { useNavigate } from 'react-router-dom'
 import FlexBetween from 'components/FlexBetween'
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import { useParams } from 'react-router-dom'
 
 const Navbar = () => {
     const [isMobileMenuToggled, setIsMobileMenuToggled] = useState(false)
     const [results, setResults] = useState([])
     const [selectedProfile, setSelectedProfile] = useState(null)
+
+    const [open, setOpen] = useState(false);
+    const [notifications, setNotifications] = useState([]);
+    const { userId } = useParams()
+    const handleNotificationClick = () => {
+      setOpen(true);
+        const fetchNotifications = async () => {
+            const response = await fetch(`http://localhost:3002/notification/getUserNotifications`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                }),
+            })
+            const results = await response.json()
+            setNotifications(results)
+        }
+      fetchNotifications();
+    };
 
     const dispatch = useDispatch()
     const navigate = useNavigate()
@@ -62,6 +90,7 @@ const Navbar = () => {
         setSelectedProfile(update)
         return setResults(update)
     }
+    
 
     return (
         <FlexBetween padding="1rem 6%" backgroundColor={alt}>
@@ -108,7 +137,22 @@ const Navbar = () => {
                             <LightMode sx={{ color: dark, fontSize: '25px' }} />
                         )}
                     </IconButton>
-                    <Notifications sx={{ fontSize: '25px' }} />
+
+                    <IconButton onClick={handleNotificationClick}>
+                      <Notifications sx={{ fontSize: '25px' }} />
+                    </IconButton>
+                    <Dialog open={open} onClose={() => setOpen(false)}>
+                      <DialogTitle>Notifications</DialogTitle>
+                      <DialogContent>
+                        <List>
+                          {notifications.map((notification) => (
+                            <ListItem key={notification.nid}>
+                              <ListItemText primary={notification.content} />
+                            </ListItem>
+                          ))}
+                        </List>
+                      </DialogContent>
+                    </Dialog>
                     <FormControl variant="standard" value={fullName}>
                         <Select
                             value={fullName}
@@ -187,7 +231,21 @@ const Navbar = () => {
                                 />
                             )}
                         </IconButton>
-                        <Notifications sx={{ fontSize: '25px' }} />
+                    <IconButton onClick={handleNotificationClick}>
+                      <Notifications sx={{ fontSize: '25px' }} />
+                    </IconButton>
+                    <Dialog open={open} onClose={() => setOpen(false)}>
+                      <DialogTitle>Notifications</DialogTitle>
+                      <DialogContent>
+                        <List>
+                          {notifications.map((notification) => (
+                            <ListItem key={notification.nid}>
+                              <ListItemText primary={notification.content} />
+                            </ListItem>
+                          ))}
+                        </List>
+                      </DialogContent>
+                    </Dialog>
                         <FormControl variant="standard" value={fullName}>
                             <Select
                                 value={fullName}
