@@ -12,8 +12,8 @@ const connectionPool = mysql.createPool({
 export const userNotifications = async (req, res, next) => {
   try {
     console.log("req.body.user_id: " + req.body.user_id);
-  const insertValues = req.body;
-      console.log(insertValues);
+    const insertValues = req.body;
+    console.log(insertValues);
 
     const user_id = req.body.user_id;
     const result = await selectUserNotifications(user_id);
@@ -29,6 +29,7 @@ const selectUserNotifications = (user_id) => {
       if (connectionError) {
         reject(connectionError);
       } else {
+        console.log("selectUserNotifications user_id:" + user_id);
         const query = `
           SELECT nid, user_id, type, source_id, is_read, create_time, content
           FROM notifications

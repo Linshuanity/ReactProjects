@@ -1,5 +1,13 @@
-import { useState } from 'react'
-import LiveSearch from 'components/LiveSearch'
+import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+
+import LiveSearch from 'components/LiveSearch';
+import FlexBetween from 'components/FlexBetween';
+import NotificationDrawer from './NotificationDrawer';
+
+import { setMode, setLogout } from 'state';
+
 import {
     Box,
     IconButton,
@@ -10,58 +18,35 @@ import {
     FormControl,
     useTheme,
     useMediaQuery,
-} from '@mui/material'
+    Drawer,
+    List,
+    ListItem,
+    ListItemText,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+} from '@mui/material';
+
 import {
-    Search,
-    Message,
     DarkMode,
     LightMode,
     Notifications,
-    Help,
     Menu,
     Close,
-} from '@mui/icons-material'
-import { useDispatch, useSelector } from 'react-redux'
-import { setMode, setLogout } from 'state'
-import { useNavigate } from 'react-router-dom'
-import FlexBetween from 'components/FlexBetween'
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemText from '@mui/material/ListItemText';
-import { useParams } from 'react-router-dom'
+} from '@mui/icons-material';
+
+
 
 const Navbar = () => {
     const [isMobileMenuToggled, setIsMobileMenuToggled] = useState(false)
     const [results, setResults] = useState([])
     const [selectedProfile, setSelectedProfile] = useState(null)
-
     const [open, setOpen] = useState(false);
-    const [notifications, setNotifications] = useState([]);
-    const { userId } = useParams()
-    const handleNotificationClick = () => {
-      setOpen(true);
-        const fetchNotifications = async () => {
-            const response = await fetch(`http://localhost:3002/notification/getUserNotifications`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    user_id: userId,
-                }),
-            })
-            const results = await response.json()
-            setNotifications(results)
-        }
-      fetchNotifications();
-    };
+    const user = useSelector((state) => state.user)
+    const userId = `${user.user_id}`
 
     const dispatch = useDispatch()
     const navigate = useNavigate()
-    const user = useSelector((state) => state.user)
     const isNonMobileScreens = useMediaQuery('(min-width: 1000px)')
 
     const theme = useTheme()
@@ -137,7 +122,8 @@ const Navbar = () => {
                             <LightMode sx={{ color: dark, fontSize: '25px' }} />
                         )}
                     </IconButton>
-
+                    <NotificationDrawer/>
+{/* 
                     <IconButton onClick={handleNotificationClick}>
                       <Notifications sx={{ fontSize: '25px' }} />
                     </IconButton>
@@ -152,7 +138,7 @@ const Navbar = () => {
                           ))}
                         </List>
                       </DialogContent>
-                    </Dialog>
+                    </Dialog> */}
                     <FormControl variant="standard" value={fullName}>
                         <Select
                             value={fullName}
@@ -231,7 +217,8 @@ const Navbar = () => {
                                 />
                             )}
                         </IconButton>
-                    <IconButton onClick={handleNotificationClick}>
+                         <NotificationDrawer/>
+                    {/* <IconButton onClick={handleNotificationClick}>
                       <Notifications sx={{ fontSize: '25px' }} />
                     </IconButton>
                     <Dialog open={open} onClose={() => setOpen(false)}>
@@ -245,7 +232,7 @@ const Navbar = () => {
                           ))}
                         </List>
                       </DialogContent>
-                    </Dialog>
+                    </Dialog> */}
                         <FormControl variant="standard" value={fullName}>
                             <Select
                                 value={fullName}
