@@ -175,20 +175,19 @@ const createPost = (insertValues) => {
           },
           {
             tag: 'ADD_ACH',
-            sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
-            SELECT ?, 4, NOW(), (SELECT user_post_count FROM virus_platform_user WHERE user_id = ?), NOW()
-            FROM DUAL
-            WHERE NOT EXISTS (
-              SELECT 1
-              FROM user_achievement
-              WHERE user_id = ? AND achievement_id = 4 AND value >= (
-                SELECT user_post_count FROM virus_platform_user WHERE user_id = ?
-              )
-            )`,
+            sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+                SELECT vp.user_id, 4, NOW(),
+                       user_post_count, 
+                       NOW(), 
+                       lm.level, lm.required, lm.next, lm.reward
+                FROM virus_platform_user vp
+                    LEFT JOIN level_map lm
+                    ON lm.required < vp.user_post_count
+                WHERE vp.user_id = ? AND lm.ach_code = 4
+                ORDER BY lm.required DESC
+                LIMIT 1
+                ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`, 
             params: [
-              insertValues.userId,
-              insertValues.userId,
-              insertValues.userId,
               insertValues.userId,
             ],
           },
@@ -414,63 +413,48 @@ const addCommentlike = (liker_id, comment_id, is_liked) => {
             },
             {
               tag: 'ADD_ACH',
-              sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
-            SELECT ?, 6, NOW(), (SELECT user_total_likes_count FROM virus_platform_user WHERE user_id = ?), NOW()
-            FROM DUAL
-            WHERE NOT EXISTS (
-              SELECT 1
-              FROM user_achievement
-              WHERE user_id = ? AND achievement_id = 6 AND value >= (
-                SELECT user_total_likes_count FROM virus_platform_user WHERE user_id = ?
-              )
-            )`,
-              params: [liker_id, liker_id, liker_id, liker_id],
+              sql: `INSERT IGNORE INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+                  SELECT vp.user_id, 6, NOW(),
+                      user_total_likes_count, 
+                      NOW(), 
+                      lm.level, lm.required, lm.next
+                  FROM virus_platform_user vp
+                      LEFT JOIN level_map lm
+                      ON lm.required < vp.user_total_likes_count
+                  WHERE vp.user_id = ? AND lm.ach_code = 6
+                  ORDER BY lm.required DESC
+                  LIMIT 1`, 
+              params: [liker_id],
             },
             {
               tag: 'ADD_ACH_2',
-              sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time) 
-            SELECT 
-              (SELECT user_id FROM comments WHERE cid = ?) AS user_id, 
-              5 AS achievement_id, 
-              NOW() AS create_time, 
-              (SELECT user_total_liked_count FROM virus_platform_user 
-                WHERE user_id = (SELECT user_id FROM comments WHERE cid = ?)
-              ) AS value, 
-              NOW() AS last_update_time 
-            FROM DUAL 
-            WHERE NOT EXISTS (
-                SELECT 1 FROM user_achievement WHERE 
-                  user_id = (SELECT user_id FROM comments WHERE cid = ?) 
-                  AND achievement_id = 5 
-                  AND value >= (
-                    SELECT user_total_liked_count FROM virus_platform_user 
-                    WHERE user_id = (SELECT user_id FROM comments WHERE cid = ?)
-                  )
-              )`,
-              params: [comment_id, comment_id, comment_id, comment_id],
+              sql: `INSERT IGNORE INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+                  SELECT vp.user_id, 5, NOW(),
+                      user_total_liked_count, 
+                      NOW(), 
+                      lm.level, lm.required, lm.next
+                  FROM virus_platform_user vp
+                      LEFT JOIN level_map lm
+                      ON lm.required < vp.user_total_liked_count
+                  WHERE vp.user_id = ? AND lm.ach_code = 5
+                  ORDER BY lm.required DESC
+                  LIMIT 1`, 
+              params: [comment_id],
             },
             {
               tag: 'ADD_ACH_3',
-              sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time) 
-            SELECT 
-              (SELECT user_id FROM comments WHERE cid = ?) AS user_id, 
-              9 AS achievement_id, 
-              NOW() AS create_time, 
-              (SELECT user_most_liked_count FROM virus_platform_user 
-                WHERE user_id = (SELECT user_id FROM comments WHERE cid = ?)
-              ) AS value, 
-              NOW() AS last_update_time 
-            FROM DUAL 
-            WHERE NOT EXISTS (
-                SELECT 1 FROM user_achievement WHERE 
-                  user_id = (SELECT user_id FROM comments WHERE cid = ?) 
-                  AND achievement_id = 9 
-                  AND value >= (
-                    SELECT user_most_liked_count FROM virus_platform_user 
-                    WHERE user_id = (SELECT user_id FROM comments WHERE cid = ?)
-                  )
-              )`,
-              params: [comment_id, comment_id, comment_id, comment_id],
+              sql: `INSERT IGNORE INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+                  SELECT vp.user_id, 9, NOW(),
+                      user_most_liked_count, 
+                      NOW(), 
+                      lm.level, lm.required, lm.next
+                  FROM virus_platform_user vp
+                      LEFT JOIN level_map lm
+                      ON lm.required < vp.user_most_liked_count
+                  WHERE vp.user_id = ? AND lm.ach_code = 9
+                  ORDER BY lm.required DESC
+                  LIMIT 1`, 
+              params: [comment_id],
             },
           ];
 
@@ -639,62 +623,47 @@ const addUserLike = async (liker_id, post_id, is_liked) => {
             },
             {
               tag: 'ADD_ACH_1',
-              sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
-                SELECT ?, 6, NOW(), (SELECT user_total_likes_count FROM virus_platform_user WHERE user_id = ?), NOW()
-                FROM DUAL
-                WHERE NOT EXISTS (
-                  SELECT 1
-                  FROM user_achievement
-                  WHERE user_id = ? AND achievement_id = 6 AND value >= (
-                    SELECT user_total_likes_count FROM virus_platform_user WHERE user_id = ?
-                  )
-                )`,
-              params: [liker_id, liker_id, liker_id, liker_id],
+              sql: `INSERT IGNORE INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+                  SELECT vp.user_id, 6, NOW(),
+                      user_total_likes_count, 
+                      NOW(), 
+                      lm.level, lm.required, lm.next
+                  FROM virus_platform_user vp
+                      LEFT JOIN level_map lm
+                      ON lm.required < vp.user_total_likes_count
+                  WHERE vp.user_id = ? AND lm.ach_code = 6
+                  ORDER BY lm.required DESC
+                  LIMIT 1`, 
+              params: [liker_id],
             },
             {
               tag: 'ADD_ACH_2',
-              sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time) 
-                SELECT 
-                 (SELECT author_uid FROM posts WHERE pid = ?) AS user_id, 
-                  5 AS achievement_id, 
-                  NOW() AS create_time, 
-                  (SELECT user_total_liked_count FROM virus_platform_user 
-                    WHERE user_id = (SELECT author_uid FROM posts WHERE pid = ?)
-                  ) AS value, 
-                  NOW() AS last_update_time 
-                FROM DUAL 
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM user_achievement WHERE 
-                      user_id = (SELECT author_uid FROM posts WHERE pid = ?) 
-                      AND achievement_id = 5 
-                      AND value >= (
-                        SELECT user_total_liked_count FROM virus_platform_user 
-                        WHERE user_id = (SELECT author_uid FROM posts WHERE pid = ?)
-                      )
-                  )`,
-              params: [post_id, post_id, post_id, post_id],
+              sql: `INSERT IGNORE INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+                  SELECT vp.user_id, 5, NOW(),
+                      user_total_liked_count, 
+                      NOW(), 
+                      lm.level, lm.required, lm.next
+                  FROM virus_platform_user vp
+                      LEFT JOIN level_map lm
+                      ON lm.required < vp.user_total_liked_count
+                  WHERE vp.user_id = ? AND lm.ach_code = 5
+                  ORDER BY lm.required DESC
+                  LIMIT 1`, 
+              params: [post_id],
             },
             {
               tag: 'ADD_ACH_3',
-              sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time) 
-                SELECT 
-                 (SELECT author_uid FROM posts WHERE pid = ?) AS user_id, 
-                  9 AS achievement_id, 
-                  NOW() AS create_time, 
-                  (SELECT user_most_liked_count FROM virus_platform_user 
-                    WHERE user_id = (SELECT author_uid FROM posts WHERE pid = ?)
-                  ) AS value, 
-                  NOW() AS last_update_time 
-                FROM DUAL 
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM user_achievement WHERE 
-                      user_id = (SELECT author_uid FROM posts WHERE pid = ?) 
-                      AND achievement_id = 9 
-                      AND value >= (
-                        SELECT user_most_liked_count FROM virus_platform_user 
-                        WHERE user_id = (SELECT author_uid FROM posts WHERE pid = ?)
-                      )
-                  )`,
+              sql: `INSERT IGNORE INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+                  SELECT vp.user_id, 9, NOW(),
+                      user_most_liked_count, 
+                      NOW(), 
+                      lm.level, lm.required, lm.next
+                  FROM virus_platform_user vp
+                      LEFT JOIN level_map lm
+                      ON lm.required < vp.user_most_liked_count
+                  WHERE vp.user_id = ? AND lm.ach_code = 9
+                  ORDER BY lm.required DESC
+                  LIMIT 1`, 
               params: [post_id, post_id, post_id, post_id],
             },
           ];

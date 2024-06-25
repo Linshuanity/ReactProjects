@@ -47,23 +47,23 @@ const MissionWidget = () => {
             </FlexBetween>
 
             {listItems.slice(0, displayCount).map((item, index) => (
-                <div key={item.a_id} style={{ margin: '16px 0' }}>
+                <div key={item.ach_code} style={{ margin: '16px 0' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
                         <Typography variant="h5" fontWeight="500">
-                            {item.name}
+                            {item.name} : {item.value}
                         </Typography>
                         <Typography variant="h6" fontWeight="500">
                             <CoronavirusIcon color="blue"/>
-                            100
+                            {item.reward}
                         </Typography>
                     </div>
                     <div>
                         <div style={{ width: '100%', marginTop: '8px' }}>
-                            <LinearProgress variant="determinate" value={item.value} />
+                            <LinearProgress variant="determinate" value={100*(item.value - item.required)/(item.next - item.required)} />
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
                             <Typography variant="h6" fontWeight="500">
-                                Progress: {item.value}%
+                                Progress: {Math.floor(100*(item.value - item.required)/(item.next - item.required))}%
                             </Typography>
                         </div>
                     </div>

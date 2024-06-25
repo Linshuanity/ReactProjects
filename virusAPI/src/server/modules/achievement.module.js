@@ -23,14 +23,12 @@ const selectAchievement = (insertValues) => {
     connectionPool.getConnection((connectionError, connection) => {
       // 資料庫連線
       const query = `
-      SELECT ua.achievement_id AS a_id, ac.code_desc AS name, MAX(ua.value) AS value
-        FROM user_achievement AS ua
-        LEFT JOIN (
-            SELECT * FROM app_code WHERE code_type = 'achievement'
-        ) AS ac
-        ON ua.achievement_id = ac.code_code
-        WHERE user_id = ?
-        GROUP BY ua.achievement_id`;
+      SELECT ua.achievement_id AS a_id, ua.max_v AS value, lm.*, ac.code_desc AS name 
+        FROM (
+          SELECT achievement_id, max(value) AS max_v 
+            FROM user_achievement where user_id in (0, ?) GROUP BY achievement_id) AS ua 
+        LEFT JOIN level_map lm ON ua.achievement_id = lm.ach_code AND max_v < lm.next AND max_v >= lm.required
+        LEFT JOIN app_code AS ac ON ua.achievement_id = ac.code_code`
       let queryParams = [
         insertValues.userId,
       ];

@@ -108,31 +108,33 @@ const createSubscribe = (user_id, friend_id, is_delete) => {
                 },
                 {
                   tag: 'ADD_ACH',
-                  sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
-            SELECT ?, 2, NOW(), (SELECT subscriber FROM virus_platform_user WHERE user_id = ?), NOW()
-            FROM DUAL
-            WHERE NOT EXISTS (
-              SELECT 1
-              FROM user_achievement
-              WHERE user_id = ? AND achievement_id = 2 AND value >= (
-                SELECT subscriber FROM virus_platform_user WHERE user_id = ?
-              )
-            )`,
-                  params: [user_id, user_id, user_id, user_id],
+                  sql: `INSERT IGNORE INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+                    SELECT vp.user_id, 2, NOW(),
+                           vp.subscriber, 
+                           NOW(), 
+                           lm.level, lm.required, lm.next
+                    FROM virus_platform_user vp
+                        LEFT JOIN level_map lm
+                        ON lm.required < vp.subscriber
+                    WHERE vp.user_id = ? AND lm.ach_code = 2
+                    ORDER BY lm.required DESC
+                    LIMIT 1`, 
+                  params: [user_id],
                 },
                 {
                   tag: 'ADD_ACH_2',
-                  sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
-            SELECT ?, 3, NOW(), (SELECT subscribed FROM virus_platform_user WHERE user_id = ?), NOW()
-            FROM DUAL
-            WHERE NOT EXISTS (
-              SELECT 1
-              FROM user_achievement
-              WHERE user_id = ? AND achievement_id = 3 AND value >= (
-                SELECT subscribed FROM virus_platform_user WHERE user_id = ?
-              )
-            )`,
-                  params: [friend_id, friend_id, friend_id, friend_id],
+                  sql: `INSERT IGNORE INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+                    SELECT vp.user_id, 3, NOW(),
+                           vp.subscribed, 
+                           NOW(), 
+                           lm.level, lm.required, lm.next
+                    FROM virus_platform_user vp
+                        LEFT JOIN level_map lm
+                        ON lm.required < vp.subscribed
+                    WHERE vp.user_id = ? AND lm.ach_code = 3
+                    ORDER BY lm.required DESC
+                    LIMIT 1`, 
+                  params: [friend_id],
                 },
               ];
 
