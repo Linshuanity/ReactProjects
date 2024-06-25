@@ -179,7 +179,7 @@ const createPost = (insertValues) => {
                 SELECT vp.user_id, 4, NOW(),
                        user_post_count, 
                        NOW(), 
-                       lm.level, lm.required, lm.next, lm.reward
+                       lm.level, lm.required, lm.next
                 FROM virus_platform_user vp
                     LEFT JOIN level_map lm
                     ON lm.required < vp.user_post_count
