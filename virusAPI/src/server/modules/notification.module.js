@@ -9,6 +9,43 @@ const connectionPool = mysql.createPool({
   database: config.mysqlDatabase
 });
 
+
+export const insertNotification = async (req, res, next) => {
+  try {
+    const { user_id, type, source_id, content } = req.body;
+    const result = await createNotification(user_id, type, source_id, content);
+    res.status(201).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const createNotification = (user_id, type, source_id, content) => {
+  return new Promise((resolve, reject) => {
+    connectionPool.getConnection((connectionError, connection) => {
+      if (connectionError) {
+        reject(connectionError);
+      } else {
+        const query = `
+          INSERT INTO notifications 
+          (user_id, type, source_id, is_read, create_time, content)
+          VALUES (?, ?, ?, 0, NOW(), ?)
+        `;
+        connection.query(query, [user_id, type, source_id, content], (error, result) => {
+          if (error) {
+            console.error('SQL error: ', error);
+            reject(error);
+          } else {
+            resolve({ id: result.insertId, message: 'Notification inserted successfully' });
+          }
+          connection.release();
+        });
+      }
+    });
+  });
+};
+
+
 export const userReadNotification = async (req, res, next) => {
   try {
     console.log("req.body.user_id: " + req.body.user_id);
