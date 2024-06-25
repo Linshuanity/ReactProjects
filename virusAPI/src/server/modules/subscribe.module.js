@@ -108,7 +108,7 @@ const createSubscribe = (user_id, friend_id, is_delete) => {
                 },
                 {
                   tag: 'ADD_ACH',
-                  sql: `INSERT IGNORE INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+                  sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
                     SELECT vp.user_id, 2, NOW(),
                            vp.subscriber, 
                            NOW(), 
@@ -118,12 +118,13 @@ const createSubscribe = (user_id, friend_id, is_delete) => {
                         ON lm.required < vp.subscriber
                     WHERE vp.user_id = ? AND lm.ach_code = 2
                     ORDER BY lm.required DESC
-                    LIMIT 1`, 
+                    LIMIT 1
+                    ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`, 
                   params: [user_id],
                 },
                 {
                   tag: 'ADD_ACH_2',
-                  sql: `INSERT IGNORE INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+                  sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
                     SELECT vp.user_id, 3, NOW(),
                            vp.subscribed, 
                            NOW(), 
@@ -133,7 +134,8 @@ const createSubscribe = (user_id, friend_id, is_delete) => {
                         ON lm.required < vp.subscribed
                     WHERE vp.user_id = ? AND lm.ach_code = 3
                     ORDER BY lm.required DESC
-                    LIMIT 1`, 
+                    LIMIT 1
+                    ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`, 
                   params: [friend_id],
                 },
               ];
