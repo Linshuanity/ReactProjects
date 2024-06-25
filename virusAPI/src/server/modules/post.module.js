@@ -414,21 +414,6 @@ const addCommentlike = (liker_id, comment_id, is_liked) => {
             {
               tag: 'ADD_ACH',
               sql: `INSERT IGNORE INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
-                  SELECT vp.user_id, 6, NOW(),
-                      user_total_likes_count, 
-                      NOW(), 
-                      lm.level, lm.required, lm.next
-                  FROM virus_platform_user vp
-                      LEFT JOIN level_map lm
-                      ON lm.required < vp.user_total_likes_count
-                  WHERE vp.user_id = ? AND lm.ach_code = 6
-                  ORDER BY lm.required DESC
-                  LIMIT 1`, 
-              params: [liker_id],
-            },
-            {
-              tag: 'ADD_ACH_2',
-              sql: `INSERT IGNORE INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
                   SELECT vp.user_id, 5, NOW(),
                       user_total_liked_count, 
                       NOW(), 
@@ -442,7 +427,7 @@ const addCommentlike = (liker_id, comment_id, is_liked) => {
               params: [comment_id],
             },
             {
-              tag: 'ADD_ACH_3',
+              tag: 'ADD_ACH_2',
               sql: `INSERT IGNORE INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
                   SELECT vp.user_id, 9, NOW(),
                       user_most_liked_count, 
@@ -620,21 +605,6 @@ const addUserLike = async (liker_id, post_id, is_liked) => {
               sql: `INSERT INTO likes (liker_id, post_id) select ?, ? FROM DUAL
                         WHERE NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
               params: [liker_id, post_id, post_id, liker_id],
-            },
-            {
-              tag: 'ADD_ACH_1',
-              sql: `INSERT IGNORE INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
-                  SELECT vp.user_id, 6, NOW(),
-                      user_total_likes_count, 
-                      NOW(), 
-                      lm.level, lm.required, lm.next
-                  FROM virus_platform_user vp
-                      LEFT JOIN level_map lm
-                      ON lm.required < vp.user_total_likes_count
-                  WHERE vp.user_id = ? AND lm.ach_code = 6
-                  ORDER BY lm.required DESC
-                  LIMIT 1`, 
-              params: [liker_id],
             },
             {
               tag: 'ADD_ACH_2',
