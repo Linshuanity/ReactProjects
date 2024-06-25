@@ -123,22 +123,6 @@ const Navbar = () => {
                         )}
                     </IconButton>
                     <NotificationDrawer/>
-{/* 
-                    <IconButton onClick={handleNotificationClick}>
-                      <Notifications sx={{ fontSize: '25px' }} />
-                    </IconButton>
-                    <Dialog open={open} onClose={() => setOpen(false)}>
-                      <DialogTitle>Notifications</DialogTitle>
-                      <DialogContent>
-                        <List>
-                          {notifications.map((notification) => (
-                            <ListItem key={notification.nid}>
-                              <ListItemText primary={notification.content} />
-                            </ListItem>
-                          ))}
-                        </List>
-                      </DialogContent>
-                    </Dialog> */}
                     <FormControl variant="standard" value={fullName}>
                         <Select
                             value={fullName}
@@ -218,21 +202,6 @@ const Navbar = () => {
                             )}
                         </IconButton>
                          <NotificationDrawer/>
-                    {/* <IconButton onClick={handleNotificationClick}>
-                      <Notifications sx={{ fontSize: '25px' }} />
-                    </IconButton>
-                    <Dialog open={open} onClose={() => setOpen(false)}>
-                      <DialogTitle>Notifications</DialogTitle>
-                      <DialogContent>
-                        <List>
-                          {notifications.map((notification) => (
-                            <ListItem key={notification.nid}>
-                              <ListItemText primary={notification.content} />
-                            </ListItem>
-                          ))}
-                        </List>
-                      </DialogContent>
-                    </Dialog> */}
                         <FormControl variant="standard" value={fullName}>
                             <Select
                                 value={fullName}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Drawer, List, ListItem, ListItemText, IconButton, Typography, Box, Badge, Button, useTheme } from '@mui/material';
+import { Drawer, List, ListItem, ListItemText, IconButton, Typography, Box, Badge, Button, useTheme, useMediaQuery } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import { useSelector } from 'react-redux';
 import { styled } from '@mui/system';
@@ -14,39 +14,40 @@ const NotificationDrawer = () => {
   const dark = palette.neutral.dark
   const [notifications, setNotifications] = useState([]);
 
+  const isNonMobileScreens = useMediaQuery('(min-width: 1000px)')
   const notificationTypes = {
-      1: "貼文被讚",
-      2: "評論被讚",
-      3: "獲得金錢",
-      4: "交易成功"
+    1: "貼文被讚",
+    2: "評論被讚",
+    3: "獲得金錢",
+    4: "交易成功"
   };
 
   const StyledDrawer = styled(Drawer)(({ theme }) => ({
-      '& .MuiDrawer-paper': {
-        width: '25%',  // 占網頁的1/4
-        backgroundColor: {dark},
-        padding: theme.spacing(2),
-        boxSizing: 'border-box',
-      },
+    '& .MuiDrawer-paper': {
+      width: isNonMobileScreens ? '25%' : '100%',  // 占網頁的1/4
+      backgroundColor: { dark },
+      padding: theme.spacing(2),
+      boxSizing: 'border-box',
+    },
   }));
 
   const NotificationItem = styled(ListItem)(({ theme, isRead }) => ({
-      margin: '10px 0',
-      padding: '10px',
-      // backgroundColor: isRead ? {dark} : '#00D5FA',
-      backgroundColor: {dark},
-      borderRadius: '5px',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center'
+    margin: '10px 0',
+    padding: '10px',
+    // backgroundColor: isRead ? {dark} : '#00D5FA',
+    backgroundColor: { dark },
+    borderRadius: '5px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
   }));
 
   const Dot = styled('div')({
-      width: '10px',
-      height: '10px',
-      borderRadius: '50%',
-      backgroundColor: '#00D5FA',
-      marginLeft: '10px',
+    width: '10px',
+    height: '10px',
+    borderRadius: '50%',
+    backgroundColor: '#00D5FA',
+    marginLeft: '10px',
   });
 
   const toggleDrawer = (open) => () => {
@@ -56,24 +57,37 @@ const NotificationDrawer = () => {
     }
   };
 
-  const handleNotificationClick = () => {
-    setOpen(true);
-    const fetchNotifications = async () => {
-        const response = await fetch(`http://localhost:3002/notification/getUserNotifications`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                user_id: userId,
-            }),
-        })
-        const results = await response.json()
-        setNotifications(results)
+  const fetchNotifications = async () => {
+    try {
+      const response = await fetch(`http://localhost:3002/notification/getUserNotifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userId,
+        }),
+      });
+      const results = await response.json();
+      setNotifications(results);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
     }
-    fetchNotifications();
   };
 
+  const handleNotificationClick = () => {
+    if (!open) {
+      setOpen(true);
+      fetchNotifications();
+    } else {
+      setOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [userId]);
+  
   const handleReadClick = (userId, nid) => {
     const markNotificationAsRead = async () => {
       try {
@@ -104,10 +118,6 @@ const NotificationDrawer = () => {
     };
     markNotificationAsRead();
   };
-
-  useEffect(() => {
-    handleNotificationClick();
-  }, [userId]);
 
   const filteredNotifications = filter === 'all' ? notifications : notifications.filter(notification => notification.is_read === 0);
   const unreadCount = notifications.filter(notification => notification.is_read === 0).length;
@@ -153,7 +163,7 @@ const NotificationDrawer = () => {
           ) : (
             filteredNotifications.map((notification) => (
               <NotificationItem button key={notification.nid} isRead={notification.is_read === 1}
-              onClick={() => handleReadClick(userId, notification.nid)}
+                onClick={() => handleReadClick(userId, notification.nid)}
               >
                 <ListItemText
                   primary={
