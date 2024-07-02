@@ -140,6 +140,7 @@ const MyPostWidget = ({ picturePath }) => {
                 {isNonMobileScreens ? (
                     <>
                         <FlexBetween gap="0.25rem">
+                            {/*
                             <Typography color={mediumMain}>
                                 Price
                                 <InputBase
@@ -157,6 +158,7 @@ const MyPostWidget = ({ picturePath }) => {
                                     }}
                                 />
                             </Typography>
+                            */}
                         </FlexBetween>
                     </>
                 ) : (
