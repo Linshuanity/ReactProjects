@@ -381,7 +381,8 @@ const addCommentlike = (liker_id, comment_id, is_liked) => {
             WHERE NOT EXISTS (
                 SELECT 1 FROM user_achievement
                 WHERE user_id = ? AND achievement_id = 1 AND DATE(last_update_time) = DATE(CURDATE())
-            ) AND NOT EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = ? AND liker_id = ?)`,
+            ) AND NOT EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = ? AND liker_id = ?)
+            ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`,
               params: [liker_id, liker_id, comment_id, liker_id],
             },
             {
@@ -549,7 +550,8 @@ const addUserLike = async (liker_id, post_id, is_liked) => {
                 WHERE NOT EXISTS (
                     SELECT 1 FROM user_achievement
                     WHERE user_id = ? AND achievement_id = 1 AND DATE(last_update_time) = DATE(CURDATE())
-                ) AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
+                ) AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)
+                ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`,
               params: [liker_id, liker_id, post_id, liker_id],
             },
             {
