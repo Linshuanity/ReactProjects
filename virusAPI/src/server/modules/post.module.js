@@ -1,6 +1,12 @@
 import mysql from 'mysql';
 import config from '../../config/config';
 
+// import {
+//   createNotification
+// } from './notification.module.js';
+
+// createNotification(1,1,1,'haha');
+
 const connectionPool = mysql.createPool({
   connectionLimit: 10,
   host: config.mysqlHost,
@@ -413,7 +419,7 @@ const addCommentlike = (liker_id, comment_id, is_liked) => {
             },
             {
               tag: 'ADD_ACH',
-              sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+              sql: `INSERT IGNORE INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
                   SELECT vp.user_id, 5, NOW(),
                       user_total_liked_count, 
                       NOW(), 
@@ -421,15 +427,14 @@ const addCommentlike = (liker_id, comment_id, is_liked) => {
                   FROM virus_platform_user vp
                       LEFT JOIN level_map lm
                       ON lm.required < vp.user_total_liked_count
-                  WHERE vp.user_id = (SELECT user_id FROM comments WHERE cid = ?) AND lm.ach_code = 5
+                  WHERE vp.user_id = ? AND lm.ach_code = 5
                   ORDER BY lm.required DESC
-                  LIMIT 1
-                  ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`, 
+                  LIMIT 1`, 
               params: [comment_id],
             },
             {
               tag: 'ADD_ACH_2',
-              sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+              sql: `INSERT IGNORE INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
                   SELECT vp.user_id, 9, NOW(),
                       user_most_liked_count, 
                       NOW(), 
@@ -437,10 +442,9 @@ const addCommentlike = (liker_id, comment_id, is_liked) => {
                   FROM virus_platform_user vp
                       LEFT JOIN level_map lm
                       ON lm.required < vp.user_most_liked_count
-                  WHERE vp.user_id = (SELECT user_id FROM comments WHERE cid = ?) AND lm.ach_code = 9
+                  WHERE vp.user_id = ? AND lm.ach_code = 9
                   ORDER BY lm.required DESC
-                  LIMIT 1
-                  ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`, 
+                  LIMIT 1`, 
               params: [comment_id],
             },
           ];
@@ -610,7 +614,7 @@ const addUserLike = async (liker_id, post_id, is_liked) => {
             },
             {
               tag: 'ADD_ACH_2',
-              sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+              sql: `INSERT IGNORE INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
                   SELECT vp.user_id, 5, NOW(),
                       user_total_liked_count, 
                       NOW(), 
@@ -618,16 +622,14 @@ const addUserLike = async (liker_id, post_id, is_liked) => {
                   FROM virus_platform_user vp
                       LEFT JOIN level_map lm
                       ON lm.required < vp.user_total_liked_count
-                  WHERE vp.user_id = (SELECT owner_uid FROM posts WHERE pid = ?)
-                      AND lm.ach_code = 5
+                  WHERE vp.user_id = ? AND lm.ach_code = 5
                   ORDER BY lm.required DESC
-                  LIMIT 1
-                  ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`, 
+                  LIMIT 1`, 
               params: [post_id],
             },
             {
               tag: 'ADD_ACH_3',
-              sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+              sql: `INSERT IGNORE INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
                   SELECT vp.user_id, 9, NOW(),
                       user_most_liked_count, 
                       NOW(), 
@@ -635,12 +637,10 @@ const addUserLike = async (liker_id, post_id, is_liked) => {
                   FROM virus_platform_user vp
                       LEFT JOIN level_map lm
                       ON lm.required < vp.user_most_liked_count
-                  WHERE vp.user_id = (SELECT owner_uid FROM posts WHERE pid = ?)
-                      AND lm.ach_code = 9
+                  WHERE vp.user_id = ? AND lm.ach_code = 9
                   ORDER BY lm.required DESC
-                  LIMIT 1
-                  ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`, 
-              params: [post_id],
+                  LIMIT 1`, 
+              params: [post_id, post_id, post_id, post_id],
             },
           ];
 

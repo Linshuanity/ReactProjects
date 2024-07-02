@@ -20,7 +20,7 @@ export const insertNotification = async (req, res, next) => {
   }
 };
 
-const createNotification = (user_id, type, source_id, content) => {
+export const createNotification = (user_id, type, source_id, content) => {
   return new Promise((resolve, reject) => {
     connectionPool.getConnection((connectionError, connection) => {
       if (connectionError) {
