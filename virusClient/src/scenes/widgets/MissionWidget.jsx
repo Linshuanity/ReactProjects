@@ -63,7 +63,7 @@ const MissionWidget = () => {
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
                             <Typography variant="h6" fontWeight="500">
-                                Progress: {Math.floor(100*(item.value - item.required)/(item.next - item.required))}%
+                                Level {item.level} ({Math.floor(100*(item.value - item.required)/(item.next - item.required))}%)
                             </Typography>
                         </div>
                     </div>

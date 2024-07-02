@@ -96,7 +96,6 @@ const PostWidget = ({
             }),
         })
         const update = await response.json()
-        console.log(update)
         if (update.status == 'ok') {
             setMyBid(bid)
         }
@@ -210,6 +209,7 @@ const PostWidget = ({
                 }
             )
             const update = await response.json()
+            console.log(update)
             setCommentList(update)
         }
         setListMode(listMode === 1 ? 0 : 1)
