@@ -28,7 +28,8 @@ const selectAchievement = (insertValues) => {
           SELECT achievement_id, max(value) AS max_v 
             FROM user_achievement where user_id in (0, ?) GROUP BY achievement_id) AS ua 
         LEFT JOIN level_map lm ON ua.achievement_id = lm.ach_code AND max_v < lm.next AND max_v >= lm.required
-        LEFT JOIN app_code AS ac ON ua.achievement_id = ac.code_code and ac.code_type = "achievement"`
+        LEFT JOIN app_code AS ac ON ua.achievement_id = ac.code_code and ac.code_type = "achievement"
+        ORDER BY lm.level DESC`
       let queryParams = [
         insertValues.userId,
       ];

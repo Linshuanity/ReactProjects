@@ -68,7 +68,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
                 <Tabs value={mode} onChange={handleTabChange}>
                     <Tab label="My post" />
                     <Tab label="My collection" />
-                    <Tab label="My order" />
+                    {userId == loggedInUserId && <Tab label="My order" />}
                 </Tabs>
             </div>
             {posts.map((post) => (
