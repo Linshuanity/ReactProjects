@@ -1109,7 +1109,7 @@ const selectUserComments = (user_id, post_id) => {
       if (connectionError) {
         reject(connectionError);
       } else {
-        const query = `SELECT c.cid, c.context, u.user_name, u.user_image_path, c.likes, 
+        const query = `SELECT c.cid, c.context, u.user_id, u.user_name, u.user_image_path, c.likes,
         CASE WHEN (SELECT COUNT(1) FROM comment_likes cl WHERE cl.liker_id = ? AND cl.comment_id = c.cid) <> 0 THEN true
         ELSE false END AS isLiked
         FROM comments as c JOIN virus_platform_user as u on c.user_id = u.user_id WHERE c.post_id = ?`;

@@ -243,7 +243,7 @@ const PostWidget = ({
         }
     }
 
-    const patchCommentLike = async (index, commentIsLiked, cid, c_isLiked) => {
+    const patchCommentLike = async (index, commentIsLiked, cid) => {
         // Disable unlike
         if (commentIsLiked)
             return;
@@ -267,7 +267,7 @@ const PostWidget = ({
                 body: JSON.stringify({
                     liker_id: loggedInUserId,
                     comment_id: cid,
-                    is_liked: c_isLiked,
+                    is_liked: commentIsLiked,
                 }),
             }
         )
@@ -573,10 +573,10 @@ const PostWidget = ({
                                                 patchCommentLike(
                                                     i,
                                                     comment.isLiked,
-                                                    comment.cid,
-                                                    comment.isLiked
+                                                    comment.cid
                                                 )
                                             }
+                                            disabled={comment.user_id === loggedInUserId}
                                         >
                                             {comment.isLiked ? (
                                                 <FavoriteOutlined
