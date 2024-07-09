@@ -1,6 +1,11 @@
 import mysql from 'mysql';
 import config from '../../config/config';
 
+import {
+  createNotification,
+  createNotificationWithSQL
+} from './notification.module.js';
+
 const connectionPool = mysql.createPool({
   connectionLimit: 10,
   host: config.mysqlHost,
@@ -50,8 +55,11 @@ export const getPost = async (req, res, next) => {
 
 export const userLike = async (req, res, next) => {
   try {
-    const { liker_id, post_id, is_liked } = req.body;
-    const result = await addUserLike(liker_id, post_id, is_liked);
+    const { liker_id, post_id } = req.body;
+    const result = await addUserLike(liker_id, post_id);
+    createNotificationWithSQL(1,post_id,
+      'SELECT vp.user_id FROM virus_platform_user vp WHERE vp.user_id = (SELECT owner_uid FROM posts WHERE pid = ?)', [post_id],
+      "SELECT CONCAT(vp.user_name, ' likes your post!') FROM virus_platform_user vp WHERE vp.user_id = ?",[liker_id]);
     res.send(result);
   } catch (error) {
     next(error);
@@ -60,8 +68,11 @@ export const userLike = async (req, res, next) => {
 
 export const commentlike = async (req, res, next) => {
   try {
-    const { liker_id, comment_id, is_liked } = req.body;
-    const result = await addCommentlike(liker_id, comment_id, is_liked);
+    const { liker_id, comment_id } = req.body;
+    const result = await addCommentlike(liker_id, comment_id);
+    createNotificationWithSQL(2,comment_id,
+      'SELECT vp.user_id FROM virus_platform_user vp WHERE vp.user_id = (SELECT user_id FROM comments WHERE cid = ?)', [comment_id],
+      'SELECT CONCAT(vp.user_name, \' likes your comment!\') FROM virus_platform_user vp WHERE vp.user_id = ?)',[liker_id]);
     res.send(result);
   } catch (error) {
     next(error);
@@ -108,9 +119,9 @@ export const userComments = async (req, res, next) => {
   try {
     console.log(
       'req.body.user_id: ' +
-        req.body.user_id +
-        '   req.body.post_id: ' +
-        req.body.post_id,
+      req.body.user_id +
+      '   req.body.post_id: ' +
+      req.body.post_id,
     );
     const result = await selectUserComments(req.body.user_id, req.body.post_id);
     // const result = await selectUserComments(req.body.user_id, req.body.post_id);
@@ -186,7 +197,7 @@ const createPost = (insertValues) => {
                 WHERE vp.user_id = ? AND lm.ach_code = 4
                 ORDER BY lm.required DESC
                 LIMIT 1
-                ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`, 
+                ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`,
             params: [
               insertValues.userId,
             ],
@@ -342,7 +353,7 @@ const selectUserPosts = (insertValues) => {
   });
 };
 
-const addCommentlike = (liker_id, comment_id, is_liked) => {
+const addCommentlike = (liker_id, comment_id) => {
   return new Promise((resolve, reject) => {
     connectionPool.getConnection((connectionError, connection) => {
       if (connectionError) {
@@ -350,71 +361,59 @@ const addCommentlike = (liker_id, comment_id, is_liked) => {
         return;
       }
 
-      const queries = is_liked
-        ? [
-            {
-              sql: `UPDATE comments SET likes = likes - 1 WHERE cid = ? AND EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = ? AND liker_id = ?)`,
-              params: [comment_id, comment_id, liker_id],
-            },
-            {
-              sql: `DELETE from comment_likes WHERE comment_id = ? and liker_id = ?`,
-              params: [comment_id, liker_id],
-            },
-          ]
-        : [
-            {
-              sql: `UPDATE user_achievement
+      const queries =
+        [
+          {
+            sql: `UPDATE user_achievement
             SET value = value + 1, last_update_time = NOW()
-            WHERE user_id = ? AND achievement_id = 1 AND DATE(last_update_time) = DATE(CURDATE() - INTERVAL 1 DAY)
-            AND NOT EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = ? AND liker_id = ?)`,
-              params: [liker_id, comment_id, liker_id],
-            },
-            {
-              sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
+            WHERE user_id = ? AND achievement_id = 1 AND DATE(last_update_time) = DATE(CURDATE() - INTERVAL 1 DAY)`,
+            params: [liker_id],
+          },
+          {
+            sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
             SELECT ?, 1, NOW(), 1, NOW()
             WHERE NOT EXISTS (
                 SELECT 1 FROM user_achievement
                 WHERE user_id = ? AND achievement_id = 1 AND DATE(last_update_time) = DATE(CURDATE())
-            ) AND NOT EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = ? AND liker_id = ?)
-            ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`,
-              params: [liker_id, liker_id, comment_id, liker_id],
-            },
-            {
-              sql: `UPDATE comments SET likes = likes + 1 WHERE cid = ? AND NOT EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = ? AND liker_id = ?)`,
-              params: [comment_id, comment_id, liker_id],
-            },
-            {
-              sql: `UPDATE virus_platform_user SET user_total_likes_count = user_total_likes_count + 1 WHERE user_id = ?`,
-              params: [liker_id],
-            },
-            {
-              sql: `UPDATE virus_platform_user SET user_total_liked_count = user_total_liked_count + 1 WHERE user_id = (SELECT user_id FROM comments WHERE cid = ?)`,
-              params: [comment_id],
-            },
-            {
-              sql: `UPDATE virus_platform_user SET user_most_liked_count = 
+            ) ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`,
+            params: [liker_id, liker_id],
+          },
+          {
+            sql: `UPDATE comments SET likes = likes + 1 WHERE cid = ?`,
+            params: [comment_id],
+          },
+          {
+            sql: `UPDATE virus_platform_user SET user_total_likes_count = user_total_likes_count + 1 WHERE user_id = ?`,
+            params: [liker_id],
+          },
+          {
+            sql: `UPDATE virus_platform_user SET user_total_liked_count = user_total_liked_count + 1 WHERE user_id = (SELECT user_id FROM comments WHERE cid = ?)`,
+            params: [comment_id],
+          },
+          {
+            sql: `UPDATE virus_platform_user SET user_most_liked_count = 
             CASE WHEN (SELECT likes FROM comments WHERE cid = ?) > user_most_liked_count
                   THEN (SELECT likes FROM comments WHERE cid = ?)
                   ELSE user_most_liked_count
             END
             WHERE user_id = (SELECT user_id FROM comments WHERE cid = ?)`,
-              params: [comment_id, comment_id, comment_id],
-            },
-            {
-              sql: `INSERT INTO accounting (from_id, to_id, amount, type) SELECT 0, ?, 1, 0 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = ? AND liker_id = ?)`,
-              params: [liker_id, comment_id, liker_id],
-            },
-            {
-              sql: `UPDATE virus_platform_user SET virus = virus + 1 where user_id = ? AND NOT EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = ? AND liker_id = ?)`,
-              params: [liker_id, comment_id, liker_id],
-            },
-            {
-              sql: `INSERT INTO comment_likes (liker_id, comment_id) select ?, ? FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = ? AND liker_id = ?)`,
-              params: [liker_id, comment_id, comment_id, liker_id],
-            },
-            {
-              tag: 'ADD_ACH',
-              sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+            params: [comment_id, comment_id, comment_id],
+          },
+          {
+            sql: `INSERT INTO accounting (from_id, to_id, amount, type) SELECT 0, ?, 1, 0 FROM DUAL`,
+            params: [liker_id],
+          },
+          {
+            sql: `UPDATE virus_platform_user SET virus = virus + 1 where user_id = ?`,
+            params: [liker_id],
+          },
+          {
+            sql: `INSERT INTO comment_likes (liker_id, comment_id) select ?, ? FROM DUAL`,
+            params: [liker_id, comment_id],
+          },
+          {
+            tag: 'ADD_ACH',
+            sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
                   SELECT vp.user_id, 5, NOW(),
                       user_total_liked_count, 
                       NOW(), 
@@ -425,12 +424,12 @@ const addCommentlike = (liker_id, comment_id, is_liked) => {
                   WHERE vp.user_id = (SELECT user_id FROM comments WHERE cid = ?) AND lm.ach_code = 5
                   ORDER BY lm.required DESC
                   LIMIT 1
-                  ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`, 
-              params: [comment_id],
-            },
-            {
-              tag: 'ADD_ACH_2',
-              sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+                  ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`,
+            params: [comment_id],
+          },
+          {
+            tag: 'ADD_ACH_2',
+            sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
                   SELECT vp.user_id, 9, NOW(),
                       user_most_liked_count, 
                       NOW(), 
@@ -441,10 +440,10 @@ const addCommentlike = (liker_id, comment_id, is_liked) => {
                   WHERE vp.user_id = (SELECT user_id FROM comments WHERE cid = ?) AND lm.ach_code = 9
                   ORDER BY lm.required DESC
                   LIMIT 1
-                  ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`, 
-              params: [comment_id],
-            },
-          ];
+                  ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`,
+            params: [comment_id],
+          },
+        ];
 
       const executeQuery = async (query) => {
         return new Promise((resolve, reject) => {
@@ -503,7 +502,7 @@ const addCommentlike = (liker_id, comment_id, is_liked) => {
   });
 };
 
-const addUserLike = async (liker_id, post_id, is_liked) => {
+const addUserLike = async (liker_id, post_id) => {
   return new Promise((resolve, reject) => {
     connectionPool.getConnection((connectionError, connection) => {
       if (connectionError) {
@@ -516,103 +515,83 @@ const addUserLike = async (liker_id, post_id, is_liked) => {
       if (rand > 0.7) reward = 2;
       else if (rand > 0.3) reward = 1;
 
-      const queries = is_liked
-        ? [
-            {
-              tag: 'SUB_LK',
-              sql: `UPDATE posts SET likes = likes - 1
-                        WHERE pid = ? AND EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
-              params: [post_id, post_id, liker_id],
-            },
-            {
-              tag: 'DEL_LK',
-              sql: `DELETE from likes WHERE post_id = ? and liker_id = ?`,
-              params: [post_id, liker_id],
-            },
-          ]
-        : [
-            {
-              tag: 'UP_ACH',
-              sql: `UPDATE user_achievement
+      const queries = [
+        {
+          tag: 'UP_ACH',
+          sql: `UPDATE user_achievement
                 SET value = value + 1, last_update_time = NOW()
-                WHERE user_id = ? AND achievement_id = 1 AND DATE(last_update_time) = DATE(CURDATE() - INTERVAL 1 DAY)
-                AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
-              params: [liker_id, post_id, liker_id],
-            },
-            {
-              tag: 'ADD_ACH',
-              sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
+                WHERE user_id = ? AND achievement_id = 1 AND DATE(last_update_time) = DATE(CURDATE() - INTERVAL 1 DAY)`,
+          params: [liker_id],
+        },
+        {
+          tag: 'ADD_ACH',
+          sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
                 SELECT ?, 1, NOW(), 1, NOW()
                 WHERE NOT EXISTS (
                     SELECT 1 FROM user_achievement
                     WHERE user_id = ? AND achievement_id = 1 AND DATE(last_update_time) = DATE(CURDATE())
-                ) AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)
+                ) 
                 ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`,
-              params: [liker_id, liker_id, post_id, liker_id],
-            },
-            {
-              tag: 'ADD_LK',
-              sql: `UPDATE posts SET likes = likes + 1
-                        WHERE pid = ? AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
-              params: [post_id, post_id, liker_id],
-            },
-            {
-              tag: 'ADD_LK_CNT1',
-              sql: `UPDATE virus_platform_user SET user_total_likes_count = user_total_likes_count + 1 WHERE user_id = ?`,
-              params: [liker_id],
-            },
-            {
-              tag: 'ADD_LK_CNT2',
-              sql: `UPDATE virus_platform_user SET user_total_liked_count = user_total_liked_count + 1 WHERE user_id = (SELECT author_uid FROM posts WHERE pid = ?)`,
-              params: [post_id],
-            },
-            {
-              tag: 'ADD_LK_CNT3',
-              sql: `UPDATE virus_platform_user SET user_most_liked_count = 
+          params: [liker_id, liker_id],
+        },
+        {
+          tag: 'ADD_LK',
+          sql: `UPDATE posts SET likes = likes + 1 WHERE pid = ?`,
+          params: [post_id],
+        },
+        {
+          tag: 'ADD_LK_CNT1',
+          sql: `UPDATE virus_platform_user SET user_total_likes_count = user_total_likes_count + 1 WHERE user_id = ?`,
+          params: [liker_id],
+        },
+        {
+          tag: 'ADD_LK_CNT2',
+          sql: `UPDATE virus_platform_user SET user_total_liked_count = user_total_liked_count + 1 WHERE user_id = (SELECT author_uid FROM posts WHERE pid = ?)`,
+          params: [post_id],
+        },
+        {
+          tag: 'ADD_LK_CNT3',
+          sql: `UPDATE virus_platform_user SET user_most_liked_count = 
             CASE WHEN (SELECT likes FROM posts WHERE pid = ?) > user_most_liked_count
                   THEN (SELECT likes FROM posts WHERE pid = ?)
                   ELSE user_most_liked_count
             END
           WHERE user_id = (SELECT author_uid FROM posts WHERE pid = ?)`,
-              params: [post_id, post_id, post_id],
-            },
-            {
-              tag: 'UP_ACC',
-              sql: `INSERT INTO accounting (from_id, to_id, amount, type) SELECT 0, ?, ?, 0 FROM DUAL
+          params: [post_id, post_id, post_id],
+        },
+        {
+          tag: 'UP_ACC',
+          sql: `INSERT INTO accounting (from_id, to_id, amount, type) SELECT 0, ?, ?, 0 FROM DUAL
                         WHERE EXISTS (SELECT 1 FROM virus_platform_user AS liker
-                                        WHERE liker.user_id = ? AND liker.daily_paid_likes > 0)
-                            AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
-              params: [liker_id, reward, liker_id, post_id, liker_id],
-            },
-            {
-              // Note: Need two layers of select to avoid error.
-              tag: 'ADD_VIR',
-              sql: `UPDATE virus_platform_user
+                                        WHERE liker.user_id = ? AND liker.daily_paid_likes > 0)`,
+          params: [liker_id, reward, liker_id],
+        },
+        {
+          // Note: Need two layers of select to avoid error.
+          tag: 'ADD_VIR',
+          sql: `UPDATE virus_platform_user
                         SET virus = virus + ?
                         WHERE user_id = (SELECT owner_uid FROM posts WHERE pid = ?)
                             AND EXISTS (SELECT 1 FROM (SELECT user_id AS uid FROM virus_platform_user
-                                        WHERE user_id = ? AND daily_paid_likes > 0) as X)
-                            AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
-              params: [reward, post_id, liker_id, post_id, liker_id],
-            },
-            {
-              tag: 'ADD_VIR2',
-              sql: `UPDATE virus_platform_user
+                                        WHERE user_id = ? AND daily_paid_likes > 0) as X)`,
+          params: [reward, post_id, liker_id],
+        },
+        {
+          tag: 'ADD_VIR2',
+          sql: `UPDATE virus_platform_user
                         SET virus = virus + ?, daily_paid_likes = daily_paid_likes - 1
                         WHERE user_id = ?
-                            AND daily_paid_likes > 0
-                            AND NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
-              params: [reward, liker_id, post_id, liker_id],
-            },
-            {
-              tag: 'INS_LK',
-              sql: `INSERT INTO likes (liker_id, post_id) select ?, ? FROM DUAL
-                        WHERE NOT EXISTS (SELECT 1 FROM likes WHERE post_id = ? AND liker_id = ?)`,
-              params: [liker_id, post_id, post_id, liker_id],
-            },
-            {
-              tag: 'ADD_ACH_2',
-              sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+                            AND daily_paid_likes > 0`,
+          params: [reward, liker_id],
+        },
+        {
+          tag: 'INS_LK',
+          sql: `INSERT INTO likes (liker_id, post_id) select ?, ? FROM DUAL`,
+          params: [liker_id, post_id],
+        },
+        {
+          tag: 'ADD_ACH_2',
+          sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
                   SELECT vp.user_id, 5, NOW(),
                       user_total_liked_count, 
                       NOW(), 
@@ -624,12 +603,12 @@ const addUserLike = async (liker_id, post_id, is_liked) => {
                       AND lm.ach_code = 5
                   ORDER BY lm.required DESC
                   LIMIT 1
-                  ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`, 
-              params: [post_id],
-            },
-            {
-              tag: 'ADD_ACH_3',
-              sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+                  ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`,
+          params: [post_id],
+        },
+        {
+          tag: 'ADD_ACH_3',
+          sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
                   SELECT vp.user_id, 9, NOW(),
                       user_most_liked_count, 
                       NOW(), 
@@ -641,10 +620,10 @@ const addUserLike = async (liker_id, post_id, is_liked) => {
                       AND lm.ach_code = 9
                   ORDER BY lm.required DESC
                   LIMIT 1
-                  ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`, 
-              params: [post_id],
-            },
-          ];
+                  ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`,
+          params: [post_id],
+        },
+      ];
 
       const executeQuery = async (query) => {
         return new Promise((resolve, reject) => {
