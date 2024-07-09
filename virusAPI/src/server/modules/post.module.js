@@ -309,7 +309,7 @@ const selectUserPosts = (insertValues) => {
           filter_string = 'WHERE p.owner_uid = ?';
           break;
         case 2:
-          filter_string = 'WHERE b.user_id = ?';
+          filter_string = 'WHERE b.user_id = ? and b.price > 0';
           break;
       }
 
