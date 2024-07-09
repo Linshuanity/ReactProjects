@@ -469,7 +469,7 @@ const PostWidget = ({
                             }}
                             variant="contained"
                             onClick={() => setConfirmationState(2)}
-                            disabled={bid <= 0}
+                            disabled={bid < 0 || (bid == 0 && myBid == 0)}
                         >
                             {(isSell ? 'Ask (' : 'Bid (') + myBid + ')'}
                         </Button>
