@@ -59,7 +59,7 @@ export const userLike = async (req, res, next) => {
     const result = await addUserLike(liker_id, post_id);
     createNotificationWithSQL(1,post_id,
       'SELECT vp.user_id FROM virus_platform_user vp WHERE vp.user_id = (SELECT owner_uid FROM posts WHERE pid = ?)', [post_id],
-      "SELECT CONCAT(vp.user_name, ' likes your post!') FROM virus_platform_user vp WHERE vp.user_id = ?",[liker_id]);
+      'SELECT CONCAT(vp.user_name, \' likes your post!\') as content FROM virus_platform_user vp WHERE vp.user_id = ?',[liker_id]);
     res.send(result);
   } catch (error) {
     next(error);
@@ -72,7 +72,8 @@ export const commentlike = async (req, res, next) => {
     const result = await addCommentlike(liker_id, comment_id);
     createNotificationWithSQL(2,comment_id,
       'SELECT vp.user_id FROM virus_platform_user vp WHERE vp.user_id = (SELECT user_id FROM comments WHERE cid = ?)', [comment_id],
-      'SELECT CONCAT(vp.user_name, \' likes your comment!\') FROM virus_platform_user vp WHERE vp.user_id = ?)',[liker_id]);
+      // 'SELECT CONCAT(vp.user_name, \' likes your comment!\') FROM virus_platform_user vp WHERE vp.user_id = ?',[liker_id]);
+      'SELECT CONCAT(vp.user_name, \' likes your comment!\') as content FROM virus_platform_user vp WHERE vp.user_id = ?',[liker_id]);
     res.send(result);
   } catch (error) {
     next(error);
@@ -361,6 +362,16 @@ const addCommentlike = (liker_id, comment_id) => {
         return;
       }
 
+      const rand = Math.random();
+      let reward = 0;
+      if (rand > 0.7) reward = 2;
+      else if (rand > 0.3) reward = 1;
+
+      if(reward > 0) {
+      createNotificationWithSQL(3,post_id,
+        'SELECT vp.user_id FROM virus_platform_user vp WHERE vp.user_id = (SELECT owner_uid FROM posts WHERE pid = ?)', [liker_id],
+        'SELECT \'you made '+reward+' virus!\' as content FROM dual',[]);
+      }
       const queries =
         [
           {
@@ -515,6 +526,12 @@ const addUserLike = async (liker_id, post_id) => {
       if (rand > 0.7) reward = 2;
       else if (rand > 0.3) reward = 1;
 
+
+      if(reward > 0) {
+        createNotificationWithSQL(3,post_id,
+          'SELECT vp.user_id FROM virus_platform_user vp WHERE vp.user_id = (SELECT owner_uid FROM posts WHERE pid = ?)', [liker_id],
+          'SELECT \'you made '+reward+' virus!\' as content FROM dual',[]);
+        }
       const queries = [
         {
           tag: 'UP_ACH',
