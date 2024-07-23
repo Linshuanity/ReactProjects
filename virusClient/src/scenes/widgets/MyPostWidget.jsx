@@ -17,6 +17,7 @@ import {
     IconButton,
     useMediaQuery,
 } from '@mui/material'
+import Modal from 'react-modal'
 import FlexBetween from 'components/FlexBetween'
 import Dropzone from 'react-dropzone'
 import UserImage from 'components/UserImage'
@@ -24,6 +25,7 @@ import WidgetWrapper from 'components/WidgetWrapper'
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { setPosts } from 'state'
+import { MessageProvider, useMessage } from 'components/MessageContext'
 
 const MyPostWidget = ({ picturePath }) => {
     const dispatch = useDispatch()
@@ -31,8 +33,10 @@ const MyPostWidget = ({ picturePath }) => {
     const [image, setImage] = useState(null)
     const [post, setPost] = useState('')
     const [price, setPrice] = useState('')
+    const [confirmationState, setConfirmationState] = useState(0)
     const { palette } = useTheme()
     const { _id } = useSelector((state) => state.user)
+    const { showMessage } = useMessage()
     const token = useSelector((state) => state.token)
     const isNonMobileScreens = useMediaQuery('(min-width: 1000px)')
     const mediumMain = palette.neutral.mediumMain
@@ -54,11 +58,15 @@ const MyPostWidget = ({ picturePath }) => {
             body: formData,
         })
         const posts = await response.json()
-        dispatch(setPosts({ posts }))
-        setImage(null)
-        setPost('')
-
-        window.location.reload(true)
+        setConfirmationState(false)
+        if (posts.success)
+        {
+            setImage(null)
+            setPost('')
+            window.location.reload(true)
+        }
+        else
+            showMessage('Not enough virus.', 1000, 'message-box-red')
     }
 
     return (
@@ -169,7 +177,7 @@ const MyPostWidget = ({ picturePath }) => {
 
                 <Button
                     disabled={!post}
-                    onClick={handlePost}
+                    onClick={() => setConfirmationState(1)}
                     sx={{
                         color: palette.background.alt,
                         backgroundColor: palette.primary.main,
@@ -178,6 +186,37 @@ const MyPostWidget = ({ picturePath }) => {
                 >
                     POST
                 </Button>
+                <Modal
+                    isOpen={confirmationState > 0}
+                    onRequestClose={() => setConfirmationState(0)}
+                    ariaHideApp={false}
+                    className="custom-modal" // Apply your custom CSS class
+                >
+                    {confirmationState === 1 && (
+                        <div className="custom-modal-content">
+                            <p style={{ color: 'black' }}>
+                                This will cost you $1.
+                                Are you sure you want to post?
+                            </p>
+                            <div className="button-container">
+                                <button
+                                    className="yes-button"
+                                    onClick={handlePost}
+                                >
+                                    Yes
+                                </button>
+                                <button
+                                    className="no-button"
+                                    onClick={() =>
+                                        setConfirmationState(0)
+                                    }
+                                >
+                                    No
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </Modal>
             </FlexBetween>
         </WidgetWrapper>
     )

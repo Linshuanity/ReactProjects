@@ -60,7 +60,7 @@ const PostWidget = ({
     const userImagePath = useSelector((state) => state.user.picturePath)
     const isSell = loggedInUserId === owner_id
     const price = isSell ? bid_price : ask_price
-    const [bid, setBid] = useState('0')
+    const [bid, setBid] = useState(0)
     const [myBid, setMyBid] = useState(my_bid)
     const [isLiked, setLiked] = useState(is_liked)
     const [likesCount, setLikes] = useState(likes)
@@ -79,7 +79,7 @@ const PostWidget = ({
     const [commentCount, setCommentCount] = useState(comments)
     const [commentList, setCommentList] = useState([])
     const [bidList, setBidList] = useState([])
-    const [ConfirmationState, setConfirmationState] = useState(0)
+    const [confirmationState, setConfirmationState] = useState(0)
     const { showMessage } = useMessage()
 
     const handleAddBid = async () => {
@@ -91,15 +91,15 @@ const PostWidget = ({
             body: JSON.stringify({
                 user_id: loggedInUserId,
                 post_id: postId,
-                price: bid,
+                price: Number(bid),
                 is_bid: loggedInUserId !== owner_id,
             }),
         })
         const update = await response.json()
-        if (update.status == 'ok') {
-            setMyBid(bid)
-        }
         setConfirmationState(false)
+        if (update.successful)
+            showMessage(`Updated at ${bid}`, 1000, 'message-box-green')
+        else showMessage('Not enough virus.', 1000, 'message-box-red')
     }
     const handleAddComment = async () => {
         try {
@@ -127,6 +127,7 @@ const PostWidget = ({
                 const commentObject = {
                     cid: update.cid,
                     context: newComment,
+                    user_id: loggedInUserId,
                     user_name: loggedInUserName,
                     user_image_path: userImagePath,
                     isLiked: 0,
@@ -209,7 +210,6 @@ const PostWidget = ({
                 }
             )
             const update = await response.json()
-            console.log(update)
             setCommentList(update)
         }
         setListMode(listMode === 1 ? 0 : 1)
@@ -487,12 +487,12 @@ const PostWidget = ({
                             }}
                         />
                         <Modal
-                            isOpen={ConfirmationState > 0}
+                            isOpen={confirmationState > 0}
                             onRequestClose={() => setConfirmationState(0)}
                             ariaHideApp={false}
                             className="custom-modal" // Apply your custom CSS class
                         >
-                            {ConfirmationState === 1 ? (
+                            {confirmationState === 1 ? (
                                 <div className="custom-modal-content">
                                     <p style={{ color: 'black' }}>
                                         Are you sure you want to{' '}

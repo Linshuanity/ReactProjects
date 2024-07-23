@@ -179,6 +179,7 @@ export const createUserPost = async (req, res, next) => {
 
 /* POST 新增 */
 const createPost = (insertValues) => {
+  const post_cost = 1;
   return new Promise((resolve, reject) => {
     connectionPool.getConnection((connectionError, connection) => {
       if (connectionError) {
@@ -194,6 +195,16 @@ const createPost = (insertValues) => {
         }
 
         const queries = [
+          {
+            tag: 'FUND_CHECK',
+            sql: `UPDATE virus_platform_user SET virus = virus - ? WHERE user_id = ? 
+                        AND virus > ?`,
+            params: [
+                post_cost,
+                insertValues.userId,
+                post_cost
+            ],
+          },
           {
             tag: 'INS_POST',
             sql: `INSERT INTO posts (title, content, owner_uid, author_uid, image_path, expire_date) 
@@ -251,11 +262,8 @@ const createPost = (insertValues) => {
             // Check if the post was inserted successfully
             const affectedRows = results[0].affectedRows;
             if (affectedRows === 0) {
-              connection.rollback(() => {
-                connection.release();
-                resolve(null); // No changes made
-              });
-              return;
+              connection.release();
+              return resolve({ success : false });
             }
 
             connection.commit((err) => {
@@ -267,7 +275,7 @@ const createPost = (insertValues) => {
                 return;
               }
               connection.release();
-              resolve(`{"status":"ok", "msg":"成功！"}`);
+              resolve({ success : true });
             });
           })
           .catch((error) => {
@@ -798,10 +806,12 @@ const addUserBid = (user_id, post_id, price, is_bid) => {
                                                         AND is_bid = True), 0)
                         WHERE user_id = ?`,
           params: [user_id, post_id, user_id],
+          need_change: false,
         },
         {
           sql: `DELETE FROM bids WHERE user_id = ? AND post_id = ? AND is_bid = True`,
           params: [user_id, post_id],
+          need_change: false,
         },
         {
           sql: `INSERT INTO bids (user_id, post_id, is_bid, price) SELECT ?, ?, ?, ?
@@ -817,11 +827,13 @@ const addUserBid = (user_id, post_id, price, is_bid) => {
             is_bid,
             price,
           ],
+          need_change: true,
         },
         {
           sql: `UPDATE virus_platform_user
                         SET virus = virus - ? WHERE user_id = ? AND ? = True`,
           params: [price, user_id, is_bid],
+          need_change: false,
         },
         {
           sql: `UPDATE posts p
@@ -845,13 +857,19 @@ const addUserBid = (user_id, post_id, price, is_bid) => {
                         )
                         WHERE p.pid = ?`,
           params: [post_id],
+          need_change: false,
         },
       ];
+
       const executeQuery = async (query) => {
         return new Promise((resolve, reject) => {
           connection.query(query.sql, query.params, (error, result) => {
             if (error) {
               return reject(error);
+            }
+            const affectedRows = result.affectedRows;
+            if (affectedRows === 0 && query.need_change) {
+              return reject('transfer failed');
             }
             resolve(result);
           });
@@ -869,27 +887,26 @@ const addUserBid = (user_id, post_id, price, is_bid) => {
             });
           });
 
-          const results = [];
           for (const query of queries) {
-            const result = await executeQuery(query);
-            if (result.affectedRows > 0) {
-              results.push(result);
+            try {
+              await executeQuery(query);
+            } catch (error) {
+              // Handle error here
+              return resolve({ successful: false, reason: 1 });
             }
           }
-          if (results.length >= 2) {
-            await new Promise((resolve, reject) => {
-              connection.commit((err) => {
-                if (err) {
-                  return reject(err);
-                }
-                resolve();
-              });
+
+          await new Promise((resolve, reject) => {
+            connection.commit((err) => {
+              if (err) {
+                return reject(err);
+              }
+              resolve();
             });
-            resolve({ status: 'ok' });
-          } else {
-            resolve({ status: 'bad' });
-          }
+          });
+
           connection.release();
+          resolve({ successful: true, reason: 0 });
         } catch (error) {
           await new Promise((resolve, reject) => {
             connection.rollback(() => {

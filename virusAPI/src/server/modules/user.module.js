@@ -48,13 +48,9 @@ const selectUserById = (userId) => {
         return; // Early return after rejecting to avoid continuing execution
       }
 
-      console.log('query');
-      console.log('connection.query userId:', userId);
-
       const query = 'SELECT * FROM virus_platform_user WHERE user_id = ?';
 
       connection.query(query, [userId], (queryError, result) => {
-        console.log('inside query');
         connection.release();
 
         if (queryError) {
