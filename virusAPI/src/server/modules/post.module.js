@@ -14,18 +14,6 @@ const connectionPool = mysql.createPool({
   database: config.mysqlDatabase,
 });
 
-const executeQuery = async (sql, params = []) => {
-  const connection = await getConnection();
-  try {
-    const [results] = await connection.query(sql, params);
-    return results;
-  } catch (error) {
-    throw error;
-  } finally {
-    connection.release();
-  }
-};
-
 const getConnection = () => {
   return new Promise((resolve, reject) => {
     connectionPool.getConnection((err, connection) => {

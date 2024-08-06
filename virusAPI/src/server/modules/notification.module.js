@@ -20,72 +20,62 @@ export const insertNotification = async (req, res, next) => {
   }
 };
 
-export const createNotificationWithSQL = async (type, source_id, user_id_sql, user_id_parameter, content_sql, content_parameter) => {
-  const connection = await new Promise((resolve, reject) => {
-    connectionPool.getConnection((connectionError, conn) => {
+export const createNotificationWithSQL = (type, source_id, user_id_sql, user_id_parameter, content_sql, content_parameter) => {
+  return new Promise((resolve, reject) => {
+    connectionPool.getConnection((connectionError, connection) => {
       if (connectionError) {
         reject(connectionError);
-      } else {
-        resolve(conn);
+        return; // Exit early if connection error
+      }
+
+      try {
+        // First, execute user_id query
+        connection.query(user_id_sql, user_id_parameter, (userIdError, userIdResult) => {
+          if (userIdError) {
+            console.error('SQL error (user_id): ', userIdError);
+            reject(userIdError);
+            return; // Exit early if user_id query error
+          }
+
+          const user_id = userIdResult[0].user_id;
+
+          // Then, execute content query
+          connection.query(content_sql, content_parameter, (contentError, contentResult) => {
+            if (contentError) {
+              console.error('SQL error (content): ', contentError);
+              reject(contentError);
+              return; // Exit early if content query error
+            }
+
+            const content = contentResult[0].content;
+
+            console.log('user_id: ', user_id);
+            console.log('content: ', content);
+
+            // Finally, insert into notifications table
+            const insertQuery = `
+              INSERT INTO notifications
+              (user_id, type, source_id, is_read, create_time, content)
+              VALUES (?, ?, ?, 0, NOW(), ?)
+            `;
+
+            connection.query(insertQuery, [user_id, type, source_id, content], (insertError, result) => {
+              if (insertError) {
+                console.error('SQL error (insert): ', insertError);
+                reject(insertError);
+              } else {
+                resolve({ id: result.insertId, message: 'Notification inserted successfully' });
+              }
+            });
+          });
+        });
+      } catch (error) {
+        reject(error);
+      } finally {
+        connection.release();
       }
     });
   });
-
-  try {
-    // Execute user_id query
-    const [userIdResult] = await new Promise((resolve, reject) => {
-      connection.query(user_id_sql, user_id_parameter, (userIdError, results) => {
-        if (userIdError) {
-          reject(userIdError);
-        } else {
-          resolve(results);
-        }
-      });
-    });
-
-    const user_id = userIdResult[0].user_id;
-
-    // Execute content query
-    const [contentResult] = await new Promise((resolve, reject) => {
-      connection.query(content_sql, content_parameter, (contentError, results) => {
-        if (contentError) {
-          reject(contentError);
-        } else {
-          resolve(results);
-        }
-      });
-    });
-
-    const content = contentResult[0].content;
-
-    console.log('user_id: ', user_id);
-    console.log('content: ', content);
-
-    // Insert into notifications
-    const [insertResult] = await new Promise((resolve, reject) => {
-      const insertQuery = `
-        INSERT INTO notifications
-        (user_id, type, source_id, is_read, create_time, content)
-        VALUES (?, ?, ?, 0, NOW(), ?)
-      `;
-      connection.query(insertQuery, [user_id, type, source_id, content], (insertError, result) => {
-        if (insertError) {
-          reject(insertError);
-        } else {
-          resolve(result);
-        }
-      });
-    });
-
-    return { id: insertResult.insertId, message: 'Notification inserted successfully' };
-
-  } catch (error) {
-    console.error('Error occurred: ', error);
-    throw error; // Propagate the error
-
-  } finally {
-    connection.release();
-  }
 };
 
 export const createNotification = (user_id, type, source_id, content) => {
