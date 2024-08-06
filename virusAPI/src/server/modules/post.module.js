@@ -262,27 +262,25 @@ const createPost = (insertValues) => {
             // Check if the post was inserted successfully
             const affectedRows = results[0].affectedRows;
             if (affectedRows === 0) {
-              connection.release();
               return resolve({ success : false });
             }
 
             connection.commit((err) => {
               if (err) {
                 connection.rollback(() => {
-                  connection.release();
                   reject(err);
                 });
                 return;
               }
-              connection.release();
               resolve({ success : true });
             });
           })
           .catch((error) => {
             connection.rollback(() => {
-              connection.release();
               reject(error);
             });
+          }).finally(() => {
+            connection.release();
           });
       });
     });
@@ -551,16 +549,16 @@ const addCommentlike = (liker_id, comment_id, reward) => {
             });
           });
 
-          connection.release();
           resolve({ results });
         } catch (error) {
           await new Promise((resolve, reject) => {
             connection.rollback(() => {
-              connection.release();
               resolve();
             });
           });
           reject(error);
+        } finally {
+          connection.release();
         }
       };
 
@@ -743,16 +741,16 @@ const addUserLike = async (liker_id, post_id, reward) => {
             });
           });
 
-          connection.release();
           resolve({ results: results, reward: reward });
         } catch (error) {
           await new Promise((resolve, reject) => {
             connection.rollback(() => {
-              connection.release();
               resolve();
             });
           });
           reject(error);
+        } finally {
+          connection.release();
         }
       };
 
@@ -905,16 +903,16 @@ const addUserBid = (user_id, post_id, price, is_bid) => {
             });
           });
 
-          connection.release();
           resolve({ successful: true, reason: 0 });
         } catch (error) {
           await new Promise((resolve, reject) => {
             connection.rollback(() => {
-              connection.release();
               resolve();
             });
           });
           reject(error);
+        } finally {
+          connection.release();
         }
       };
 
@@ -1070,16 +1068,16 @@ const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
             });
           });
 
-          connection.release();
           resolve({ successful: true, reason: 0 });
         } catch (error) {
           await new Promise((resolve, reject) => {
             connection.rollback(() => {
-              connection.release();
               resolve();
             });
           });
           reject(error);
+        } finally {
+          connection.release();
         }
       };
 
@@ -1144,16 +1142,16 @@ const addUserComment = (user_id, post_id, context) => {
             });
           });
 
-          connection.release();
           resolve({ results });
         } catch (error) {
           await new Promise((resolve, reject) => {
             connection.rollback(() => {
-              connection.release();
               resolve();
             });
           });
           reject(error);
+        } finally {
+          connection.release();
         }
       };
 
@@ -1188,27 +1186,3 @@ const selectUserComments = (user_id, post_id) => {
     });
   });
 };
-
-// const selectUserComments = (user_id, post_id) => {
-//   return new Promise((resolve, reject) => {
-//     connectionPool.getConnection((connectionError, connection) => {
-//       if (connectionError) {
-//         reject(connectionError);
-//       } else {
-//         const query = `SELECT  c.context,  u.user_name,  u.user_image_path,  c.likes,
-//   (SELECT COUNT(*) FROM comment_likes cl WHERE cl.liker_id = ? AND cl.comment_id = c.cid) AS like_count
-// FROM comments AS c JOIN virus_platform_user AS u ON c.user_id = u.user_id WHERE c.post_id = ?`;
-//         connection.query(query, [user_id], [post_id], (error, result) => {
-//           if (error) {
-//             console.error('SQL error: ', error);
-//             reject(error);
-//           } else {
-//             const jsonResponse = JSON.stringify(result);
-//             resolve(jsonResponse);
-//           }
-//           connection.release();
-//         });
-//       }
-//     });
-//   });
-// };

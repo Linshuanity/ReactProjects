@@ -9,24 +9,46 @@ const connectionPool = mysql.createPool({
   database: config.mysqlDatabase,
 });
 
-const executeQuery = (sql, params) => {
-  return new Promise((resolve, reject) => {
-    connectionPool.getConnection((err, connection) => {
-      if (err) {
-        reject(err);
-        return;
-      }
+const executeQuery = async (sql, params) => {
+  let connection;
 
-      connection.query(sql, params, (error, result) => {
-        connection.release();
-        if (error) {
-          reject(error);
+  try {
+    // Obtain a connection from the pool
+    connection = await new Promise((resolve, reject) => {
+      connectionPool.getConnection((err, conn) => {
+      console.log("connect executeQuery");
+        if (err) {
+          reject(new Error(`Connection Error: ${err.message}`));
         } else {
-          resolve(result);
+          resolve(conn);
         }
       });
     });
-  });
+
+    // Perform the query
+    const [result] = await new Promise((resolve, reject) => {
+      connection.query(sql, params, (err, results) => {
+        if (err) {
+          reject(new Error(`Query Error: ${err.message}`));
+        } else {
+          resolve(results);
+        }
+      });
+    });
+
+    return result;
+
+  } catch (error) {
+    console.error('Error during query execution:', error);
+    throw error; // Propagate the error to be handled by the caller
+
+  } finally {
+    // Ensure the connection is always released
+    if (connection) {
+      connection.release();
+      console.log("disconnect executeQuery");
+    }
+  }
 };
 
 const getFriends = (userId) =>
@@ -164,7 +186,6 @@ const createSubscribe = (user_id, friend_id, is_delete) => {
             );
             if (affectedRows === 0) {
               connection.rollback(() => {
-                connection.release();
                 resolve(null); // No changes made
               });
               return;
@@ -178,7 +199,6 @@ const createSubscribe = (user_id, friend_id, is_delete) => {
               (error, selectResult) => {
                 if (error) {
                   connection.rollback(() => {
-                    connection.release();
                     reject(error);
                   });
                   return;
@@ -187,12 +207,10 @@ const createSubscribe = (user_id, friend_id, is_delete) => {
                 connection.commit((err) => {
                   if (err) {
                     connection.rollback(() => {
-                      connection.release();
                       reject(err);
                     });
                     return;
                   }
-                  connection.release();
                   resolve(selectResult);
                 });
               },
@@ -200,9 +218,10 @@ const createSubscribe = (user_id, friend_id, is_delete) => {
           })
           .catch((error) => {
             connection.rollback(() => {
-              connection.release();
               reject(error);
             });
+          }).finally(() => {
+            connection.release();
           });
       });
     });
