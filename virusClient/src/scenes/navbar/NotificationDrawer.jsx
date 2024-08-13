@@ -104,11 +104,20 @@ const NotificationDrawer = () => {
 
         if (response.ok) {
           // 更新通知列表，將對應的通知標記為已讀
-          setNotifications(prevNotifications =>
-            prevNotifications.map(notification =>
-              notification.nid === nid ? { ...notification, is_read: 1 } : notification
-            )
-          );
+          if (nid > 0)
+          {
+              setNotifications(prevNotifications =>
+                prevNotifications.map(notification =>
+                  notification.nid === nid ? { ...notification, is_read: 1 } : notification
+                )
+              );
+          }
+          else
+          {
+              setNotifications(prevNotifications =>
+                prevNotifications.map(notification => ({ ...notification, is_read: 1 }))
+              );
+          }
         } else {
           console.error('Failed to mark notification as read');
         }
@@ -148,6 +157,7 @@ const NotificationDrawer = () => {
         <Box display="flex" justifyContent="space-around" mb={2}>
           <Button variant="contained" onClick={() => setFilter('all')}>All</Button>
           <Button variant="contained" onClick={() => setFilter('unread')}>Unread</Button>
+          <Button variant="contained" onClick={() => handleReadClick(userId, 0)}>ReadAll</Button>
         </Box>
         <List>
           {filteredNotifications.length == 0 ? (

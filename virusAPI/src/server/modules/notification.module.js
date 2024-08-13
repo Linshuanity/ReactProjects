@@ -126,10 +126,11 @@ const updateUserReadNotification = (user_id, nid) => {
         reject(connectionError);
       } else {
         console.log("updateUserReadNotification user_id:" + user_id +  "nid:" + nid);
-        const query = `
-            UPDATE notifications SET is_read = 1 WHERE nid = ? AND user_id = ?
-        `;
-        connection.query(query, [nid, user_id], (error, result) => {
+        const query = nid > 0 ?
+            "UPDATE notifications SET is_read = 1 WHERE nid = ? AND user_id = ?" :
+            "UPDATE notifications SET is_read = 1 WHERE user_id = ?";
+        const parameters = nid > 0 ? [nid, user_id] : [user_id];
+        connection.query(query, parameters, (error, result) => {
           if (error) {
             console.error('SQL error: ', error);
             reject(error);
@@ -145,7 +146,6 @@ const updateUserReadNotification = (user_id, nid) => {
 
 export const userNotifications = async (req, res, next) => {
   try {
-    console.log("req.body.user_id: " + req.body.user_id);
     const insertValues = req.body;
     console.log(insertValues);
 
