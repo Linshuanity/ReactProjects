@@ -421,10 +421,6 @@ const addCommentlike = (liker_id, comment_id, reward) => {
             params: [comment_id, comment_id, comment_id],
           },
           {
-            sql: `INSERT INTO accounting (from_id, to_id, amount, type) SELECT 0, ?, 1, 0 FROM DUAL`,
-            params: [liker_id],
-          },
-          {
             sql: `UPDATE virus_platform_user SET virus = virus + 1 where user_id = ?`,
             params: [liker_id],
           },
@@ -795,6 +791,18 @@ const addUserBid = (user_id, post_id, price, is_bid) => {
           need_change: false,
         },
         {
+          sql: `INSERT INTO accounting (from_id, to_id, amount, type)
+                SELECT ?, ?, price, 2
+                FROM (
+                    SELECT price
+                    FROM bids
+                    WHERE user_id = ? AND post_id = ? AND is_bid = TRUE
+                ) AS bid_price
+                WHERE bid_price.price > 0`,
+          params: [post_id, user_id, user_id, post_id],
+          need_change: false,
+        },
+        {
           sql: `DELETE FROM bids WHERE user_id = ? AND post_id = ? AND is_bid = True`,
           params: [user_id, post_id],
           need_change: false,
@@ -814,6 +822,11 @@ const addUserBid = (user_id, post_id, price, is_bid) => {
             price,
           ],
           need_change: true,
+        },
+        {
+          sql: `INSERT INTO accounting (from_id, to_id, amount, type) SELECT ?, ?, ?, 1 FROM DUAL WHERE ? = true`,
+          params: [user_id, post_id, price, is_bid],
+          need_change: false,
         },
         {
           sql: `UPDATE virus_platform_user
@@ -878,6 +891,7 @@ const addUserBid = (user_id, post_id, price, is_bid) => {
               await executeQuery(query);
             } catch (error) {
               // Handle error here
+              console.log(query);
               return resolve({ successful: false, reason: 1 });
             }
           }
@@ -990,6 +1004,14 @@ const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
         {
           sql: `UPDATE virus_platform_user SET user_sell_post_count = user_sell_post_count + 1 WHERE user_id = ?`,
           params: [seller_id],
+        },
+        {
+          sql: `INSERT INTO accounting (from_id, to_id, amount, type) SELECT ?, ?, ?, 1 FROM DUAL WHERE ? = false`,
+          params: [buyer_id, post_id, price, for_sell],
+        },
+        {
+          sql: `INSERT INTO accounting (from_id, to_id, amount, type) VALUES (?, ?, ?, 2)`,
+          params: [post_id, seller_id, price],
         },
         {
           sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
