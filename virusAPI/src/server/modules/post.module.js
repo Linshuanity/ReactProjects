@@ -194,6 +194,14 @@ const createPost = (insertValues) => {
             ],
           },
           {
+            tag: 'ADD_ACC',
+            sql: `INSERT INTO accounting (from_id, to_id, amount, type, note) VALUES (?, 0, ?, 0, "create post")`,
+            params: [
+                insertValues.userId,
+                post_cost
+            ]
+          },
+          {
             tag: 'INS_POST',
             sql: `INSERT INTO posts (title, content, owner_uid, author_uid, image_path, expire_date) 
                   VALUES (?, ?, ?, ?, ?, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 7 DAY))`,
@@ -430,14 +438,14 @@ const addCommentlike = (liker_id, comment_id, reward) => {
           },
           {
             tag: 'UP_ACC',
-            sql: `INSERT INTO accounting (from_id, to_id, amount, type) SELECT 0, ?, ?, 0 FROM DUAL
+            sql: `INSERT INTO accounting (from_id, to_id, amount, type, note) SELECT 0, ?, ?, 0, "like a comment" FROM DUAL
                           WHERE EXISTS (SELECT 1 FROM virus_platform_user AS liker
                                           WHERE liker.user_id = ? AND liker.daily_paid_likes > 0)`,
             params: [liker_id, reward, liker_id],
           },
           {
             tag: 'UP_ACC2',
-            sql: `INSERT INTO accounting (from_id, to_id, amount, type) SELECT 0, (SELECT user_id FROM comments WHERE cid = ?), ?, 0 FROM DUAL
+            sql: `INSERT INTO accounting (from_id, to_id, amount, type, note) SELECT 0, (SELECT user_id FROM comments WHERE cid = ?), ?, 0, "comment liked" FROM DUAL
                           WHERE EXISTS (SELECT 1 FROM virus_platform_user AS liker
                                           WHERE liker.user_id = ? AND liker.daily_paid_likes > 0)`,
             params: [comment_id, reward, liker_id],
@@ -607,14 +615,14 @@ const addUserLike = async (liker_id, post_id, reward) => {
         },
         {
           tag: 'UP_ACC',
-          sql: `INSERT INTO accounting (from_id, to_id, amount, type) SELECT 0, ?, ?, 0 FROM DUAL
+          sql: `INSERT INTO accounting (from_id, to_id, amount, type, note) SELECT 0, ?, ?, 0, "like a post" FROM DUAL
                         WHERE EXISTS (SELECT 1 FROM virus_platform_user AS liker
                                         WHERE liker.user_id = ? AND liker.daily_paid_likes > 0)`,
           params: [liker_id, reward, liker_id],
         },
         {
           tag: 'UP_ACC2',
-          sql: `INSERT INTO accounting (from_id, to_id, amount, type) SELECT 0, (SELECT owner_uid FROM posts WHERE pid = ?), ?, 0 FROM DUAL
+          sql: `INSERT INTO accounting (from_id, to_id, amount, type, note) SELECT 0, (SELECT owner_uid FROM posts WHERE pid = ?), ?, 0, "post liked" FROM DUAL
                         WHERE EXISTS (SELECT 1 FROM virus_platform_user AS liker
                                         WHERE liker.user_id = ? AND liker.daily_paid_likes > 0)`,
           params: [post_id, reward, liker_id],
@@ -791,8 +799,8 @@ const addUserBid = (user_id, post_id, price, is_bid) => {
           need_change: false,
         },
         {
-          sql: `INSERT INTO accounting (from_id, to_id, amount, type)
-                SELECT ?, ?, price, 2
+          sql: `INSERT INTO accounting (from_id, to_id, amount, type, note)
+                SELECT ?, ?, price, 2, "bid refund"
                 FROM (
                     SELECT price
                     FROM bids
@@ -824,8 +832,8 @@ const addUserBid = (user_id, post_id, price, is_bid) => {
           need_change: true,
         },
         {
-          sql: `INSERT INTO accounting (from_id, to_id, amount, type) SELECT ?, ?, ?, 1 FROM DUAL WHERE ? = true`,
-          params: [user_id, post_id, price, is_bid],
+          sql: `INSERT INTO accounting (from_id, to_id, amount, type, note) SELECT ?, ?, ?, 1, "new bid" FROM DUAL WHERE ? = true and ? > 0`,
+          params: [user_id, post_id, price, is_bid, price],
           need_change: false,
         },
         {
@@ -1006,11 +1014,11 @@ const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
           params: [seller_id],
         },
         {
-          sql: `INSERT INTO accounting (from_id, to_id, amount, type) SELECT ?, ?, ?, 1 FROM DUAL WHERE ? = false`,
+          sql: `INSERT INTO accounting (from_id, to_id, amount, type, note) SELECT ?, ?, ?, 1, "purchase a post" FROM DUAL WHERE ? = false`,
           params: [buyer_id, post_id, price, for_sell],
         },
         {
-          sql: `INSERT INTO accounting (from_id, to_id, amount, type) VALUES (?, ?, ?, 2)`,
+          sql: `INSERT INTO accounting (from_id, to_id, amount, type, note) VALUES (?, ?, ?, 2, "post sold")`,
           params: [post_id, seller_id, price],
         },
         {
