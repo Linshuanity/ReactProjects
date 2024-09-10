@@ -41,32 +41,42 @@ const MyPostWidget = ({ picturePath }) => {
     const isNonMobileScreens = useMediaQuery('(min-width: 1000px)')
     const mediumMain = palette.neutral.mediumMain
     const medium = palette.neutral.medium
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const handlePost = async () => {
-        const formData = new FormData()
-        formData.append('userId', _id)
-        formData.append('content', post)
-        formData.append('price', price)
-        if (image) {
-            formData.append('picture', image)
-            formData.append('picturePath', image.name)
-        }
+        if (isProcessing) return;
+        setIsProcessing(true);
+        try {
+            const formData = new FormData()
+            formData.append('userId', _id)
+            formData.append('content', post)
+            formData.append('price', price)
+            if (image) {
+                formData.append('picture', image)
+                formData.append('picturePath', image.name)
+            }
 
-        const response = await fetch(`http://localhost:3002/posts/createPost`, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
-            body: formData,
-        })
-        const posts = await response.json()
-        setConfirmationState(false)
-        if (posts.success)
-        {
-            setImage(null)
-            setPost('')
-            window.location.reload(true)
+            const response = await fetch(`http://localhost:3002/posts/createPost`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData,
+            })
+            const posts = await response.json()
+            setConfirmationState(false)
+            if (posts.success) {
+                setImage(null)
+                setPost('')
+                window.location.reload(true)
+            }
+            else
+                showMessage('Not enough virus.', 1000, 'message-box-red')
+        } catch (error) {
+            console.error('Error adding bid:', error);
+            showMessage('Error occurred while processing bid.', 1000, 'message-box-red');
+        } finally {
+            setIsProcessing(false);
+            setConfirmationState(false)
         }
-        else
-            showMessage('Not enough virus.', 1000, 'message-box-red')
     }
 
     return (
@@ -200,8 +210,9 @@ const MyPostWidget = ({ picturePath }) => {
                             </p>
                             <div className="button-container">
                                 <button
-                                    className="yes-button"
+                                    className={`yes-button ${isProcessing ? 'processing' : ''}`}
                                     onClick={handlePost}
+                                    disabled={isProcessing}
                                 >
                                     Yes
                                 </button>
