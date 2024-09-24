@@ -66,6 +66,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
         <>
             <div style={{ marginTop: '10px' }}>
                 <Tabs value={mode} onChange={handleTabChange}>
+                    {userId == loggedInUserId && <Tab label="News" />}
                     <Tab label="My post" />
                     <Tab label="My collection" />
                     {userId == loggedInUserId && <Tab label="My order" />}
