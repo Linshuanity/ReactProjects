@@ -47,22 +47,22 @@ export const userLike = async (req, res, next) => {
     let reward = 0;
     if (rand > 0.7) reward = 2;
     else if (rand > 0.3) reward = 1;
-    
+
     const { liker_id, post_id } = req.body;
     const result = await addUserLike(liker_id, post_id, reward);
 
     let content_sql = 'SELECT CONCAT(vp.user_name, \' likes your post!\') as content FROM virus_platform_user vp WHERE vp.user_id = ?';
-    if(reward > 0) {
-      content_sql = 'SELECT CONCAT(vp.user_name, \' likes your post! You made'+reward+' virus!\') as content FROM virus_platform_user vp WHERE vp.user_id = ?';
-      createNotificationWithSQL(3,post_id,
+    if (reward > 0) {
+      content_sql = 'SELECT CONCAT(vp.user_name, \' likes your post! You made' + reward + ' virus!\') as content FROM virus_platform_user vp WHERE vp.user_id = ?';
+      createNotificationWithSQL(3, post_id,
         'SELECT ? as user_id FROM dual', [liker_id],
-        'SELECT \'You like a post! You made '+reward+' virus!\' as content FROM dual',[]);
+        'SELECT \'You like a post! You made ' + reward + ' virus!\' as content FROM dual', []);
     }
-    createNotificationWithSQL(1,post_id,
+    createNotificationWithSQL(1, post_id,
       'SELECT owner_uid as user_id FROM posts WHERE pid = ?', [post_id],
-      content_sql,[liker_id]);
+      content_sql, [liker_id]);
     res.send(result);
-    
+
   } catch (error) {
     next(error);
   }
@@ -77,17 +77,17 @@ export const commentlike = async (req, res, next) => {
 
     const { liker_id, comment_id } = req.body;
     const result = await addCommentlike(liker_id, comment_id, reward);
-    
+
     let content_sql = 'SELECT CONCAT(vp.user_name, \' likes your comment!\') as content FROM virus_platform_user vp WHERE vp.user_id = ?';
-    if(reward > 0) {
-      content_sql = 'SELECT CONCAT(vp.user_name, \' likes your comment! You made '+reward+' virus!\') as content FROM virus_platform_user vp WHERE vp.user_id = ?';
-      createNotificationWithSQL(3,comment_id,
+    if (reward > 0) {
+      content_sql = 'SELECT CONCAT(vp.user_name, \' likes your comment! You made ' + reward + ' virus!\') as content FROM virus_platform_user vp WHERE vp.user_id = ?';
+      createNotificationWithSQL(3, comment_id,
         'SELECT ? as user_id FROM dual', [liker_id],
-        'SELECT \'You like a comment! You made '+reward+' virus!\' as content FROM dual',[]);
+        'SELECT \'You like a comment! You made ' + reward + ' virus!\' as content FROM dual', []);
     }
-    createNotificationWithSQL(2,comment_id,
+    createNotificationWithSQL(2, comment_id,
       'SELECT user_id as user_id FROM comments WHERE cid = ?', [comment_id],
-      content_sql,[liker_id]);
+      content_sql, [liker_id]);
     res.send(result);
   } catch (error) {
     next(error);
@@ -202,17 +202,17 @@ const createPost = (insertValues) => {
             sql: `UPDATE virus_platform_user SET virus = virus - ? WHERE user_id = ? 
                         AND virus > ?`,
             params: [
-                post_cost,
-                insertValues.userId,
-                post_cost
+              post_cost,
+              insertValues.userId,
+              post_cost
             ],
           },
           {
             tag: 'ADD_ACC',
             sql: `INSERT INTO accounting (from_id, to_id, amount, type, note) VALUES (?, 0, ?, 0, "create post")`,
             params: [
-                insertValues.userId,
-                post_cost
+              insertValues.userId,
+              post_cost
             ]
           },
           {
@@ -272,7 +272,7 @@ const createPost = (insertValues) => {
             // Check if the post was inserted successfully
             const affectedRows = results[0].affectedRows;
             if (affectedRows === 0) {
-              return resolve({ success : false });
+              return resolve({ success: false });
             }
 
             connection.commit((err) => {
@@ -282,7 +282,7 @@ const createPost = (insertValues) => {
                 });
                 return;
               }
-              resolve({ success : true });
+              resolve({ success: true });
             });
           })
           .catch((error) => {
@@ -350,6 +350,7 @@ const selectUserPosts = (insertValues) => {
       }
 
       let filter_string = '';
+      let order_string = '';
       let queryParams = [
         insertValues.login_user,
         insertValues.login_user,
@@ -357,13 +358,20 @@ const selectUserPosts = (insertValues) => {
       ];
       switch (insertValues.filter_mode) {
         case 0:
-          filter_string = 'WHERE p.author_uid = ?';
+          filter_string = 'where 1=1';
+          order_string = ' order by p.pid desc';
           break;
         case 1:
-          filter_string = 'WHERE p.owner_uid = ?';
+          filter_string = 'WHERE p.author_uid = ?';
+          order_string = ' order by p.pid desc';
           break;
         case 2:
+          filter_string = 'WHERE p.owner_uid = ?';
+          order_string = ' order by p.pid desc';
+          break;
+        case 3:
           filter_string = 'WHERE b.user_id = ? and b.price > 0';
+          order_string = ' order by p.pid desc';
           break;
       }
 
@@ -380,7 +388,7 @@ const selectUserPosts = (insertValues) => {
         JOIN virus_platform_user AS v2 ON p.author_uid = v2.user_id
         LEFT JOIN bids AS b ON p.pid = b.post_id and b.user_id = ?
         LEFT JOIN likes AS l ON p.pid = l.post_id AND l.liker_id = ?
-        ${filter_string} order by p.pid desc`;
+        ${filter_string} ${order_string}`;
 
       connection.query(query, queryParams, (error, result) => {
         connection.release();
@@ -540,7 +548,7 @@ const addCommentlike = (liker_id, comment_id, reward) => {
 
           const results = [];
           for (const query of queries) {
-            if(reward !== 0 || (query.tag !== 'ADD_VIR' && query.tag !== 'ADD_VIR2' && query.tag !== 'UP_ACC' && query.tag !== 'UP_ACC2')) {
+            if (reward !== 0 || (query.tag !== 'ADD_VIR' && query.tag !== 'ADD_VIR2' && query.tag !== 'UP_ACC' && query.tag !== 'UP_ACC2')) {
               const result = await executeQuery(query);
               results.push(result);
             }
@@ -582,7 +590,7 @@ const addUserLike = async (liker_id, post_id, reward) => {
         reject(connectionError);
         return;
       }
-      
+
       const queries = [
         {
           tag: 'UP_ACH',
@@ -732,7 +740,7 @@ const addUserLike = async (liker_id, post_id, reward) => {
 
           const results = [];
           for (const query of queries) {
-            if(reward !== 0 || (query.tag !== 'ADD_VIR' && query.tag !== 'ADD_VIR2' && query.tag !== 'UP_ACC' && query.tag !== 'UP_ACC2')) {
+            if (reward !== 0 || (query.tag !== 'ADD_VIR' && query.tag !== 'ADD_VIR2' && query.tag !== 'UP_ACC' && query.tag !== 'UP_ACC2')) {
               const result = await executeQuery(query);
               results.push(result);
             }

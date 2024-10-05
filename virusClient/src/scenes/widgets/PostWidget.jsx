@@ -81,27 +81,40 @@ const PostWidget = ({
     const [bidList, setBidList] = useState([])
     const [confirmationState, setConfirmationState] = useState(0)
     const { showMessage } = useMessage()
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const handleAddBid = async () => {
-        const response = await fetch(`http://localhost:3002/posts/bid`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                user_id: loggedInUserId,
-                post_id: postId,
-                price: Number(bid),
-                is_bid: loggedInUserId !== owner_id,
-            }),
-        })
-        const update = await response.json()
-        setConfirmationState(false)
-        if (update.successful)
-            showMessage(`Updated at ${bid}`, 1000, 'message-box-green')
-        else showMessage('Not enough virus.', 1000, 'message-box-red')
+        if (isProcessing) return;
+        setIsProcessing(true);
+        try {
+            const response = await fetch(`http://localhost:3002/posts/bid`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: loggedInUserId,
+                    post_id: postId,
+                    price: Number(bid),
+                    is_bid: loggedInUserId !== owner_id,
+                }),
+            })
+            const update = await response.json()
+            setConfirmationState(false)
+            if (update.successful)
+                showMessage(`Updated at ${bid}`, 1000, 'message-box-green')
+            else showMessage('Not enough virus.', 1000, 'message-box-red')
+        } catch (error) {
+            console.error('Error adding bid:', error);
+            showMessage('Error occurred while processing bid.', 1000, 'message-box-red');
+        } finally {
+            setIsProcessing(false);
+            setConfirmationState(false)
+        }
     }
     const handleAddComment = async () => {
+        if (isProcessing) return;
+        setIsProcessing(true);
         try {
             if (newComment.trim() !== '') {
                 const response = await fetch(
@@ -144,10 +157,14 @@ const PostWidget = ({
                 `An error occurredwhile adding the comment: ${error.message}`,
                 3000
             )
+        } finally {
+            setIsProcessing(false);
         }
     }
 
     const purchaseAction = async () => {
+        if (isProcessing) return;
+        setIsProcessing(true);
         try {
             const response = await fetch(
                 `http://localhost:3002/posts/purchase`,
@@ -176,6 +193,8 @@ const PostWidget = ({
                 3000,
                 'message-box-red'
             )
+        } finally {
+            setIsProcessing(false);
         }
     }
 
@@ -280,10 +299,10 @@ const PostWidget = ({
         const updatedCommentList = commentList.map((comment, i) =>
             i === index
                 ? {
-                      ...comment,
-                      isLiked: !commentIsLiked,
-                      likes: (commentIsLiked ? -1 : 1) + comment.likes,
-                  }
+                    ...comment,
+                    isLiked: !commentIsLiked,
+                    likes: (commentIsLiked ? -1 : 1) + comment.likes,
+                }
                 : comment
         )
         setCommentList(updatedCommentList)
@@ -305,7 +324,7 @@ const PostWidget = ({
     }
 
     const handleCopyToClipboard = () => {
-        const shareURL = `https://localhost:3000/post/${post_id}` // Replace with your actual URL
+        const shareURL = `http://localhost:3000/post/${post_id}` // Replace with your actual URL
         copyToClipboard(shareURL)
     }
 
@@ -593,7 +612,7 @@ const PostWidget = ({
                         ) : (
                             <div className="custom-modal-content">
                                 <p style={{ color: 'black' }}>
-                                    Are you sure you want to refill ${price}?
+                                    Are you sure you want to refill ${bid}?
                                 </p>
                                 <div className="button-container">
                                     <button
