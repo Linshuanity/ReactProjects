@@ -8,6 +8,7 @@ import {
   userBid,
   userBids,
   userPurchase,
+  userRefuel,
   userComment,
   userComments,
   createUserPost,
@@ -32,6 +33,7 @@ router.post('/commentlike', commentlike);
 router.post('/bid', userBid);
 router.post('/bids', userBids);
 router.post('/purchase', userPurchase);
+router.post('/refuel', userRefuel);
 router.post('/comment', userComment);
 router.post('/comments', userComments);
 router.post('/createPost', upload.single('picture'), createUserPost);

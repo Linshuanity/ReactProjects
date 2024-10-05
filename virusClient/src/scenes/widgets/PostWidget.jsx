@@ -65,10 +65,10 @@ const PostWidget = ({
     const [isLiked, setLiked] = useState(is_liked)
     const [likesCount, setLikes] = useState(likes)
     const startDate = [create_date]
+    const endDate = [expire_date]
     const currentTime = new Date()
     const start = new Date(startDate)
-    const durationInMs = 12 * 3.6e6 * (6 + Math.sqrt(likesCount))
-    const end = new Date(start.getTime() + durationInMs)
+    const end = new Date(endDate)
     const isAlive = currentTime <= end
     const [rewardValueMsg, setRewardValue] = useState(0)
 
@@ -162,6 +162,36 @@ const PostWidget = ({
                         user_id: isSell ? bid_user_id : owner_id,
                         for_sell: isSell,
                         price: price,
+                    }),
+                }
+            )
+            const update = await response.json()
+            setConfirmationState(false)
+            if (update.successful)
+                showMessage('Transaction done.', 1000, 'message-box-green')
+            else showMessage('Not enough virus.', 1000, 'message-box-red')
+        } catch (error) {
+            showMessage(
+                `Server error: ${error.message}`,
+                3000,
+                'message-box-red'
+            )
+        }
+    }
+
+    const refuelAction = async () => {
+        try {
+            const response = await fetch(
+                `http://localhost:3002/posts/refuel`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        doner_id: loggedInUserId,
+                        post_id: postId,
+                        price: Number(bid),
                     }),
                 }
             )
@@ -416,7 +446,7 @@ const PostWidget = ({
                     )
                 })()}
             <FlexBetween mt="0.25rem">
-                <FlexBetween gap="1rem">
+                <FlexBetween gap="2rem">
                     <FlexBetween gap="0.3rem">
                         <IconButton onClick={patchLike}>
                             {isLiked ? (
@@ -439,113 +469,152 @@ const PostWidget = ({
                         <IconButton onClick={fetchBids}>
                             <ShoppingCartIcon />
                         </IconButton>
-                        <Button
-                            sx={{
-                                backgroundColor: isSell ? '#FFAF00' : '#00AFFF',
-                                padding: '2px 4px',
-                                color: 'white',
-                                marginLeft: '0.5rem',
-                            }}
-                            variant="contained"
-                            onClick={() => {
-                                setConfirmationState(1)
-                            }}
-                            disabled={price <= 0}
-                        >
-                            {(isSell ? 'Sell @ ' : 'Buy @ ') +
-                                (price <= 0 ? 0 : price)}
-                        </Button>
-                        <Button
-                            sx={{
-                                backgroundColor: isSell ? '#FFAF00' : '#00AFFF',
-                                padding: '2px 4px',
-                                color: 'white',
-                                minWidth: '50px',
-                                '&:hover': {
-                                    backgroundColor: isSell
-                                        ? '#FFD98D !important'
-                                        : '#6DD4FF !important',
-                                },
-                            }}
-                            variant="contained"
-                            onClick={() => setConfirmationState(2)}
-                            disabled={bid < 0 || (bid == 0 && myBid == 0)}
-                        >
-                            {(isSell ? 'Ask (' : 'Bid (') + myBid + ')'}
-                        </Button>
-                        <InputBase
-                            type="number"
-                            placeholder="set price"
-                            onChange={(e) => setBid(e.target.value)}
-                            value={bid}
-                            sx={{
-                                width: '6rem',
-                                height: '2rem',
-                                backgroundColor: palette.neutral.light,
-                                borderRadius: '1rem',
-                                padding: '0.5rem 0.5rem',
-                            }}
-                        />
-                        <Modal
-                            isOpen={confirmationState > 0}
-                            onRequestClose={() => setConfirmationState(0)}
-                            ariaHideApp={false}
-                            className="custom-modal" // Apply your custom CSS class
-                        >
-                            {confirmationState === 1 ? (
-                                <div className="custom-modal-content">
-                                    <p style={{ color: 'black' }}>
-                                        Are you sure you want to{' '}
-                                        {isSell ? 'sell' : 'buy'} at ${price}?
-                                    </p>
-                                    <div className="button-container">
-                                        <button
-                                            className="yes-button"
-                                            onClick={purchaseAction}
-                                        >
-                                            Yes
-                                        </button>
-                                        <button
-                                            className="no-button"
-                                            onClick={() =>
-                                                setConfirmationState(0)
-                                            }
-                                        >
-                                            No
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="custom-modal-content">
-                                    <p style={{ color: 'black' }}>
-                                        Are you sure you want to place{' '}
-                                        {isSell ? 'an ask' : 'a bid'} at ${bid}?
-                                    </p>
-                                    <div className="button-container">
-                                        <button
-                                            className="yes-button"
-                                            onClick={handleAddBid}
-                                        >
-                                            Yes
-                                        </button>
-                                        <button
-                                            className="no-button"
-                                            onClick={() =>
-                                                setConfirmationState(0)
-                                            }
-                                        >
-                                            No
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </Modal>
                     </FlexBetween>
                 </FlexBetween>
 
                 <IconButton onClick={handleCopyToClipboard}>
                     <ShareOutlined />
                 </IconButton>
+            </FlexBetween>
+            <FlexBetween>
+                <FlexBetween gap="1rem">
+                    <Button
+                        sx={{
+                            backgroundColor: isSell ? '#FFAF00' : '#00AFFF',
+                            padding: '2px 4px',
+                            color: 'white',
+                            marginLeft: '0.5rem',
+                        }}
+                        variant="contained"
+                        onClick={() => {
+                            setConfirmationState(1)
+                        }}
+                        disabled={price <= 0}
+                    >
+                        {(isSell ? 'Sell @ ' : 'Buy @ ') +
+                            (price <= 0 ? 0 : price)}
+                    </Button>
+                    <Button
+                        sx={{
+                            backgroundColor: isSell ? '#FFAF00' : '#00AFFF',
+                            padding: '2px 4px',
+                            color: 'white',
+                            minWidth: '50px',
+                            '&:hover': {
+                                backgroundColor: isSell
+                                    ? '#FFD98D !important'
+                                    : '#6DD4FF !important',
+                            },
+                        }}
+                        variant="contained"
+                        onClick={() => setConfirmationState(2)}
+                        disabled={bid < 0 || (bid == 0 && myBid == 0)}
+                    >
+                        {(isSell ? 'Ask (' : 'Bid (') + myBid + ')'}
+                    </Button>
+                    <Button
+                        sx={{
+                            backgroundColor: '#FFAF00',
+                            padding: '2px 4px',
+                            color: 'white',
+                            '&:hover': '#FFD98D'
+                        }}
+                        variant="contained"
+                        onClick={() => setConfirmationState(3)}
+                        disabled={bid < 0 || (bid == 0 && myBid == 0)}
+                    >
+                        Refuel
+                    </Button>
+                    <InputBase
+                        type="number"
+                        placeholder="set price"
+                        onChange={(e) => setBid(e.target.value)}
+                        value={bid}
+                        sx={{
+                            width: '6rem',
+                            height: '2rem',
+                            backgroundColor: palette.neutral.light,
+                            borderRadius: '1rem',
+                            padding: '0.5rem 0.5rem',
+                        }}
+                    />
+                    <Modal
+                        isOpen={confirmationState > 0}
+                        onRequestClose={() => setConfirmationState(0)}
+                        ariaHideApp={false}
+                        className="custom-modal" // Apply your custom CSS class
+                    >
+                        {confirmationState === 1 ? (
+                            <div className="custom-modal-content">
+                                <p style={{ color: 'black' }}>
+                                    Are you sure you want to{' '}
+                                    {isSell ? 'sell' : 'buy'} at ${price}?
+                                </p>
+                                <div className="button-container">
+                                    <button
+                                        className="yes-button"
+                                        onClick={purchaseAction}
+                                    >
+                                        Yes
+                                    </button>
+                                    <button
+                                        className="no-button"
+                                        onClick={() =>
+                                            setConfirmationState(0)
+                                        }
+                                    >
+                                        No
+                                    </button>
+                                </div>
+                            </div>
+                        ) : confirmationState === 2 ? (
+                            <div className="custom-modal-content">
+                                <p style={{ color: 'black' }}>
+                                    Are you sure you want to place{' '}
+                                    {isSell ? 'an ask' : 'a bid'} at ${bid}?
+                                </p>
+                                <div className="button-container">
+                                    <button
+                                        className="yes-button"
+                                        onClick={handleAddBid}
+                                    >
+                                        Yes
+                                    </button>
+                                    <button
+                                        className="no-button"
+                                        onClick={() =>
+                                            setConfirmationState(0)
+                                        }
+                                    >
+                                        No
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="custom-modal-content">
+                                <p style={{ color: 'black' }}>
+                                    Are you sure you want to refill ${price}?
+                                </p>
+                                <div className="button-container">
+                                    <button
+                                        className="yes-button"
+                                        onClick={refuelAction}
+                                    >
+                                        Yes
+                                    </button>
+                                    <button
+                                        className="no-button"
+                                        onClick={() =>
+                                            setConfirmationState(0)
+                                        }
+                                    >
+                                        No
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </Modal>
+                </FlexBetween>
             </FlexBetween>
             {(listMode === 1 && (
                 <Box mt="1rem">

@@ -120,6 +120,20 @@ export const userPurchase = async (req, res, next) => {
   }
 };
 
+export const userRefuel = async (req, res, next) => {
+  try {
+    const { doner_id, post_id, price } = req.body;
+    const result = await extend_post(
+      doner_id,
+      post_id,
+      price,
+    );
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const userComment = async (req, res, next) => {
   try {
     const { user_id, post_id, context } = req.body;
@@ -1077,6 +1091,15 @@ const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
           );
           const parallelResults = await Promise.all(parallelPromises);
 
+          if (parallelResults[0].affectedRows === 0) {
+            // Rollback the transaction
+            await new Promise((resolve, reject) => {
+              connection.rollback(() => {
+                reject(new Error('The first query did not affect any rows. Transaction rolled back.'));
+              });
+            });
+          }
+
           await new Promise((resolve, reject) => {
             connection.commit((err) => {
               if (err) {
@@ -1100,6 +1123,109 @@ const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
       };
 
       executeQueriesWithTransaction(queries)
+        .then((result) => resolve(result))
+        .catch((error) => reject(error));
+    });
+  });
+};
+
+const extend_post = (donor_id, post_id, price) => {
+  return new Promise((resolve, reject) => {
+    connectionPool.getConnection((connectionError, connection) => {
+      if (connectionError) {
+        reject(connectionError);
+        return;
+      }
+      const parallelQueries = [
+        {
+          sql: `UPDATE virus_platform_user AS vpu
+                    JOIN (SELECT virus FROM virus_platform_user WHERE user_id = ?) AS subquery
+                    ON subquery.virus >= ?
+                    SET vpu.virus = vpu.virus - ?
+                    WHERE vpu.user_id = ?`,
+          params: [donor_id, price, price, donor_id],
+          need_change: true,
+        },
+        {
+          sql: `UPDATE posts
+                    SET expire_date = DATE_ADD(expire_date, INTERVAL 8 HOUR)
+                    WHERE pid = ?`,
+          params: [post_id],
+          need_change: true,
+        },
+        {
+          sql: `INSERT INTO accounting 
+                    (from_id, to_id, amount, type, note) SELECT ?, ?, ?, 1, "extend post lifetime"`,
+          params: [donor_id, post_id, price],
+          need_change: true,
+        },
+        {
+          sql: `INSERT INTO accounting 
+                    (from_id, to_id, amount, type, note) SELECT ?, ?, ?, 2, "exchange for lifetime with system"`,
+          params: [post_id, 0, price],
+          need_change: true,
+        },
+      ];
+      const executeQuery = async (query) => {
+        return new Promise((resolve, reject) => {
+          connection.query(query.sql, query.params, (error, result) => {
+            if (error) {
+              return reject(error);
+            }
+            // Check affected rows and resolve or reject accordingly
+            if (result.affectedRows === 0 && query.need_change) {
+              return reject(new Error('Transfer failed: No rows affected.'));
+            }
+            resolve(result);
+          });
+        });
+      };
+
+      const executeQueriesWithTransaction = async () => {
+        const result = {
+          successful: false,
+          reason: null,
+        };
+
+        try {
+          // Start the transaction
+          await new Promise((resolve, reject) => {
+            connection.beginTransaction((err) => {
+              if (err) return reject(err);
+              resolve();
+            });
+          });
+
+          // Execute all queries in parallel
+          const parallelPromises = parallelQueries.map((query) => executeQuery(query));
+          await Promise.all(parallelPromises);
+
+          // Commit the transaction if all queries are successful
+          await new Promise((resolve, reject) => {
+            connection.commit((err) => {
+              if (err) return reject(err);
+              resolve();
+            });
+          });
+
+          // Mark the result as successful
+          result.successful = true;
+        } catch (error) {
+          // Rollback the transaction on error
+          await new Promise((resolve) => {
+            connection.rollback(() => {
+              resolve();
+            });
+          });
+          result.reason = error.message; // Capture the error message
+        } finally {
+          connection.release();
+        }
+
+        return result; // Return the result object
+      };
+
+      executeQueriesWithTransaction()
         .then((result) => resolve(result))
         .catch((error) => reject(error));
     });
