@@ -199,6 +199,8 @@ const PostWidget = ({
     }
 
     const refuelAction = async () => {
+        if (isProcessing) return;
+        setIsProcessing(true);
         try {
             const response = await fetch(
                 `http://localhost:3002/posts/refuel`,
@@ -225,6 +227,8 @@ const PostWidget = ({
                 3000,
                 'message-box-red'
             )
+        } finally {
+            setIsProcessing(false);
         }
     }
 
@@ -571,13 +575,15 @@ const PostWidget = ({
                                 </p>
                                 <div className="button-container">
                                     <button
-                                        className="yes-button"
+                                        className={`yes-button ${isProcessing ? 'processing' : ''}`}
+                                        disabled={isProcessing}
                                         onClick={purchaseAction}
                                     >
                                         Yes
                                     </button>
                                     <button
                                         className="no-button"
+                                        disabled={isProcessing}
                                         onClick={() =>
                                             setConfirmationState(0)
                                         }
@@ -594,13 +600,15 @@ const PostWidget = ({
                                 </p>
                                 <div className="button-container">
                                     <button
-                                        className="yes-button"
+                                        className={`yes-button ${isProcessing ? 'processing' : ''}`}
+                                        disabled={isProcessing}
                                         onClick={handleAddBid}
                                     >
                                         Yes
                                     </button>
                                     <button
                                         className="no-button"
+                                        disabled={isProcessing}
                                         onClick={() =>
                                             setConfirmationState(0)
                                         }
@@ -616,13 +624,15 @@ const PostWidget = ({
                                 </p>
                                 <div className="button-container">
                                     <button
-                                        className="yes-button"
+                                        className={`yes-button ${isProcessing ? 'processing' : ''}`}
+                                        disabled={isProcessing}
                                         onClick={refuelAction}
                                     >
                                         Yes
                                     </button>
                                     <button
                                         className="no-button"
+                                        disabled={isProcessing}
                                         onClick={() =>
                                             setConfirmationState(0)
                                         }
