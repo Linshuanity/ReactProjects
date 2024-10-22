@@ -40,7 +40,7 @@ const getFriends = (userId) =>
 
 const getSearch = (substring) =>
   executeQuery(
-    `SELECT user_id as id, user_name as name FROM virus_platform_user WHERE user_name LIKE ?`,
+    `SELECT user_id as id, user_name as name, user_image_path as image_path FROM virus_platform_user WHERE user_name LIKE ?`,
     [`%${substring}%`],
   );
 

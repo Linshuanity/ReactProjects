@@ -209,7 +209,7 @@ const createPost = (insertValues) => {
           {
             tag: 'FUND_CHECK',
             sql: `UPDATE virus_platform_user SET virus = virus - ? WHERE user_id = ? 
-                        AND virus > ?`,
+                        AND virus >= ?`,
             params: [
               post_cost,
               insertValues.userId,

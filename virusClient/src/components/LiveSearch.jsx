@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import UserImage from './UserImage'
 
 const LiveSearch = ({
     results = [],
@@ -16,10 +17,17 @@ const LiveSearch = ({
     const [defaultValue, setDefaultValue] = useState('')
 
     const handleSelection = (selectedIndex) => {
+        /*
         const selectedItem = results[selectedIndex]
         if (!selectedItem) return resetSearchComplete()
         onSelect && onSelect(selectedItem)
         resetSearchComplete()
+        */
+        const selectedItem = results[selectedIndex];  // Get the selected item based on index
+        if (selectedItem) {
+            navigate(`/profile/${selectedItem.id}`);
+            window.location.reload(true);
+        }
     }
 
     const resetSearchComplete = useCallback(() => {
@@ -111,28 +119,36 @@ const LiveSearch = ({
                             <div
                                 key={index}
                                 onMouseDown={() => {
-                                    navigate(`/profile/${item.id}`)
-                                    window.location.reload(true)
+                                    navigate(`/profile/${item.id}`);
+                                    window.location.reload(true);
                                 }}
-                                ref={
-                                    index === focusedIndex
-                                        ? resultContainer
-                                        : null
-                                }
+                                ref={index === focusedIndex ? resultContainer : null}
                                 style={{
-                                    border: '1px solid #ccc',
-                                    borderRadius: '8px',
-                                    padding: '10px',
-                                    fontSize: '16px',
-                                    color: 'rgba(100,100,200,1)',
-                                    backgroundColor:
-                                        index === focusedIndex
-                                            ? 'rgba(180,180,180,1)'
-                                            : 'rgba(225,225,225,1)',
+                                    border: '1px solid #ddd',
+                                    borderRadius: '12px',
+                                    padding: '15px 20px',
+                                    fontSize: '17px',
+                                    color: 'rgba(50,50,150,1)',
+                                    backgroundColor: index === focusedIndex
+                                        ? 'rgba(240,240,240,1)'
+                                        : 'rgba(255,255,255,1)',
+                                    boxShadow: index === focusedIndex
+                                        ? '0 4px 12px rgba(0, 0, 0, 0.1)'
+                                        : '0 2px 8px rgba(0, 0, 0, 0.05)',
+                                    transition: 'background-color 0.3s, box-shadow 0.3s',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '15px',
                                 }}
-                                className="cursor-pointer hover:bg-gray-200"
+                                className="cursor-pointer hover:bg-gray-100"
                             >
-                                {item.name}
+                                <UserImage
+                                    image={item.image_path}
+                                    size={'40px'}
+                                />
+                                <span style={{ fontWeight: index === focusedIndex ? 'bold' : 'normal' }}>
+                                    {item.name}
+                                </span>
                             </div>
                         ))}
                     </div>
