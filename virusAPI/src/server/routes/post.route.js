@@ -12,6 +12,7 @@ import {
   userComment,
   userComments,
   createUserPost,
+  searchPost,
 } from '../modules/post.module.js';
 
 /* FILE STORAGE */
@@ -37,6 +38,7 @@ router.post('/refuel', userRefuel);
 router.post('/comment', userComment);
 router.post('/comments', userComments);
 router.post('/createPost', upload.single('picture'), createUserPost);
+router.post('/search', searchPost);
 router.post('/:post_id', getPost);
 
 export default router;

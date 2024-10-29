@@ -41,6 +41,15 @@ export const getPost = async (req, res, next) => {
   }
 };
 
+export const searchPost = async (req, res, next) => {
+  try {
+    const result = await searchUserPost(req.body);
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const userLike = async (req, res, next) => {
   try {
     const rand = Math.random();
@@ -194,7 +203,7 @@ const createPost = (insertValues) => {
           {
             tag: 'FUND_CHECK',
             sql: `UPDATE virus_platform_user SET virus = virus - ? WHERE user_id = ? 
-                        AND virus > ?`,
+                        AND virus >= ?`,
             params: [
               post_cost,
               insertValues.userId,
@@ -287,6 +296,48 @@ const createPost = (insertValues) => {
             connection.release();
           });
       });
+    });
+  });
+};
+
+const searchUserPost = (insertValues) => {
+  return new Promise((resolve, reject) => {
+    connectionPool.getConnection((connectionError, connection) => {
+      // 資料庫連線
+      const query = `
+        SELECT DISTINCT p.*,
+               v1.user_name AS owner_name,
+               v1.user_image_path AS owner_profile,
+               v2.user_name AS author_name,
+               v2.user_image_path AS author_profile,
+               CASE WHEN b.price IS NOT NULL THEN b.price ELSE 0 END AS my_bid,
+               CASE WHEN l.post_id IS NOT NULL THEN 1 ELSE 0 END AS is_liked
+        FROM posts AS p
+        JOIN virus_platform_user AS v1 ON p.owner_uid = v1.user_id
+        JOIN virus_platform_user AS v2 ON p.author_uid = v2.user_id
+        LEFT JOIN bids AS b ON p.pid = b.post_id and b.user_id = ?
+        LEFT JOIN likes AS l ON p.pid = l.post_id AND l.liker_id = ?
+
+      WHERE p.content LIKE ? `;
+      let queryParams = [
+        insertValues.login_user,
+        insertValues.login_user,
+        `%${insertValues.keyword}%`,
+      ];
+      if (connectionError) {
+        reject(connectionError); // 若連線有問題回傳錯誤
+      } else {
+        connection.query(query, queryParams, (error, result) => {
+          if (error) {
+            console.error('SQL error: ', error);
+            reject(error); // 寫入資料庫有問題時回傳錯誤
+          } else {
+            const jsonResponse = JSON.stringify(result);
+            resolve(jsonResponse);
+          }
+          connection.release();
+        });
+      }
     });
   });
 };
