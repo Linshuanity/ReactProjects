@@ -146,12 +146,6 @@ export const userComment = async (req, res, next) => {
 
 export const userComments = async (req, res, next) => {
   try {
-    console.log(
-      'req.body.user_id: ' +
-      req.body.user_id +
-      '   req.body.post_id: ' +
-      req.body.post_id,
-    );
     const result = await selectUserComments(req.body.user_id, req.body.post_id);
     // const result = await selectUserComments(req.body.user_id, req.body.post_id);
     res.send(result);
@@ -343,9 +337,13 @@ const selectUserPost = (insertValues) => {
 
 const selectUserPosts = (insertValues) => {
   return new Promise((resolve, reject) => {
+    const page = insertValues.page || 1; // Default to page 1 if not provided
+    const limit = insertValues.limit || 5; // Default limit to 5 posts
+    const offset = (page - 1) * limit;
+
     connectionPool.getConnection((connectionError, connection) => {
       if (connectionError) {
-        reject(connectionError); // 若連線有問題回傳錯誤
+        reject(connectionError);
         return;
       }
 
@@ -355,23 +353,32 @@ const selectUserPosts = (insertValues) => {
         insertValues.login_user,
         insertValues.login_user,
         insertValues.as_user,
+        limit,
+        offset,
       ];
+
       switch (insertValues.filter_mode) {
         case 0:
-          filter_string = 'where 1=1';
-          order_string = ' order by p.pid desc';
+          queryParams = [
+            insertValues.login_user,
+            insertValues.login_user,
+            limit,
+            offset,
+          ];
+          filter_string = 'WHERE expire_date > NOW()';
+          order_string = ' ORDER BY p.pid DESC';
           break;
         case 1:
           filter_string = 'WHERE p.author_uid = ?';
-          order_string = ' order by p.pid desc';
+          order_string = ' ORDER BY p.pid DESC';
           break;
         case 2:
           filter_string = 'WHERE p.owner_uid = ?';
-          order_string = ' order by p.pid desc';
+          order_string = ' ORDER BY p.pid DESC';
           break;
         case 3:
-          filter_string = 'WHERE b.user_id = ? and b.price > 0';
-          order_string = ' order by p.pid desc';
+          filter_string = 'WHERE b.user_id = ? AND b.price > 0';
+          order_string = ' ORDER BY p.pid DESC';
           break;
       }
 
@@ -386,23 +393,94 @@ const selectUserPosts = (insertValues) => {
         FROM posts AS p
         JOIN virus_platform_user AS v1 ON p.owner_uid = v1.user_id
         JOIN virus_platform_user AS v2 ON p.author_uid = v2.user_id
-        LEFT JOIN bids AS b ON p.pid = b.post_id and b.user_id = ?
+        LEFT JOIN bids AS b ON p.pid = b.post_id AND b.user_id = ?
         LEFT JOIN likes AS l ON p.pid = l.post_id AND l.liker_id = ?
-        ${filter_string} ${order_string}`;
+        ${filter_string} ${order_string}
+        LIMIT ? OFFSET ?`;
 
       connection.query(query, queryParams, (error, result) => {
         connection.release();
         if (error) {
           console.error('SQL error: ', error);
-          reject(error); // 寫入資料庫有問題時回傳錯誤
+          reject(error);
           return;
         }
-        const jsonResponse = JSON.stringify(result);
-        resolve(jsonResponse);
+
+        // Construct the response with both page and posts
+        const response = {
+          page: page,
+          posts: result, // Posts data
+        };
+
+        resolve(JSON.stringify(response)); // Return response as JSON string
       });
     });
   });
 };
+
+
+// const selectUserPosts = (insertValues) => {
+//   return new Promise((resolve, reject) => {
+//     connectionPool.getConnection((connectionError, connection) => {
+//       if (connectionError) {
+//         reject(connectionError); // 若連線有問題回傳錯誤
+//         return;
+//       }
+
+//       let filter_string = '';
+//       let order_string = '';
+//       let queryParams = [
+//         insertValues.login_user,
+//         insertValues.login_user,
+//         insertValues.as_user,
+//       ];
+//       switch (insertValues.filter_mode) {
+//         case 0:
+//           filter_string = 'where 1=1';
+//           order_string = ' order by p.pid desc';
+//           break;
+//         case 1:
+//           filter_string = 'WHERE p.author_uid = ?';
+//           order_string = ' order by p.pid desc';
+//           break;
+//         case 2:
+//           filter_string = 'WHERE p.owner_uid = ?';
+//           order_string = ' order by p.pid desc';
+//           break;
+//         case 3:
+//           filter_string = 'WHERE b.user_id = ? and b.price > 0';
+//           order_string = ' order by p.pid desc';
+//           break;
+//       }
+
+//       const query = `
+//         SELECT DISTINCT p.*,
+//                v1.user_name AS owner_name,
+//                v1.user_image_path AS owner_profile,
+//                v2.user_name AS author_name,
+//                v2.user_image_path AS author_profile,
+//                CASE WHEN b.price IS NOT NULL THEN b.price ELSE 0 END AS my_bid,
+//                CASE WHEN l.post_id IS NOT NULL THEN 1 ELSE 0 END AS is_liked
+//         FROM posts AS p
+//         JOIN virus_platform_user AS v1 ON p.owner_uid = v1.user_id
+//         JOIN virus_platform_user AS v2 ON p.author_uid = v2.user_id
+//         LEFT JOIN bids AS b ON p.pid = b.post_id and b.user_id = ?
+//         LEFT JOIN likes AS l ON p.pid = l.post_id AND l.liker_id = ?
+//         ${filter_string} ${order_string}`;
+
+//       connection.query(query, queryParams, (error, result) => {
+//         connection.release();
+//         if (error) {
+//           console.error('SQL error: ', error);
+//           reject(error); // 寫入資料庫有問題時回傳錯誤
+//           return;
+//         }
+//         const jsonResponse = JSON.stringify(result);
+//         resolve(jsonResponse);
+//       });
+//     });
+//   });
+// };
 
 const addCommentlike = (liker_id, comment_id, reward) => {
   return new Promise((resolve, reject) => {
@@ -920,8 +998,6 @@ const addUserBid = (user_id, post_id, price, is_bid) => {
             try {
               await executeQuery(query);
             } catch (error) {
-              // Handle error here
-              console.log(query);
               return resolve({ successful: false, reason: 1 });
             }
           }

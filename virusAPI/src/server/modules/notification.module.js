@@ -169,6 +169,7 @@ const selectUserNotifications = (user_id) => {
           FROM notifications
           WHERE user_id = ?
           ORDER BY create_time DESC
+          LIMIT 10
         `;
 
         connection.query(query, [user_id], (error, result) => {
