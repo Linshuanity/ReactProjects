@@ -94,22 +94,20 @@ const Navbar = () => {
                 >
                     GoVirus
                 </Typography>
-                {isNonMobileScreens && (
-                    <FlexBetween
-                        backgroundColor={neutralLight}
-                        borderRadius="9px"
-                        gap="3rem"
-                        padding="0.1rem 1.5rem"
-                    >
-                        <LiveSearch
-                            results={results}
-                            value={selectedProfile?.name}
-                            renderItem={(item) => <p>{item.name}</p>}
-                            onChange={handleSearch}
-                            onSelect={(item) => setSelectedProfile(item)}
-                        />
-                    </FlexBetween>
-                )}
+                <FlexBetween
+                    backgroundColor={neutralLight}
+                    borderRadius="9px"
+                    gap="3rem"
+                    padding="0.1rem 1.5rem"
+                >
+                    <LiveSearch
+                        results={results}
+                        value={selectedProfile?.name}
+                        renderItem={(item) => <p>{item.name}</p>}
+                        onChange={handleSearch}
+                        onSelect={(item) => setSelectedProfile(item)}
+                    />
+                </FlexBetween>
             </FlexBetween>
 
             {/* DESKTOP NAV */}
@@ -158,24 +156,24 @@ const Navbar = () => {
                 </IconButton>
             )}
 
-            {/* MOBILE NAV */}
             {!isNonMobileScreens && isMobileMenuToggled && (
                 <Box
                     position="fixed"
                     right="0"
-                    bottom="0"
-                    height="100%"
+                    top="0"
+                    height="50%"
                     zIndex="10"
-                    maxWidth="500px"
-                    minWidth="300px"
+                    maxWidth="200px"
+                    minWidth="100px"
                     backgroundColor={background}
+                    borderRadius="8px"  // Rounded corners for a softer look
+                    boxShadow={3}        // Subtle shadow for depth
                 >
                     {/* CLOSE ICON */}
-                    <Box display="flex" justifyContent="flex-end" p="1rem">
+                    <Box display="flex" justifyContent="flex-end" p="0.5rem">
                         <IconButton
-                            onClick={() =>
-                                setIsMobileMenuToggled(!isMobileMenuToggled)
-                            }
+                            onClick={() => setIsMobileMenuToggled(!isMobileMenuToggled)}
+                            sx={{ color: dark }} // Adjust icon color for better visibility
                         >
                             <Close />
                         </IconButton>
@@ -187,27 +185,33 @@ const Navbar = () => {
                         flexDirection="column"
                         justifyContent="center"
                         alignItems="center"
-                        gap="3rem"
+                        gap="1rem"  // Reduced gap for a more compact look
+                        p="0.5rem"    // Added padding around the menu items
                     >
+                        {/* Theme Toggle Button */}
                         <IconButton
                             onClick={() => dispatch(setMode())}
-                            sx={{ fontSize: '25px' }}
+                            sx={{ fontSize: '30px', color: dark }} // Increased font size for better visibility
                         >
                             {theme.palette.mode === 'dark' ? (
-                                <DarkMode sx={{ fontSize: '25px' }} />
+                                <DarkMode sx={{ fontSize: '30px' }} />
                             ) : (
                                 <LightMode
-                                    sx={{ color: dark, fontSize: '25px' }}
+                                    sx={{ color: dark, fontSize: '30px' }}
                                 />
                             )}
                         </IconButton>
-                         <NotificationDrawer/>
+
+                        {/* Notification Drawer */}
+                        <NotificationDrawer />
+
+                        {/* User Menu */}
                         <FormControl variant="standard" value={fullName}>
                             <Select
                                 value={fullName}
                                 sx={{
                                     backgroundColor: neutralLight,
-                                    width: '150px',
+                                    width: '160px',  // Slightly wider for a better fit
                                     borderRadius: '0.25rem',
                                     p: '0.25rem 1rem',
                                     '& .MuiSvgIcon-root': {

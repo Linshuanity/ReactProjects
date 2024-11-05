@@ -15,23 +15,30 @@ const HomePage = () => {
             <Navbar />
             <Box
                 width="100%"
-                padding="2rem 6%"
-                display={isNonMobileScreens ? 'flex' : 'block'}
-                gap="0.5rem"
-                justifyContent="space-between"
+                padding={isNonMobileScreens ? "2rem 6%" : "1rem 2%"} // Adjust padding for mobile
+                display="flex"
+                flexDirection={isNonMobileScreens ? "row" : "column"} // Stack on mobile
+                gap="1rem" // Increased gap for better spacing
             >
-                <Box flexBasis={isNonMobileScreens ? '26%' : undefined}>
+                <Box flexBasis={isNonMobileScreens ? '26%' : '100%'}> {/* Full width on mobile */}
                     <UserWidget userId={_id} picturePath={picturePath} />
                 </Box>
                 <Box
-                    flexBasis={isNonMobileScreens ? '42%' : undefined}
-                    mt={isNonMobileScreens ? undefined : '2rem'}
+                    flexBasis={isNonMobileScreens ? '42%' : '100%'}
+                    mt={isNonMobileScreens ? undefined : '1rem'} // Smaller top margin on mobile
                 >
                     <MyPostWidget picturePath={picturePath} />
                     <PostsWidget userId={_id} />
                 </Box>
                 {isNonMobileScreens && (
                     <Box flexBasis="26%">
+                        <MissionWidget />
+                        <Box m="2rem 0" />
+                        <FriendListWidget userId={_id} />
+                    </Box>
+                )}
+                {!isNonMobileScreens && ( // Display these widgets for mobile
+                    <Box flexBasis="100%" mt="1rem"> {/* Full width on mobile */}
                         <MissionWidget />
                         <Box m="2rem 0" />
                         <FriendListWidget userId={_id} />
