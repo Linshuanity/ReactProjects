@@ -161,19 +161,20 @@ const Navbar = () => {
                     position="fixed"
                     right="0"
                     top="0"
-                    height="50%"
+                    height="40%"
                     zIndex="10"
-                    maxWidth="200px"
-                    minWidth="100px"
+                    maxWidth="220px"  // Slightly increased for comfortable fit
+                    minWidth="150px"
                     backgroundColor={background}
                     borderRadius="8px"  // Rounded corners for a softer look
-                    boxShadow={3}        // Subtle shadow for depth
+                    boxShadow="0px 4px 10px rgba(0, 0, 0, 0.1)" // Subtle shadow for depth
+                    p="1rem"  // Added padding for consistent inner spacing
                 >
                     {/* CLOSE ICON */}
-                    <Box display="flex" justifyContent="flex-end" p="0.5rem">
+                    <Box display="flex" justifyContent="flex-end" mb="0.5rem">
                         <IconButton
                             onClick={() => setIsMobileMenuToggled(!isMobileMenuToggled)}
-                            sx={{ color: dark }} // Adjust icon color for better visibility
+                            sx={{ color: dark }}
                         >
                             <Close />
                         </IconButton>
@@ -186,19 +187,22 @@ const Navbar = () => {
                         justifyContent="center"
                         alignItems="center"
                         gap="1rem"  // Reduced gap for a more compact look
-                        p="0.5rem"    // Added padding around the menu items
                     >
                         {/* Theme Toggle Button */}
                         <IconButton
                             onClick={() => dispatch(setMode())}
-                            sx={{ fontSize: '30px', color: dark }} // Increased font size for better visibility
+                            sx={{
+                                fontSize: '30px',
+                                color: dark,
+                                borderRadius: '50%',
+                                padding: '0.5rem',
+                                '&:hover': { backgroundColor: theme.palette.action.hover },
+                            }}
                         >
                             {theme.palette.mode === 'dark' ? (
-                                <DarkMode sx={{ fontSize: '30px' }} />
+                                <DarkMode sx={{ fontSize: '24px' }} />
                             ) : (
-                                <LightMode
-                                    sx={{ color: dark, fontSize: '30px' }}
-                                />
+                                <LightMode sx={{ color: dark, fontSize: '24px' }} />
                             )}
                         </IconButton>
 
@@ -206,17 +210,26 @@ const Navbar = () => {
                         <NotificationDrawer />
 
                         {/* User Menu */}
-                        <FormControl variant="standard" value={fullName}>
+                        <FormControl
+                            variant="standard"
+                            sx={{
+                                width: '100%',
+                                mt: '0.5rem',
+                                backgroundColor: neutralLight,
+                                borderRadius: '0.5rem',
+                                padding: '0.25rem',
+                            }}
+                        >
                             <Select
                                 value={fullName}
                                 sx={{
-                                    backgroundColor: neutralLight,
-                                    width: '160px',  // Slightly wider for a better fit
+                                    width: '100%',
                                     borderRadius: '0.25rem',
-                                    p: '0.25rem 1rem',
+                                    padding: '0.25rem 1rem',
+                                    backgroundColor: neutralLight,
                                     '& .MuiSvgIcon-root': {
-                                        pr: '0.25rem',
-                                        width: '3rem',
+                                        paddingRight: '0.5rem',
+                                        fontSize: '1.5rem',
                                     },
                                     '& .MuiSelect-select:focus': {
                                         backgroundColor: neutralLight,

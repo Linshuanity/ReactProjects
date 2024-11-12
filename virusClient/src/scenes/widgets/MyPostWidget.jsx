@@ -42,6 +42,7 @@ const MyPostWidget = ({ picturePath }) => {
     const mediumMain = palette.neutral.mediumMain
     const medium = palette.neutral.medium
     const [isProcessing, setIsProcessing] = useState(false);
+    const postPrice = 1;
 
     const handlePost = async () => {
         if (isProcessing) return;
@@ -154,48 +155,29 @@ const MyPostWidget = ({ picturePath }) => {
                         Image
                     </Typography>
                 </FlexBetween>
-
-                {isNonMobileScreens ? (
-                    <>
-                        <FlexBetween gap="0.25rem">
-                            {/*
-                            <Typography color={mediumMain}>
-                                Price
-                                <InputBase
-                                    type="number"
-                                    placeholder="set price"
-                                    onChange={(e) => setPrice(e.target.value)}
-                                    value={price}
-                                    sx={{
-                                        width: '70%',
-                                        height: '1.5rem',
-                                        backgroundColor: palette.neutral.light,
-                                        borderRadius: '2rem',
-                                        padding: '1rem 2rem',
-                                        marginLeft: '1rem',
-                                    }}
-                                />
-                            </Typography>
-                            */}
-                        </FlexBetween>
-                    </>
-                ) : (
-                    <FlexBetween gap="0.25rem">
-                        <MoreHorizOutlined sx={{ color: mediumMain }} />
-                    </FlexBetween>
-                )}
-
-                <Button
-                    disabled={!post}
-                    onClick={() => setConfirmationState(1)}
-                    sx={{
-                        color: palette.background.alt,
-                        backgroundColor: palette.primary.main,
-                        borderRadius: '3rem',
-                    }}
-                >
-                    POST
-                </Button>
+                <FlexBetween gap="0.25rem">
+                    <Typography
+                        color={mediumMain}
+                        variant="body2"
+                        sx={{
+                            fontWeight: 'bold',
+                            marginRight: '0.5rem',
+                        }}
+                    >
+                        Cost: $ {postPrice} {/* Replace with actual number state or variable */}
+                    </Typography>
+                    <Button
+                        disabled={!post}
+                        onClick={() => setConfirmationState(1)}
+                        sx={{
+                            color: palette.background.alt,
+                            backgroundColor: palette.primary.main,
+                            borderRadius: '3rem',
+                        }}
+                    >
+                        POST
+                    </Button>
+                </FlexBetween>
                 <Modal
                     isOpen={confirmationState > 0}
                     onRequestClose={() => setConfirmationState(0)}

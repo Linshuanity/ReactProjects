@@ -23,6 +23,20 @@ const HomePage = () => {
                 <Box flexBasis={isNonMobileScreens ? '26%' : '100%'}> {/* Full width on mobile */}
                     <UserWidget userId={_id} picturePath={picturePath} />
                 </Box>
+                {!isNonMobileScreens && ( // Display these widgets for mobile
+                    <Box
+                        display="flex"
+                        flexDirection="row"
+                        justifyContent="space-between"
+                        alignItems="flex-start"  // Aligns widgets at the top if they vary in height
+                        gap="1rem"               // Adjust gap for spacing between widgets
+                        mt="1rem"
+                        width="100%"             // Ensures the container is full-width
+                    >
+                        <MissionWidget />
+                        <FriendListWidget userId={_id} />
+                    </Box>
+                )}
                 <Box
                     flexBasis={isNonMobileScreens ? '42%' : '100%'}
                     mt={isNonMobileScreens ? undefined : '1rem'} // Smaller top margin on mobile
@@ -32,13 +46,6 @@ const HomePage = () => {
                 </Box>
                 {isNonMobileScreens && (
                     <Box flexBasis="26%">
-                        <MissionWidget />
-                        <Box m="2rem 0" />
-                        <FriendListWidget userId={_id} />
-                    </Box>
-                )}
-                {!isNonMobileScreens && ( // Display these widgets for mobile
-                    <Box flexBasis="100%" mt="1rem"> {/* Full width on mobile */}
                         <MissionWidget />
                         <Box m="2rem 0" />
                         <FriendListWidget userId={_id} />

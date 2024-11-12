@@ -103,8 +103,9 @@ const LiveSearch = ({
                         resize: 'none',
                         backgroundColor: 'transparent',
                         color: 'grey',
+                        width: '100px',
                     }}
-                    placeholder="Search your query..."
+                    placeholder="Search ..."
                 />
 
                 {/* Search Results Container */}

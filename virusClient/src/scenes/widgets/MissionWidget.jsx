@@ -41,7 +41,7 @@ const MissionWidget = () => {
     return (
         <WidgetWrapper>
             <FlexBetween>
-                <Typography color={dark} variant="h3" fontWeight="500">
+                <Typography color={dark} variant="h4" fontWeight="500">
                     Achievement
                 </Typography>
             </FlexBetween>

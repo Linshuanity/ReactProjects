@@ -102,9 +102,11 @@ const UserWidget = ({ userId, picturePath }) => {
                 is_main={true}
             />
 
-            <WalletConnectComponent holding={holding}></WalletConnectComponent>
+            {login_id == userId && (
+                <WalletConnectComponent holding={holding}></WalletConnectComponent>
+            )}
 
-            <Divider />
+            <Divider sx={{ marginTop: '1rem' }} />
 
             {/* SECOND ROW */}
             <Box p="1rem 0">
