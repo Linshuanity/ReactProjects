@@ -22,7 +22,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
         setMode(newValue);
     }
 
-    const apiEndpoint = 'http://localhost:3002'
+    const apiEndpoint = process.env.REACT_APP_SERVER_URL
 
     const getPosts = async () => {
         if (loading || page <= lastFetchedPage) {

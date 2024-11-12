@@ -15,7 +15,7 @@ const MissionWidget = () => {
     const loggedInUserId = useSelector((state) => state.user._id)
     const [displayCount, setDisplayCount] = useState(3); // Number of items to display initially
     const [listItems, setListItems] = useState([]);
-    const apiEndpoint = 'http://localhost:3002'
+    const apiEndpoint = process.env.REACT_APP_SERVER_URL
 
     const getAchievement = async () => {
         try {

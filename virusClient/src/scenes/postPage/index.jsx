@@ -9,7 +9,7 @@ import MissionWidget from 'scenes/widgets/MissionWidget'
 import FriendListWidget from 'scenes/widgets/FriendListWidget'
 
 // const apiEndpoint = process.env.REACT_APP_API_ENDPOINT; // 使用環境變量
-const apiEndpoint = 'http://localhost:3002'
+const apiEndpoint = process.env.REACT_APP_SERVER_URL
 
 const PostPage = () => {
     const [post, setPost] = useState(null)

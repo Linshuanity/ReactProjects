@@ -87,7 +87,7 @@ const PostWidget = ({
         if (isProcessing) return;
         setIsProcessing(true);
         try {
-            const response = await fetch(`http://localhost:3002/posts/bid`, {
+            const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/posts/bid`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -118,7 +118,7 @@ const PostWidget = ({
         try {
             if (newComment.trim() !== '') {
                 const response = await fetch(
-                    `http://localhost:3002/posts/comment`,
+                    `${process.env.REACT_APP_SERVER_URL}/posts/comment`,
                     {
                         method: 'POST',
                         headers: {
@@ -167,7 +167,7 @@ const PostWidget = ({
         setIsProcessing(true);
         try {
             const response = await fetch(
-                `http://localhost:3002/posts/purchase`,
+                `${process.env.REACT_APP_SERVER_URL}/posts/purchase`,
                 {
                     method: 'POST',
                     headers: {
@@ -203,7 +203,7 @@ const PostWidget = ({
         setIsProcessing(true);
         try {
             const response = await fetch(
-                `http://localhost:3002/posts/refuel`,
+                `${process.env.REACT_APP_SERVER_URL}/posts/refuel`,
                 {
                     method: 'POST',
                     headers: {
@@ -234,7 +234,7 @@ const PostWidget = ({
 
     const fetchBids = async () => {
         if (listMode !== 2) {
-            const response = await fetch('http://localhost:3002/posts/bids', {
+            const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/posts/bids`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -250,7 +250,7 @@ const PostWidget = ({
     const fetchComments = async () => {
         if (listMode !== 1) {
             const response = await fetch(
-                'http://localhost:3002/posts/comments',
+                `${process.env.REACT_APP_SERVER_URL}/posts/comments`,
                 {
                     method: 'POST',
                     headers: {
@@ -274,7 +274,7 @@ const PostWidget = ({
             return;
         setLikes(likesCount + (isLiked ? -1 : 1))
         setLiked(!isLiked)
-        const response = await fetch(`http://localhost:3002/posts/like`, {
+        const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/posts/like`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -311,7 +311,7 @@ const PostWidget = ({
         )
         setCommentList(updatedCommentList)
         const response = await fetch(
-            `http://localhost:3002/posts/commentlike`,
+            `${process.env.REACT_APP_SERVER_URL}/posts/commentlike`,
             {
                 method: 'POST',
                 headers: {
@@ -402,10 +402,10 @@ const PostWidget = ({
                             borderRadius: '0.75rem',
                             marginTop: '0.75rem',
                         }}
-                        src={`http://localhost:3002/assets/${picturePath}`}
+                        src={`${process.env.REACT_APP_SERVER_URL}/assets/${picturePath}`}
                     />
                     <img
-                        src={`http://localhost:3002/assets/${picturePath}?123`}
+                        src={`${process.env.REACT_APP_SERVER_URL}/assets/${picturePath}?123`}
                         alt="Foreground Photo"
                         style={{
                             position: 'absolute',

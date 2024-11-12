@@ -69,7 +69,7 @@ const Form = () => {
         formData.append('picturePath', values.picture.name)
 
         const savedUserResponse = await fetch(
-            'http://localhost:3002/auth/register',
+            `${process.env.REACT_APP_SERVER_URL}/auth/register`,
             {
                 method: 'POST',
                 body: formData,
@@ -92,7 +92,7 @@ const Form = () => {
 
     const login = async (values, onSubmitProps) => {
         const loggedInResponse = await fetch(
-            'http://localhost:3002/auth/login',
+            `${process.env.REACT_APP_SERVER_URL}/auth/login`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -128,7 +128,7 @@ const Form = () => {
         alert('重設密碼的連結暫時還沒做好，仔細想想你的密碼吧！')
 
         const forgetPasswordResponse = await fetch(
-            'http://localhost:3002/auth/forget-password',
+            `${process.env.REACT_APP_SERVER_URL}/auth/forget-password`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

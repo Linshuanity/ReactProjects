@@ -27,7 +27,7 @@ const ResetPassword = () => {
     const resetPassword = async (values, onSubmitProps) => {
         try {
             const response = await fetch(
-                `http://localhost:3002/auth/reset-password/${token}`,
+                `${process.env.REACT_APP_SERVER_URL}/auth/reset-password/${token}`,
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

@@ -28,7 +28,7 @@ const UserWidget = ({ userId, picturePath }) => {
     const main = palette.neutral.main
 
     const getUser = async () => {
-        const response = await fetch(`http://localhost:3002/users/${userId}`, {
+        const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/users/${userId}`, {
             method: 'GET',
             headers: { Authorization: `Bearer ${token}` },
         })
@@ -52,7 +52,7 @@ const UserWidget = ({ userId, picturePath }) => {
         setEditing(false) // Exit editing mode
         setProfile(inputValue)
         const response = await fetch(
-            `http://localhost:3002/users/description`,
+            `${process.env.REACT_APP_SERVER_URL}/users/description`,
             {
                 method: 'POST',
                 headers: {

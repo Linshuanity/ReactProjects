@@ -62,7 +62,7 @@ const Navbar = () => {
         const { value } = e.target
         if (!value.trim()) return setResults([])
 
-        const response = await fetch(`http://localhost:3002/subscribe/search`, {
+        const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/subscribe/search`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

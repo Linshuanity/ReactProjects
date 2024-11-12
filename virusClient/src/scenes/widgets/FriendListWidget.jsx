@@ -25,7 +25,7 @@ const FriendListWidget = ({ userId }) => {
 
     const getFriends = async () => {
         const response = await fetch(
-            `http://localhost:3002/subscribe/friends/${userId}`,
+            `${process.env.REACT_APP_SERVER_URL}/subscribe/friends/${userId}`,
             {
                 method: 'GET',
                 headers: { Authorization: `Bearer ${token}` },

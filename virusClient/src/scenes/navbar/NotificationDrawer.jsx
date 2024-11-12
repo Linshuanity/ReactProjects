@@ -59,7 +59,7 @@ const NotificationDrawer = () => {
 
   const fetchNotifications = async () => {
     try {
-      const response = await fetch(`http://localhost:3002/notification/getUserNotifications`, {
+      const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/notification/getUserNotifications`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ const NotificationDrawer = () => {
   const handleReadClick = (userId, nid) => {
     const markNotificationAsRead = async () => {
       try {
-        const response = await fetch('http://localhost:3002/notification/userReadNotification', {
+        const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/notification/userReadNotification`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
