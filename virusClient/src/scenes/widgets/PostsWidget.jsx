@@ -11,7 +11,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     const [keyword, setKeyword] = useState('')
     const token = useSelector((state) => state.token)
     const loggedInUserId = useSelector((state) => state.user._id)
-    const [loading, setLoading] = useState(false); // Loading state to avoid multiple requests
+    const [loading, setLoading] = useState(0); // Loading state to avoid multiple requests
     const [lastFetchedPage, setLastFetchedPage] = useState(0); // Keep track of the last fetched page
     const [page, setPage] = useState(1); // Change page to state variable
 
@@ -25,12 +25,12 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     const apiEndpoint = process.env.REACT_APP_SERVER_URL
 
     const getPosts = async () => {
-        if (loading || page <= lastFetchedPage) {
+        if (loading > 0 || page <= lastFetchedPage) {
             console.log('Already loading or same page requested:', page, lastFetchedPage);
             return;
         }
         
-        setLoading(true);
+        setLoading(1);
     
         try {
             const currentRequestPage = page; // 保存當前的 page 值
@@ -56,7 +56,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
             console.log('page:', currentRequestPage);
             console.log('data.page:', data.page);
             console.log('lastFetchedPage:', lastFetchedPage);
-    
+
             if (data.page === currentRequestPage && lastFetchedPage === currentRequestPage - 1) {
                 setPosts((prevPosts) => {
                     // 建立一組包含所有已存在 pid 的 Set
@@ -64,16 +64,21 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     
                     // 篩選出沒有重複 pid 的新 posts
                     const uniqueNewPosts = data.posts.filter(post => !existingPostIds.has(post.pid));
-    
+   
+                    if (uniqueNewPosts.length === 0) {
+                        console.log('No new posts to load.');
+                        setLoading(2);
+                        return prevPosts; // No changes to posts
+                    }
+
+                    setLastFetchedPage(currentRequestPage);
+        
+                    setPage((prevPage) => {
+                        console.log('Incrementing page from:', prevPage);
+                        return currentRequestPage + 1;
+                    });
                     // 合併新 posts 並返回更新後的 posts
                     return [...prevPosts, ...uniqueNewPosts];
-                });
-    
-                setLastFetchedPage(currentRequestPage);
-    
-                setPage((prevPage) => {
-                    console.log('Incrementing page from:', prevPage);
-                    return currentRequestPage + 1;
                 });
             } else {
                 console.log('Expect:' + currentRequestPage + ' Unexpected page response:' + data.page);
@@ -81,7 +86,9 @@ const PostsWidget = ({ userId, isProfile = false }) => {
         } catch (error) {
             console.error('Error fetching posts:', error);
         } finally {
-            setLoading(false); // 無論成功還是失敗都設置 loading 狀態為 false
+            if (loading !== 2) {
+                setLoading(0);
+            }
         }
     };
     const handleScroll = () => {
@@ -122,6 +129,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     }
 
     useEffect(() => {
+        setLoading(0);
         const fetchData = async () => {
             await getPosts();
         };
@@ -195,7 +203,11 @@ const PostsWidget = ({ userId, isProfile = false }) => {
                     }
                 </div>
             ))}
-            {loading && <p>Loading...</p>}
+            {loading === 1 ? (
+                <p>Loading...</p>
+            ) : loading === 2 ? (
+                <p>Bottom of list</p>
+            ) : null}
             {/* {posts.map((post) => (
                 <PostWidget
                     key={post.pid}
