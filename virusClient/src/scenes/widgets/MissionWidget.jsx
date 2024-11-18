@@ -63,16 +63,6 @@ const MissionWidget = () => {
                         >
                             {item.name} : {item.value}
                         </Typography>
-                        <Typography
-                            variant="h6"
-                            fontWeight="500"
-                            sx={{
-                                fontSize: isNonMobileScreens ? 'inherit' : '0.875rem' // Adjust font size for mobile
-                            }}
-                        >
-                            <CoronavirusIcon sx={{ color: 'blue', fontSize: isNonMobileScreens ? 'inherit' : '1.25rem' }} />
-                            {item.reward}
-                        </Typography>
                     </Box>
 
                     <Box sx={{ width: '100%', mt: '8px' }}>
@@ -90,7 +80,17 @@ const MissionWidget = () => {
                                 fontSize: isNonMobileScreens ? 'inherit' : '0.875rem' // Adjust font size for mobile
                             }}
                         >
-                            Level {item.level} ({Math.floor(100 * (item.value - item.required) / (item.next - item.required))}%)
+                            Lv {item.level} ({Math.floor(100 * (item.value - item.required) / (item.next - item.required))}%)
+                        </Typography>
+                        <Typography
+                            variant="h6"
+                            fontWeight="500"
+                            sx={{
+                                fontSize: isNonMobileScreens ? 'inherit' : '0.875rem' // Adjust font size for mobile
+                            }}
+                        >
+                            <CoronavirusIcon sx={{ color: 'blue', fontSize: isNonMobileScreens ? 'inherit' : '1.25rem' }} />
+                            {item.reward}
                         </Typography>
                     </Box>
                 </Box>
