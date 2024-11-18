@@ -1,5 +1,5 @@
 import { PersonAddOutlined, PersonRemoveOutlined } from '@mui/icons-material'
-import { Box, IconButton, Typography, useTheme } from '@mui/material'
+import { Box, IconButton, Typography, useTheme, useMediaQuery } from '@mui/material'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { updateFriends } from 'state'
@@ -27,6 +27,7 @@ const Friend = ({
     const primaryDark = palette.primary.dark
     const main = palette.neutral.main
     const medium = palette.neutral.medium
+    const isNonMobileScreens = useMediaQuery('(min-width:600px)');
 
     const [isFriend, setIsFriend] = useState(
         friends !== null &&
@@ -63,18 +64,18 @@ const Friend = ({
             <FlexBetween
                 gap="1rem"
                 onClick={() => {
-                    navigate(`/profile/${friendId}`)
-                    window.location.reload(true) // Force reload, can replace this if a better approach is found.
+                    navigate(`/profile/${friendId}`);
+                    window.location.reload(true); // Force reload, can replace this if a better approach is found.
                 }}
             >
                 <UserImage
                     image={user_picture_path}
-                    size={is_main ? '77px' : '55px'}
+                    size={isNonMobileScreens ? (is_main ? '77px' : '55px') : (is_main ? '50px' : '40px')} // Reduced image size for mobile
                 />
                 <Box>
                     <Typography
                         color={main}
-                        variant={is_main ? 'h3' : 'h5'}
+                        variant={isNonMobileScreens ? (is_main ? 'h3' : 'h5') : 'h6'} // Reduced font size for mobile
                         fontWeight={is_main ? '700' : '500'}
                         sx={{
                             '&:hover': {
@@ -85,25 +86,29 @@ const Friend = ({
                     >
                         {name}
                     </Typography>
-                    <Typography color={medium} fontSize="0.75rem">
+                    <Typography color={medium} fontSize={isNonMobileScreens ? '0.75rem' : '0.65rem'}> {/* Smaller font size on mobile */}
                         {subscriber}
                     </Typography>
                 </Box>
             </FlexBetween>
+
             {action_icon && (
                 <IconButton
                     onClick={() => patchFriend()}
-                    sx={{ backgroundColor: primaryLight, p: '0.6rem' }}
+                    sx={{
+                        backgroundColor: primaryLight,
+                        p: isNonMobileScreens ? '0.6rem' : '0.4rem', // Smaller padding on mobile
+                    }}
                 >
                     {isFriend ? (
-                        <PersonRemoveOutlined sx={{ color: primaryDark }} />
+                        <PersonRemoveOutlined sx={{ color: primaryDark, fontSize: isNonMobileScreens ? '1.5rem' : '1rem' }} /> // Adjust icon size for mobile
                     ) : (
-                        <PersonAddOutlined sx={{ color: primaryDark }} />
+                        <PersonAddOutlined sx={{ color: primaryDark, fontSize: isNonMobileScreens ? '1.5rem' : '1rem' }} /> // Adjust icon size for mobile
                     )}
                 </IconButton>
             )}
         </FlexBetween>
-    )
-}
+    );
+};
 
 export default Friend

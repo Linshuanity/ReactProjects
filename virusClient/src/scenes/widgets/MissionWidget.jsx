@@ -1,4 +1,4 @@
-import { Box, Typography, LinearProgress, useTheme, Button, IconButton } from '@mui/material'
+import { Box, Typography, LinearProgress, useTheme, Button, IconButton, useMediaQuery } from '@mui/material'
 import CoronavirusIcon from '@mui/icons-material/Coronavirus'
 import FlexBetween from 'components/FlexBetween'
 import WidgetWrapper from 'components/WidgetWrapper'
@@ -16,6 +16,7 @@ const MissionWidget = () => {
     const [displayCount, setDisplayCount] = useState(3); // Number of items to display initially
     const [listItems, setListItems] = useState([]);
     const apiEndpoint = process.env.REACT_APP_SERVER_URL
+    const isNonMobileScreens = useMediaQuery('(max-width:1000px)');
 
     const getAchievement = async () => {
         try {
@@ -41,53 +42,77 @@ const MissionWidget = () => {
     return (
         <WidgetWrapper>
             <FlexBetween>
-                <Typography color={dark} variant="h4" fontWeight="500">
+                <Typography
+                    color="dark"
+                    variant="h4"
+                    fontWeight="500"
+                >
                     Achievement
                 </Typography>
             </FlexBetween>
 
-            {listItems.slice(0, displayCount).map((item, index) => (
-                <div key={item.ach_code} style={{ margin: '16px 0' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
-                        <Typography variant="h5" fontWeight="500">
+            {listItems.slice(0, displayCount).map((item) => (
+                <Box key={item.ach_code} sx={{ margin: '16px 0' }}>
+                    <Box display="flex" justifyContent="space-between" sx={{ mt: '8px' }}>
+                        <Typography
+                            variant="h5"
+                            fontWeight="500"
+                            sx={{
+                                fontSize: isNonMobileScreens ? 'inherit' : '1rem' // Adjust font size for mobile
+                            }}
+                        >
                             {item.name} : {item.value}
                         </Typography>
-                        <Typography variant="h6" fontWeight="500">
-                            <CoronavirusIcon color="blue"/>
+                        <Typography
+                            variant="h6"
+                            fontWeight="500"
+                            sx={{
+                                fontSize: isNonMobileScreens ? 'inherit' : '0.875rem' // Adjust font size for mobile
+                            }}
+                        >
+                            <CoronavirusIcon sx={{ color: 'blue', fontSize: isNonMobileScreens ? 'inherit' : '1.25rem' }} />
                             {item.reward}
                         </Typography>
-                    </div>
-                    <div>
-                        <div style={{ width: '100%', marginTop: '8px' }}>
-                            <LinearProgress variant="determinate" value={100*(item.value - item.required)/(item.next - item.required)} />
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
-                            <Typography variant="h6" fontWeight="500">
-                                Level {item.level} ({Math.floor(100*(item.value - item.required)/(item.next - item.required))}%)
-                            </Typography>
-                        </div>
-                    </div>
-                </div>
+                    </Box>
+
+                    <Box sx={{ width: '100%', mt: '8px' }}>
+                        <LinearProgress
+                            variant="determinate"
+                            value={100 * (item.value - item.required) / (item.next - item.required)}
+                        />
+                    </Box>
+
+                    <Box display="flex" justifyContent="space-between" sx={{ mt: '8px' }}>
+                        <Typography
+                            variant="h6"
+                            fontWeight="500"
+                            sx={{
+                                fontSize: isNonMobileScreens ? 'inherit' : '0.875rem' // Adjust font size for mobile
+                            }}
+                        >
+                            Level {item.level} ({Math.floor(100 * (item.value - item.required) / (item.next - item.required))}%)
+                        </Typography>
+                    </Box>
+                </Box>
             ))}
 
             {listItems.length !== displayCount && (
-                <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                <Box textAlign="center" sx={{ mt: '16px' }}>
                     <IconButton onClick={() => setDisplayCount(listItems.length)}>
-                        <ExpandMore />
+                        <ExpandMore sx={{ fontSize: isNonMobileScreens ? 'inherit' : '1.25rem' }} />
                     </IconButton>
-                </div>
+                </Box>
             )}
 
             {listItems.length > 3 && listItems.length === displayCount && (
-                <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                <Box textAlign="center" sx={{ mt: '16px' }}>
                     <IconButton onClick={() => setDisplayCount(3)}>
-                        <ExpandLess />
+                        <ExpandLess sx={{ fontSize: isNonMobileScreens ? 'inherit' : '1.25rem' }} />
                     </IconButton>
-                </div>
+                </Box>
             )}
-
         </WidgetWrapper>
-    )
-}
+    );
+};
 
 export default MissionWidget
