@@ -13,8 +13,7 @@ const router = express.Router();
 
 // API 前綴，從環境變數讀取
 const apiPrefix = process.env.API_PREFIX || '';
-
-router.use(express.static('public'));
+router.use(`${apiPrefix}/assets`, express.static('public/assets'));
 
 /* GET localhost:[port]/api page. */
 router.get('/', (req, res) => {
