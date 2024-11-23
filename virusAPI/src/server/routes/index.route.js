@@ -11,25 +11,29 @@ import config from './../../config/config';
 
 const router = express.Router();
 
+// API 前綴，從環境變數讀取
+const apiPrefix = process.env.API_PREFIX || '';
+
 router.use(express.static('public'));
+
 /* GET localhost:[port]/api page. */
 router.get('/', (req, res) => {
-  res.send(`此路徑是: localhost:${config.port}/api`);
+  res.send(`此路徑是: localhost:${config.port}${apiPrefix}`);
 });
 
 /** User Router */
-router.use('/user', user);
+router.use(`${apiPrefix}/user`, user);
 /** Users Router */
-router.use('/users', users);
+router.use(`${apiPrefix}/users`, users);
 /** auth Router */
-router.use('/auth', auth);
+router.use(`${apiPrefix}/auth`, auth);
 /** posts Router */
-router.use('/posts', posts);
+router.use(`${apiPrefix}/posts`, posts);
 /** Subscribe Router */
-router.use('/subscribe', subscribe);
-/** Subscribe Router */
-router.use('/achievement', achievement);
-
-router.use('/notification', notification);
+router.use(`${apiPrefix}/subscribe`, subscribe);
+/** Achievement Router */
+router.use(`${apiPrefix}/achievement`, achievement);
+/** Notification Router */
+router.use(`${apiPrefix}/notification`, notification);
 
 export default router;
