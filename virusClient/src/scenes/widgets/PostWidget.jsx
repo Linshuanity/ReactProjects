@@ -328,10 +328,11 @@ const PostWidget = ({
     }
 
     const handleCopyToClipboard = () => {
-        const shareURL = `http://localhost:3000/post/${post_id}` // Replace with your actual URL
-        copyToClipboard(shareURL)
-    }
-
+        const baseURL = `${window.location.origin}`; // 獲取目前網站的基礎 URL
+        const shareURL = `${baseURL}/post/${post_id}`; // 動態生成分享連結
+        copyToClipboard(shareURL);
+    };
+    
     function copyToClipboard(text) {
         const textarea = document.createElement('textarea')
         textarea.value = text

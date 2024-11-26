@@ -17,7 +17,8 @@ router.use(`${apiPrefix}/assets`, express.static('public/assets'));
 
 /* GET localhost:[port]/api page. */
 router.get('/', (req, res) => {
-  res.send(`此路徑是: localhost:${config.port}${apiPrefix}`);
+  const baseURL = `${window.location.origin}`; // 獲取目前網站的基礎 URL
+  res.send(`此路徑是: ${baseURL}:${config.port}${apiPrefix}`);
 });
 
 /** User Router */
