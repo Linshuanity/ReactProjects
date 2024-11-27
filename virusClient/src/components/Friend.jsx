@@ -49,6 +49,7 @@ const Friend = ({
             }
         )
         const data = await response.json()
+        console.log(data);
         dispatch(
             updateFriends({
                 friend: data,

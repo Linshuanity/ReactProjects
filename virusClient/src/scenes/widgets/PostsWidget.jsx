@@ -26,7 +26,6 @@ const PostsWidget = ({ userId, isProfile = false }) => {
 
     const getPosts = async () => {
         if (loading > 0 || page <= lastFetchedPage) {
-            console.log('Already loading or same page requested:', page, lastFetchedPage);
             return;
         }
         
@@ -53,10 +52,6 @@ const PostsWidget = ({ userId, isProfile = false }) => {
             if (!response.ok) throw new Error('Network response was not ok');
             const data = await response.json();
     
-            console.log('page:', currentRequestPage);
-            console.log('data.page:', data.page);
-            console.log('lastFetchedPage:', lastFetchedPage);
-
             if (data.page === currentRequestPage && lastFetchedPage === currentRequestPage - 1) {
                 setPosts((prevPosts) => {
                     // 建立一組包含所有已存在 pid 的 Set
@@ -66,7 +61,6 @@ const PostsWidget = ({ userId, isProfile = false }) => {
                     const uniqueNewPosts = data.posts.filter(post => !existingPostIds.has(post.pid));
    
                     if (uniqueNewPosts.length === 0) {
-                        console.log('No new posts to load.');
                         setLoading(2);
                         return prevPosts; // No changes to posts
                     }
@@ -74,7 +68,6 @@ const PostsWidget = ({ userId, isProfile = false }) => {
                     setLastFetchedPage(currentRequestPage);
         
                     setPage((prevPage) => {
-                        console.log('Incrementing page from:', prevPage);
                         return currentRequestPage + 1;
                     });
                     // 合併新 posts 並返回更新後的 posts
