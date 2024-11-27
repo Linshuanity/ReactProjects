@@ -113,12 +113,12 @@ const createSubscribe = (user_id, friend_id, is_delete) => {
                   tag: 'ADD_ACH',
                   sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
                     SELECT vp.user_id, 2, NOW(),
-                           vp.subscriber, 
+                           vp.subscribed,
                            NOW(), 
                            lm.level, lm.required, lm.next
                     FROM virus_platform_user vp
                         LEFT JOIN level_map lm
-                        ON lm.required < vp.subscriber
+                        ON lm.required < vp.subscribed
                     WHERE vp.user_id = ? AND lm.ach_code = 2
                     ORDER BY lm.required DESC
                     LIMIT 1
@@ -129,18 +129,18 @@ const createSubscribe = (user_id, friend_id, is_delete) => {
                   tag: 'ADD_ACH_2',
                   sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
                     SELECT vp.user_id, 3, NOW(),
-                           vp.subscribed, 
+                           vp.subscriber,
                            NOW(), 
                            lm.level, lm.required, lm.next
                     FROM virus_platform_user vp
                         LEFT JOIN level_map lm
-                        ON lm.required < vp.subscribed
+                        ON lm.required < vp.subscriber
                     WHERE vp.user_id = ? AND lm.ach_code = 3
                     ORDER BY lm.required DESC
                     LIMIT 1
                     ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`, 
                   params: [friend_id],
-                },
+                }
               ];
 
         const executeQuery = (tag, sql, params) => {
