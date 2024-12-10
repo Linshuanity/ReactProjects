@@ -21,8 +21,9 @@ const userGet = (req, res) => {
 const userGetById = (req, res) => {
   // 取得修改id
   const userId = req.params.user_id;
+  const loginId = req.headers['login_id'];
   userModule
-    .selectUserById(userId)
+    .selectUserById(userId, loginId)
     .then((result) => {
       res.send(result); // 成功回傳result結果
     })

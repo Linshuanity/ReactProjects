@@ -12,6 +12,7 @@ const Friend = ({
     name,
     user_picture_path,
     subscriber,
+    is_friend,
     is_main = false,
     action_icon = true,
 }) => {
@@ -27,13 +28,10 @@ const Friend = ({
     const primaryDark = palette.primary.dark
     const main = palette.neutral.main
     const medium = palette.neutral.medium
-    const isNonMobileScreens = useMediaQuery('(min-width:600px)');
+    const isNonMobileScreens = useMediaQuery('(min-width:600px)')
 
-    const [isFriend, setIsFriend] = useState(
-        friends !== null &&
-            Array.isArray(friends) &&
-            friends.some((friend) => friend._id == friend_id)
-    ) // Should change the naming. Otherwise this can be very confusing.
+    const [isFriend, setIsFriend] = useState(is_friend)
+    // Should change the naming. Otherwise this can be very confusing.
     // friend._id is the friend user id while _id is the member of this class, which refers to login user.
 
     const patchFriend = async () => {
@@ -49,7 +47,6 @@ const Friend = ({
             }
         )
         const data = await response.json()
-        console.log(data);
         dispatch(
             updateFriends({
                 friend: data,

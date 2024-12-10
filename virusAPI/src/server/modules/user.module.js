@@ -37,7 +37,7 @@ const selectUser = () => {
 };
 
 /*  User GET 取得  */
-const selectUserById = (userId) => {
+const selectUserById = (userId, loginId) => {
   return new Promise((resolve, reject) => {
     console.log('selectUserById userId:', userId);
 
@@ -48,9 +48,21 @@ const selectUserById = (userId) => {
         return; // Early return after rejecting to avoid continuing execution
       }
 
-      const query = 'SELECT * FROM virus_platform_user WHERE user_id = ?';
+      const query = 
+       `SELECT
+            vpu.*,
+            EXISTS (
+                SELECT 1
+                FROM subscribes s
+                WHERE s.subscriber_id = ?
+                  AND s.subscribed_id = vpu.user_id
+            ) AS is_friend
+        FROM
+            virus_platform_user vpu
+        WHERE
+            vpu.user_id = ?`
 
-      connection.query(query, [userId], (queryError, result) => {
+      connection.query(query, [loginId, userId], (queryError, result) => {
         connection.release();
 
         if (queryError) {
@@ -70,6 +82,7 @@ const selectUserById = (userId) => {
             holding: result[0].virus,
             totalLiked: result[0].user_total_liked_count,
             maxLike: result[0].user_most_liked_count,
+            isFriend: result[0].is_friend,
             postCount: result[0].user_post_count,
             description: result[0].user_description,
           });

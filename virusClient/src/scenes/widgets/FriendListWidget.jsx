@@ -9,18 +9,26 @@ const FriendListWidget = ({ userId }) => {
     const dispatch = useDispatch()
     const { palette } = useTheme()
     const token = useSelector((state) => state.token)
+    const login_id = useSelector((state) => state.user._id)
     const [friends, setFriends] = useState(null)
     let friendDiv = <></>
     try {
-        friendDiv = friends.map((friend) => (
+        friendDiv = friends
+          .sort((a, b) => {
+            // Sort by `is_friend` (true comes first)
+            if (a.is_friend === b.is_friend) return 0;
+            return a.is_friend ? -1 : 1;  // true values come first
+          })
+          .map((friend) => (
             <Friend
-                key={friend._id}
-                friend_id={friend._id}
-                name={friend.name}
-                subscriber={''}
-                user_picture_path={friend.picturePath}
+              key={friend._id}
+              friend_id={friend._id}
+              name={friend.name}
+              subscriber={''}
+              is_friend={friend.is_friend}
+              user_picture_path={friend.picturePath}
             />
-        ))
+          ))
     } catch (error) {}
 
     const getFriends = async () => {
@@ -28,7 +36,10 @@ const FriendListWidget = ({ userId }) => {
             `${process.env.REACT_APP_SERVER_URL}/subscribe/friends/${userId}`,
             {
                 method: 'GET',
-                headers: { Authorization: `Bearer ${token}` },
+                headers: { 
+                    Authorization: `Bearer ${token}`,
+                    'login_id': login_id,
+                },
             }
         )
         const data = await response.json()

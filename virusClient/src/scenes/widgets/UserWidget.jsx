@@ -30,7 +30,10 @@ const UserWidget = ({ userId, picturePath }) => {
     const getUser = async () => {
         const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/users/${userId}`, {
             method: 'GET',
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { 
+                Authorization: `Bearer ${token}`,
+                'login_id': login_id
+            },
         })
         const data = await response.json()
         setUser(data)
@@ -89,6 +92,7 @@ const UserWidget = ({ userId, picturePath }) => {
         postCount,
         totalLiked,
         maxLike,
+        isFriend,
     } = user
 
     return (
@@ -99,6 +103,7 @@ const UserWidget = ({ userId, picturePath }) => {
                 name={user_name}
                 subscriber={subscriber}
                 user_picture_path={picturePath}
+                is_friend={isFriend}
                 is_main={true}
             />
 

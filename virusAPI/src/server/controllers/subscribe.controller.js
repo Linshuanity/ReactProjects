@@ -5,8 +5,9 @@ import subscribeModule from '../modules/subscribe.module';
  */
 const getFriends = (req, res) => {
   const user_id = req.params.user_id;
+  const login_id = req.headers['login_id'];
   subscribeModule
-    .getFriends(user_id)
+    .getFriends(user_id, login_id)
     .then((result) => {
       res.send(result); // 成功回傳result結果
     })

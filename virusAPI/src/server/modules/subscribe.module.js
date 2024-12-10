@@ -32,11 +32,30 @@ const executeQuery = (sql, params) => {
   });
 };
 
-const getFriends = (userId) =>
-  executeQuery(
-    `SELECT s.subscribed_id as _id, u.user_name as name, u.user_image_path as picturePath FROM subscribes as s JOIN virus_platform_user as u ON u.user_id = s.subscribed_id where s.subscriber_id = ? limit 5`,
-    [userId],
+const getFriends = async (userId, loginId) => {
+  const results = await executeQuery(
+    `SELECT
+        s.subscribed_id AS _id,
+        u.user_name AS name,
+        u.user_image_path AS picturePath,
+        EXISTS (
+            SELECT 1
+            FROM subscribes
+            WHERE subscriber_id = ?
+              AND subscribed_id = s.subscribed_id
+        ) AS is_friend
+    FROM
+        subscribes AS s
+    JOIN
+        virus_platform_user AS u
+    ON
+        u.user_id = s.subscribed_id
+    WHERE
+        s.subscriber_id = ? LIMIT 5`,
+    [loginId, userId]
   );
+  return results;
+};
 
 const getSearch = (substring) =>
   executeQuery(

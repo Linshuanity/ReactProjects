@@ -116,7 +116,7 @@ const selectUserLogin = (insertValues) => {
                 if (res) {
                   // First query successful, now execute the second query
                   subscribeModule
-                    .getFriends(result[0].user_id)
+                    .getFriends(result[0].user_id, result[0].user_id)
                     .then((friends) => {
                       const token = jwt.sign(
                         { id: result[0].user_id },
