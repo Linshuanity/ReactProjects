@@ -83,6 +83,9 @@ const PostWidget = ({
     const { showMessage } = useMessage()
     const [isProcessing, setIsProcessing] = useState(false);
 
+    const youtubeRegex = /(https?:\/\/(?:www\.)?youtube\.com\/(?:[^\/\n\s]+\/\S+|\S+))/i;
+    const youtubeLinkMatch = description.match(youtubeRegex);
+
     const handleAddBid = async () => {
         if (isProcessing) return;
         setIsProcessing(true);
@@ -391,7 +394,20 @@ const PostWidget = ({
                 action_icon={false}
             />
             <Typography color={main} sx={{ mt: '1rem' }}>
-                {description}
+              {youtubeLinkMatch ? (
+                <Box sx={{ width: '100%', position: 'relative', paddingBottom: '56.25%' }}>
+                  <iframe
+                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                    src={`https://www.youtube.com/embed/${youtubeLinkMatch[1].split('v=')[1]}`}
+                    title="YouTube video"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </Box>
+              ) : (
+                description
+              )}
             </Typography>
             {picturePath && (
                 <div style={{ position: 'relative' }}>
