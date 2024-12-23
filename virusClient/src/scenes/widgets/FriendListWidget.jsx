@@ -1,5 +1,5 @@
 import { Box, Typography, useTheme } from '@mui/material'
-import Friend from 'components/Friend'
+import VirusUser from 'components/VirusUser'
 import WidgetWrapper from 'components/WidgetWrapper'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -9,7 +9,7 @@ const FriendListWidget = ({ userId }) => {
     const dispatch = useDispatch()
     const { palette } = useTheme()
     const token = useSelector((state) => state.token)
-    const login_id = useSelector((state) => state.user._id)
+    const loggedInUserId = useSelector((state) => state.user?._id);
     const [friends, setFriends] = useState(null)
     let friendDiv = <></>
     try {
@@ -20,7 +20,7 @@ const FriendListWidget = ({ userId }) => {
             return a.is_friend ? -1 : 1;  // true values come first
           })
           .map((friend) => (
-            <Friend
+            <VirusUser
               key={friend._id}
               friend_id={friend._id}
               name={friend.name}
@@ -38,7 +38,7 @@ const FriendListWidget = ({ userId }) => {
                 method: 'GET',
                 headers: { 
                     Authorization: `Bearer ${token}`,
-                    'login_id': login_id,
+                    'login_id': loggedInUserId,
                 },
             }
         )

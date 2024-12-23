@@ -15,22 +15,15 @@ import {
     Typography,
     Select,
     MenuItem,
+    Button,
     FormControl,
     useTheme,
     useMediaQuery,
-    Drawer,
-    List,
-    ListItem,
-    ListItemText,
-    Dialog,
-    DialogTitle,
-    DialogContent,
 } from '@mui/material';
 
 import {
     DarkMode,
     LightMode,
-    Notifications,
     Menu,
     Close,
 } from '@mui/icons-material';
@@ -41,9 +34,8 @@ const Navbar = () => {
     const [isMobileMenuToggled, setIsMobileMenuToggled] = useState(false)
     const [results, setResults] = useState([])
     const [selectedProfile, setSelectedProfile] = useState(null)
-    const [open, setOpen] = useState(false);
     const user = useSelector((state) => state.user)
-    const userId = `${user.user_id}`
+    const isAuth = Boolean(useSelector((state) => state.token));
 
     const dispatch = useDispatch()
     const navigate = useNavigate()
@@ -53,29 +45,24 @@ const Navbar = () => {
     const neutralLight = theme.palette.neutral.light
     const dark = theme.palette.neutral.dark
     const background = theme.palette.background.default
-    const primaryLight = theme.palette.primary.light
     const alt = theme.palette.background.alt
 
-    const fullName = `${user.user_name}`
+    const fullName = user?.user_name || '';
 
     const handleSearch = async (e) => {
         const { value } = e.target
-        if (!value.trim()) return setResults([])
+        if (!value.trim()) return setResults([]);
 
         const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/subscribe/search`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                substring: value,
-            }),
-        })
+            headers: { 'Content-Type': 'application/json', },
+            body: JSON.stringify({ substring: value, }),
+        });
         const update = await response.json()
         setSelectedProfile(update)
         return setResults(update)
     }
-    
+
 
     return (
         <FlexBetween padding="1rem 6%" backgroundColor={alt}>
@@ -110,7 +97,6 @@ const Navbar = () => {
                 </FlexBetween>
             </FlexBetween>
 
-            {/* DESKTOP NAV */}
             {isNonMobileScreens ? (
                 <FlexBetween gap="2rem">
                     <IconButton onClick={() => dispatch(setMode())}>
@@ -120,33 +106,43 @@ const Navbar = () => {
                             <LightMode sx={{ color: dark, fontSize: '25px' }} />
                         )}
                     </IconButton>
-                    <NotificationDrawer/>
-                    <FormControl variant="standard" value={fullName}>
-                        <Select
-                            value={fullName}
-                            sx={{
-                                backgroundColor: neutralLight,
-                                width: '150px',
-                                borderRadius: '0.25rem',
-                                p: '0.25rem 1rem',
-                                '& .MuiSvgIcon-root': {
-                                    pr: '0.25rem',
-                                    width: '3rem',
-                                },
-                                '& .MuiSelect-select:focus': {
-                                    backgroundColor: neutralLight,
-                                },
-                            }}
-                            input={<InputBase />}
+                    {isAuth && (<NotificationDrawer />)}
+                    {!isAuth ? (
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => navigate('/')}
                         >
-                            <MenuItem value={fullName}>
-                                <Typography>{fullName}</Typography>
-                            </MenuItem>
-                            <MenuItem onClick={() => dispatch(setLogout())}>
-                                Log Out
-                            </MenuItem>
-                        </Select>
-                    </FormControl>
+                            Log In
+                        </Button>
+                    ) : (
+                        <FormControl variant="standard" value={fullName}>
+                            <Select
+                                value={fullName}
+                                sx={{
+                                    backgroundColor: neutralLight,
+                                    width: '150px',
+                                    borderRadius: '0.25rem',
+                                    p: '0.25rem 1rem',
+                                    '& .MuiSvgIcon-root': {
+                                        pr: '0.25rem',
+                                        width: '3rem',
+                                    },
+                                    '& .MuiSelect-select:focus': {
+                                        backgroundColor: neutralLight,
+                                    },
+                                }}
+                                input={<InputBase />}
+                            >
+                                <MenuItem value={fullName}>
+                                    <Typography>{fullName}</Typography>
+                                </MenuItem>
+                                <MenuItem onClick={() => dispatch(setLogout())}>
+                                    Log Out
+                                </MenuItem>
+                            </Select>
+                        </FormControl>)
+                    }
                 </FlexBetween>
             ) : (
                 <IconButton
@@ -207,7 +203,7 @@ const Navbar = () => {
                         </IconButton>
 
                         {/* Notification Drawer */}
-                        <NotificationDrawer />
+                        {isAuth && (<NotificationDrawer />)}
 
                         {/* User Menu */}
                         <FormControl
@@ -219,7 +215,15 @@ const Navbar = () => {
                                 borderRadius: '0.5rem',
                                 padding: '0.25rem',
                             }}
-                        >
+                        >{!isAuth ? (
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={() => navigate('/')}
+                            >
+                                Log In
+                            </Button>
+                        ) : (
                             <Select
                                 value={fullName}
                                 sx={{
@@ -243,7 +247,8 @@ const Navbar = () => {
                                 <MenuItem onClick={() => dispatch(setLogout())}>
                                     Log Out
                                 </MenuItem>
-                            </Select>
+                            </Select>)
+                            }
                         </FormControl>
                     </FlexBetween>
                 </Box>

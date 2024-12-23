@@ -16,7 +16,7 @@ import {
     InputBase,
 } from '@mui/material'
 import FlexBetween from 'components/FlexBetween'
-import Friend from 'components/Friend'
+import VirusUser from 'components/VirusUser'
 import WidgetWrapper from 'components/WidgetWrapper'
 import UserImage from 'components/UserImage'
 import { useNavigate } from 'react-router-dom'
@@ -55,9 +55,10 @@ const PostWidget = ({
     const postId = post_id
     const dispatch = useDispatch()
     const token = useSelector((state) => state.token)
-    const loggedInUserId = useSelector((state) => state.user._id)
-    const loggedInUserName = useSelector((state) => state.user.user_name)
-    const userImagePath = useSelector((state) => state.user.picturePath)
+    const isAuth = Boolean(token); // 是否登入
+    const loggedInUserId = useSelector((state) => state.user?._id)
+    const loggedInUserName = useSelector((state) => state.user?.user_name)
+    const userImagePath = useSelector((state) => state.user?.picturePath)
     const isSell = loggedInUserId === owner_id
     const price = isSell ? bid_price : ask_price
     const [bid, setBid] = useState(0)
@@ -87,7 +88,7 @@ const PostWidget = ({
     const youtubeLinkMatch = description.match(youtubeRegex);
 
     const handleAddBid = async () => {
-        if (isProcessing) return;
+        if (!isAuth || isProcessing) return;
         setIsProcessing(true);
         try {
             const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/posts/bid`, {
@@ -116,7 +117,7 @@ const PostWidget = ({
         }
     }
     const handleAddComment = async () => {
-        if (isProcessing) return;
+        if (!isAuth || isProcessing) return;
         setIsProcessing(true);
         try {
             if (newComment.trim() !== '') {
@@ -166,7 +167,7 @@ const PostWidget = ({
     }
 
     const purchaseAction = async () => {
-        if (isProcessing) return;
+        if (!isAuth || isProcessing) return;
         setIsProcessing(true);
         try {
             const response = await fetch(
@@ -202,7 +203,7 @@ const PostWidget = ({
     }
 
     const refuelAction = async () => {
-        if (isProcessing) return;
+        if (!isAuth || isProcessing) return;
         setIsProcessing(true);
         try {
             const response = await fetch(
@@ -260,7 +261,7 @@ const PostWidget = ({
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        user_id: loggedInUserId,
+                        user_id: isAuth ? loggedInUserId : 0,
                         post_id: postId,
                     }),
                 }
@@ -273,7 +274,7 @@ const PostWidget = ({
 
     const patchLike = async () => {
         // Disable unlike
-        if (isLiked)
+        if (!isAuth || isLiked)
             return;
         setLikes(likesCount + (isLiked ? -1 : 1))
         setLiked(!isLiked)
@@ -301,7 +302,7 @@ const PostWidget = ({
 
     const patchCommentLike = async (index, commentIsLiked, cid) => {
         // Disable unlike
-        if (commentIsLiked)
+        if (!isAuth || commentIsLiked)
             return;
         const updatedCommentList = commentList.map((comment, i) =>
             i === index
@@ -386,7 +387,7 @@ const PostWidget = ({
                 margin: '1rem 0',
             }}
         >
-            <Friend
+            <VirusUser
                 friend_id={author_id}
                 name={author_name}
                 subscriber={''}

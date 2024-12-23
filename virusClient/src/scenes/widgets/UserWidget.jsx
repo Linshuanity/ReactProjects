@@ -12,7 +12,7 @@ import { useSelector } from 'react-redux'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import WalletConnectComponent from '../../WalletConnectComponent'
-import Friend from 'components/Friend'
+import VirusUser from 'components/VirusUser'
 
 const UserWidget = ({ userId, picturePath }) => {
     const [editing, setEditing] = useState(false)
@@ -98,7 +98,7 @@ const UserWidget = ({ userId, picturePath }) => {
     return (
         <WidgetWrapper>
             {/* FIRST ROW */}
-            <Friend
+            <VirusUser
                 friend_id={userId}
                 name={user_name}
                 subscriber={subscriber}

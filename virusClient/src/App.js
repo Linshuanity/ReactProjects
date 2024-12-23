@@ -32,32 +32,13 @@ function App() {
                         <CssBaseline />
                         <Routes>
                             <Route path="/" element={<LoginPage />} />
-                            <Route
-                                path="/home"
-                                element={
-                                    isAuth ? <HomePage /> : <Navigate to="/" />
-                                }
-                            />
-                            <Route
-                                path="/post/:postId"
-                                element={
-                                    isAuth ? <PostPage /> : <Navigate to="/" />
-                                }
-                            />
-                            <Route
-                                path="/profile/:userId"
-                                element={
-                                    isAuth ? (
-                                        <ProfilePage />
-                                    ) : (
-                                        <Navigate to="/" />
-                                    )
-                                }
-                            />
-                            <Route
-                                path="/reset-password/:token"
-                                element={<ResetPassword />}
-                            />
+                            {/* <Route path="/home" element={isAuth ? <HomePage /> : <Navigate to="/" />} />
+                            <Route path="/post/:postId" element={isAuth ? <PostPage /> : <Navigate to="/" />} /> */}
+                            {/* Allow public browsing */}
+                            <Route path="/home" element={<HomePage />} />
+                            <Route path="/post/:postId" element={<PostPage />} />
+                            <Route path="/profile/:userId" element={isAuth ? (<ProfilePage />) : (<Navigate to="/" />)} />
+                            <Route path="/reset-password/:token" element={<ResetPassword />} />
                         </Routes>
                     </ThemeProvider>
                 </BrowserRouter>
