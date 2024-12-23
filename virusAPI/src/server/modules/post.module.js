@@ -1226,23 +1226,18 @@ const extend_post = (donor_id, post_id, price) => {
       }
       const parallelQueries = [
       {
-          sql: `IF EXISTS (
-                    SELECT 1
+          sql: `INSERT INTO accounting (from_id, to_id, amount, type, note)
+                    SELECT ?, ?, ?, 1, 'extend post lifetime'
                     FROM virus_platform_user
-                    WHERE user_id = ? AND virus >= ?
-                )
-                THEN
-                    INSERT INTO accounting (from_id, to_id, amount, type, note)
-                    VALUES (?, ?, ?, 1, "extend post lifetime");
-                END IF`,
-          params: [donor_id, price, donor_id, post_id, price],
+                    WHERE user_id = ? AND virus >= ?`,
+          params: [donor_id, post_id, price, donor_id, price],
           need_change: true,
         },
         {
           sql: `UPDATE posts
-                    SET expire_date = DATE_ADD(expire_date, INTERVAL 8 HOUR)
+                    SET expire_date = DATE_ADD(expire_date, INTERVAL 8 * ? HOUR)
                     WHERE pid = ?`,
-          params: [post_id],
+          params: [price, post_id],
           need_change: true,
         },
         {
