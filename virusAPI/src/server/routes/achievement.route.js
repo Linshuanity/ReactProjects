@@ -2,6 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import {
   getAchievement,
+  claim
 } from '../modules/achievement.module.js';
 
 /* FILE STORAGE */
@@ -18,5 +19,6 @@ const upload = multer({ storage });
 const router = express.Router();
 
 router.post('/fetch', getAchievement);
+router.post('/claim', claim);
 
 export default router;

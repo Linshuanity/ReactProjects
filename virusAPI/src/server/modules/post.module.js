@@ -201,22 +201,6 @@ const createPost = (insertValues) => {
 
         const queries = [
           {
-            tag: 'FUND_CHECK_AND_ADD_ACC',
-            sql: `INSERT INTO accounting (from_id, to_id, amount, type, note)
-                      SELECT ?, 0, ?, 0, "create post"
-                      WHERE EXISTS (
-                        SELECT 1
-                        FROM virus_platform_user vpu
-                        WHERE vpu.user_id = ? AND vpu.virus >= ?
-                      )`,
-            params: [
-              insertValues.userId,
-              post_cost,
-              insertValues.userId,
-              post_cost
-            ],
-          },
-          {
             tag: 'FUND_CHECK',
             sql: `UPDATE virus_platform_user SET virus = virus - ? WHERE user_id = ? 
                         AND virus >= ?`,
@@ -614,6 +598,24 @@ const addCommentlike = (liker_id, comment_id, reward) => {
             params: [comment_id, reward, liker_id],
           },
           {
+            // Note: Need two layers of select to avoid error.
+            tag: 'ADD_VIR',
+            sql: `UPDATE virus_platform_user
+                          SET virus = virus + ?
+                          WHERE user_id = (SELECT user_id FROM comments WHERE cid = ?)
+                              AND EXISTS (SELECT 1 FROM (SELECT user_id AS uid FROM virus_platform_user
+                                          WHERE user_id = ? AND daily_paid_likes > 0) as X)`,
+            params: [reward, comment_id, liker_id],
+          },
+          {
+            tag: 'ADD_VIR2',
+            sql: `UPDATE virus_platform_user
+                          SET virus = virus + ?, daily_paid_likes = daily_paid_likes - 1
+                          WHERE user_id = ?
+                              AND daily_paid_likes > 0`,
+            params: [reward, liker_id],
+          },
+          {
             tag: 'ADD_ACH',
             sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
                   SELECT vp.user_id, 5, NOW(),
@@ -773,6 +775,24 @@ const addUserLike = async (liker_id, post_id, reward) => {
           params: [post_id, reward, liker_id],
         },
         {
+          // Note: Need two layers of select to avoid error.
+          tag: 'ADD_VIR',
+          sql: `UPDATE virus_platform_user
+                        SET virus = virus + ?
+                        WHERE user_id = (SELECT owner_uid FROM posts WHERE pid = ?)
+                            AND EXISTS (SELECT 1 FROM (SELECT user_id AS uid FROM virus_platform_user
+                                        WHERE user_id = ? AND daily_paid_likes > 0) as X)`,
+          params: [reward, post_id, liker_id],
+        },
+        {
+          tag: 'ADD_VIR2',
+          sql: `UPDATE virus_platform_user
+                        SET virus = virus + ?, daily_paid_likes = daily_paid_likes - 1
+                        WHERE user_id = ?
+                            AND daily_paid_likes > 0`,
+          params: [reward, liker_id],
+        },
+        {
           tag: 'INS_LK',
           sql: `INSERT INTO likes (liker_id, post_id) select ?, ? FROM DUAL`,
           params: [liker_id, post_id],
@@ -917,6 +937,15 @@ const addUserBid = (user_id, post_id, price, is_bid) => {
       }
       const queries = [
         {
+          sql: `UPDATE virus_platform_user
+                        SET virus = virus + COALESCE((SELECT price FROM bids WHERE user_id = ?
+                                                        AND post_id = ?
+                                                        AND is_bid = True), 0)
+                        WHERE user_id = ?`,
+          params: [user_id, post_id, user_id],
+          need_change: false,
+        },
+        {
           sql: `INSERT INTO accounting (from_id, to_id, amount, type, note)
                 SELECT ?, ?, price, 2, "bid refund"
                 FROM (
@@ -952,6 +981,12 @@ const addUserBid = (user_id, post_id, price, is_bid) => {
         {
           sql: `INSERT INTO accounting (from_id, to_id, amount, type, note) SELECT ?, ?, ?, 1, "new bid" FROM DUAL WHERE ? = true and ? > 0`,
           params: [user_id, post_id, price, is_bid, price],
+          need_change: false,
+        },
+        {
+          sql: `UPDATE virus_platform_user
+                        SET virus = virus - ? WHERE user_id = ? AND ? = True`,
+          params: [price, user_id, is_bid],
           need_change: false,
         },
         {
@@ -1078,13 +1113,29 @@ const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
           need_change: true,
         },
         {
-          sql: `INSERT INTO accounting (from_id, to_id, amount, type, note) SELECT ?, ?, ?, 1, "purchase a post" FROM DUAL WHERE ? = false`,
-          params: [buyer_id, post_id, price, for_sell],
+          sql: `INSERT INTO accounting
+                    (from_id, to_id, amount, type, note)
+                    SELECT ?, ?, ?, 1, "Taker buy"
+                        FROM DUAL WHERE ? = false and ? > 0`,
+          params: [buyer_id, post_id, price, for_sell, price],
+          need_change: false,
+        },
+        {
+          sql: `UPDATE virus_platform_user SET virus = virus - ? WHERE user_id = ? and ? = False`,
+          params: [price, buyer_id, for_sell],
+          need_change: false,
+        },
+        {
+          sql: `UPDATE virus_platform_user SET virus = virus + ? WHERE user_id = ?`,
+          params: [price, seller_id],
           need_change: true,
         },
         {
-          sql: `INSERT INTO accounting (from_id, to_id, amount, type, note) VALUES (?, ?, ?, 2, "post sold")`,
-          params: [post_id, seller_id, price],
+          sql: `INSERT INTO accounting
+                    (from_id, to_id, amount, type, note)
+                    SELECT ?, ?, ?, 2, "Sales settled"
+                        FROM DUAL WHERE ? > 0`,
+          params: [post_id, seller_id, price, price],
           need_change: true,
         },
         {
@@ -1122,6 +1173,14 @@ const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
         {
           sql: `UPDATE virus_platform_user SET user_sell_post_count = user_sell_post_count + 1 WHERE user_id = ?`,
           params: [seller_id],
+        },
+        {
+          sql: `INSERT INTO accounting (from_id, to_id, amount, type, note) SELECT ?, ?, ?, 1, "purchase a post" FROM DUAL WHERE ? = false`,
+          params: [buyer_id, post_id, price, for_sell],
+        },
+        {
+          sql: `INSERT INTO accounting (from_id, to_id, amount, type, note) VALUES (?, ?, ?, 2, "post sold")`,
+          params: [post_id, seller_id, price],
         },
         {
           sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
@@ -1225,7 +1284,7 @@ const extend_post = (donor_id, post_id, price) => {
         return;
       }
       const parallelQueries = [
-      {
+        {
           sql: `INSERT INTO accounting (from_id, to_id, amount, type, note)
                     SELECT ?, ?, ?, 1, 'extend post lifetime'
                     FROM virus_platform_user
@@ -1234,10 +1293,25 @@ const extend_post = (donor_id, post_id, price) => {
           need_change: true,
         },
         {
+          sql: `UPDATE virus_platform_user AS vpu
+                    JOIN (SELECT virus FROM virus_platform_user WHERE user_id = ?) AS subquery
+                    ON subquery.virus >= ?
+                    SET vpu.virus = vpu.virus - ?
+                    WHERE vpu.user_id = ?`,
+          params: [donor_id, price, price, donor_id],
+          need_change: true,
+        },
+        {
           sql: `UPDATE posts
                     SET expire_date = DATE_ADD(expire_date, INTERVAL 8 * ? HOUR)
                     WHERE pid = ?`,
           params: [price, post_id],
+          need_change: true,
+        },
+        {
+          sql: `INSERT INTO accounting
+                    (from_id, to_id, amount, type, note) SELECT ?, ?, ?, 1, "extend post lifetime"`,
+          params: [donor_id, post_id, price],
           need_change: true,
         },
         {
