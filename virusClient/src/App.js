@@ -31,11 +31,11 @@ function App() {
                     <ThemeProvider theme={theme}>
                         <CssBaseline />
                         <Routes>
-                            <Route path="/" element={<LoginPage />} />
+                            <Route path="/" element={<HomePage />} />
+                            <Route path="/login" element={<LoginPage />} />
                             {/* <Route path="/home" element={isAuth ? <HomePage /> : <Navigate to="/" />} />
                             <Route path="/post/:postId" element={isAuth ? <PostPage /> : <Navigate to="/" />} /> */}
                             {/* Allow public browsing */}
-                            <Route path="/home" element={<HomePage />} />
                             <Route path="/post/:postId" element={<PostPage />} />
                             <Route path="/profile/:userId" element={isAuth ? (<ProfilePage />) : (<Navigate to="/" />)} />
                             <Route path="/reset-password/:token" element={<ResetPassword />} />

@@ -79,7 +79,7 @@ const Navbar = () => {
                     fontWeight="bold"
                     fontSize="clamp(1rem, 2rem, 2.25rem)"
                     color="primary"
-                    onClick={() => navigate('/home')}
+                    onClick={() => navigate('/')}
                     sx={{
                         '&:hover': {
                             color: dark,
@@ -121,7 +121,7 @@ const Navbar = () => {
                             color="primary"
                             onClick={handleOpenLoginModal} // 打開浮動視窗
                         >
-                            Log In
+                            Sign In
                         </Button>
                     ) : (
                         <FormControl variant="standard" value={fullName}>

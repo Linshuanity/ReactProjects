@@ -353,10 +353,10 @@ const Form = () => {
                             }}
                         >
                             {isLogin
-                                ? 'LOGIN'
+                                ? 'Sign In'
                                 : isForgotPassword
                                   ? 'reset password'
-                                  : 'REGISTER'}
+                                  : 'Sign Up'}
                         </Button>
                         <Typography
                             onClick={() => {
