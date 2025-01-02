@@ -36,7 +36,7 @@ const HomePage = () => {
                 )}
 
                 <Box
-                    flexBasis={isNonMobileScreens ? '42%' : '100%'}
+                    flexBasis={isAuth && isNonMobileScreens ? '42%' : '100%'}
                     mt={isNonMobileScreens ? undefined : '1rem'}
                 >
                     {isAuth ? (
@@ -45,22 +45,8 @@ const HomePage = () => {
                             <PostsWidget userId={_id} />
                         </>
                     ) : (
-                    // <Box>
-                    <>
-                        <PostsWidget userId={0} /> 
-                         <Box textAlign="center">
-                            <Typography variant="h6" mb={2}>
-                                Log in to interact with posts.
-                            </Typography>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={handleLoginPrompt}
-                            >
-                                Log In
-                            </Button>
-                        </Box>
-                        </> 
+                        // <Box>
+                        <PostsWidget userId={0} />
                     )}
                 </Box>
 

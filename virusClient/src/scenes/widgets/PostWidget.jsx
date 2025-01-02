@@ -23,6 +23,7 @@ import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { setPost } from 'state'
+import FloatLogin from 'components/FloatLogin' // 引入 FloatLogin
 
 import { MessageProvider, useMessage } from 'components/MessageContext'
 import './post_widget.css'
@@ -42,12 +43,12 @@ const PostWidget = ({
     expire_date,
     picturePath,
     bid_user_id,
-    is_liked,
-    likes,
+    is_liked: initialIsLiked, // 將 is_liked 更名為 initialIsLiked
+    likes: initialLikes, // 將 likes 更名為 initialLikes
     bid_price,
     ask_price,
     my_bid,
-    comments,
+    comments: initialComments, // 將 comments 更名為 initialComments
 }) => {
     const [listMode, setListMode] = useState(0)
     const [isHovered, setIsHovered] = useState(false)
@@ -63,8 +64,8 @@ const PostWidget = ({
     const price = isSell ? bid_price : ask_price
     const [bid, setBid] = useState(0)
     const [myBid, setMyBid] = useState(my_bid)
-    const [isLiked, setLiked] = useState(is_liked)
-    const [likesCount, setLikes] = useState(likes)
+    const [isLiked, setLiked] = useState(initialIsLiked) // 使用 initialIsLiked 初始化
+    const [likesCount, setLikes] = useState(initialLikes) // 使用 initialLikes 初始化
     const startDate = [create_date]
     const endDate = [expire_date]
     const currentTime = new Date()
@@ -77,18 +78,26 @@ const PostWidget = ({
     const main = palette.neutral.main
     const primary = palette.primary.main
     const navigate = useNavigate()
-    const [commentCount, setCommentCount] = useState(comments)
+    const [commentCount, setCommentCount] = useState(initialComments) // 使用 initialComments 初始化
     const [commentList, setCommentList] = useState([])
     const [bidList, setBidList] = useState([])
     const [confirmationState, setConfirmationState] = useState(0)
     const { showMessage } = useMessage()
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false); // 控制浮動登入視窗
 
     const youtubeRegex = /(https?:\/\/(?:www\.)?youtube\.com\/(?:[^\/\n\s]+\/\S+|\S+))/i;
     const youtubeLinkMatch = description.match(youtubeRegex);
 
+    const handleCloseLoginModal = () => {
+        setIsLoginModalOpen(false);
+    };
+
     const handleAddBid = async () => {
-        if (!isAuth || isProcessing) return;
+        if (!isAuth) {
+            setIsLoginModalOpen(true);
+            return;
+        }
         setIsProcessing(true);
         try {
             const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/posts/bid`, {
@@ -117,7 +126,10 @@ const PostWidget = ({
         }
     }
     const handleAddComment = async () => {
-        if (!isAuth || isProcessing) return;
+        if (!isAuth) {
+            setIsLoginModalOpen(true);
+            return;
+        }
         setIsProcessing(true);
         try {
             if (newComment.trim() !== '') {
@@ -151,7 +163,7 @@ const PostWidget = ({
                     likes: 0,
                 }
                 setCommentList([...commentList, commentObject])
-                setCommentCount((commentCount) => commentCount + 1)
+                setCommentCount((prevCount) => prevCount + 1)
             }
 
             setNewComment('')
@@ -167,7 +179,10 @@ const PostWidget = ({
     }
 
     const purchaseAction = async () => {
-        if (!isAuth || isProcessing) return;
+        if (!isAuth) {
+            setIsLoginModalOpen(true);
+            return;
+        }
         setIsProcessing(true);
         try {
             const response = await fetch(
@@ -203,7 +218,10 @@ const PostWidget = ({
     }
 
     const refuelAction = async () => {
-        if (!isAuth || isProcessing) return;
+        if (!isAuth) {
+            setIsLoginModalOpen(true);
+            return;
+        }
         setIsProcessing(true);
         try {
             const response = await fetch(
@@ -237,6 +255,10 @@ const PostWidget = ({
     }
 
     const fetchBids = async () => {
+        if (!isAuth) {
+            setIsLoginModalOpen(true);
+            return;
+        }
         if (listMode !== 2) {
             const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/posts/bids`, {
                 method: 'POST',
@@ -252,6 +274,10 @@ const PostWidget = ({
     }
 
     const fetchComments = async () => {
+        if (!isAuth) {
+            setIsLoginModalOpen(true);
+            return;
+        }
         if (listMode !== 1) {
             const response = await fetch(
                 `${process.env.REACT_APP_SERVER_URL}/posts/comments`,
@@ -273,8 +299,12 @@ const PostWidget = ({
     }
 
     const patchLike = async () => {
+        if (!isAuth) {
+            setIsLoginModalOpen(true);
+            return;
+        }
         // Disable unlike
-        if (!isAuth || isLiked)
+        if (isLiked)
             return;
         setLikes(likesCount + (isLiked ? -1 : 1))
         setLiked(!isLiked)
@@ -301,8 +331,12 @@ const PostWidget = ({
     }
 
     const patchCommentLike = async (index, commentIsLiked, cid) => {
+        if (!isAuth) {
+            setIsLoginModalOpen(true);
+            return;
+        }
         // Disable unlike
-        if (!isAuth || commentIsLiked)
+        if (commentIsLiked)
             return;
         const updatedCommentList = commentList.map((comment, i) =>
             i === index
@@ -336,7 +370,7 @@ const PostWidget = ({
         const shareURL = `${baseURL}/post/${post_id}`; // 動態生成分享連結
         copyToClipboard(shareURL);
     };
-    
+
     function copyToClipboard(text) {
         const textarea = document.createElement('textarea')
         textarea.value = text
@@ -387,6 +421,7 @@ const PostWidget = ({
                 margin: '1rem 0',
             }}
         >
+            <FloatLogin isOpen={isLoginModalOpen} onClose={handleCloseLoginModal} /> {/* 渲染浮動視窗 */}
             <VirusUser
                 friend_id={author_id}
                 name={author_name}
@@ -395,20 +430,20 @@ const PostWidget = ({
                 action_icon={false}
             />
             <Typography color={main} sx={{ mt: '1rem' }}>
-              {youtubeLinkMatch ? (
-                <Box sx={{ width: '100%', position: 'relative', paddingBottom: '56.25%' }}>
-                  <iframe
-                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-                    src={`https://www.youtube.com/embed/${youtubeLinkMatch[1].split('v=')[1]}`}
-                    title="YouTube video"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                </Box>
-              ) : (
-                description
-              )}
+                {youtubeLinkMatch ? (
+                    <Box sx={{ width: '100%', position: 'relative', paddingBottom: '56.25%' }}>
+                        <iframe
+                            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                            src={`https://www.youtube.com/embed/${youtubeLinkMatch[1].split('v=')[1]}`}
+                            title="YouTube video"
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                        />
+                    </Box>
+                ) : (
+                    description
+                )}
             </Typography>
             {picturePath && (
                 <div style={{ position: 'relative' }}>
@@ -528,6 +563,10 @@ const PostWidget = ({
                         }}
                         variant="contained"
                         onClick={() => {
+                            if (!isAuth) {
+                                setIsLoginModalOpen(true);
+                                return;
+                            }
                             setConfirmationState(1)
                         }}
                         disabled={price <= 0}
@@ -548,7 +587,13 @@ const PostWidget = ({
                             },
                         }}
                         variant="contained"
-                        onClick={() => setConfirmationState(2)}
+                        onClick={() => {
+                            if (!isAuth) {
+                                setIsLoginModalOpen(true);
+                                return;
+                            }
+                            setConfirmationState(2)
+                        }}
                         disabled={bid < 0 || (bid == 0 && myBid == 0)}
                     >
                         {(isSell ? 'Ask (' : 'Bid (') + myBid + ')'}
@@ -561,7 +606,13 @@ const PostWidget = ({
                             '&:hover': '#FFD98D'
                         }}
                         variant="contained"
-                        onClick={() => setConfirmationState(3)}
+                        onClick={() => {
+                            if (!isAuth) {
+                                setIsLoginModalOpen(true);
+                                return;
+                            }
+                            setConfirmationState(3)
+                        }}
                         disabled={bid < 0 || (bid == 0 && myBid == 0)}
                     >
                         Refuel

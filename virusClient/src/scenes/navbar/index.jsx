@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import LiveSearch from 'components/LiveSearch';
 import FlexBetween from 'components/FlexBetween';
 import NotificationDrawer from './NotificationDrawer';
+import FloatLogin from 'components/FloatLogin'; // 引入 FloatLogin
 
 import { setMode, setLogout } from 'state';
 
@@ -28,29 +29,28 @@ import {
     Close,
 } from '@mui/icons-material';
 
-
-
 const Navbar = () => {
-    const [isMobileMenuToggled, setIsMobileMenuToggled] = useState(false)
-    const [results, setResults] = useState([])
-    const [selectedProfile, setSelectedProfile] = useState(null)
-    const user = useSelector((state) => state.user)
+    const [isMobileMenuToggled, setIsMobileMenuToggled] = useState(false);
+    const [results, setResults] = useState([]);
+    const [selectedProfile, setSelectedProfile] = useState(null);
+    const user = useSelector((state) => state.user);
     const isAuth = Boolean(useSelector((state) => state.token));
 
-    const dispatch = useDispatch()
-    const navigate = useNavigate()
-    const isNonMobileScreens = useMediaQuery('(min-width: 1000px)')
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const isNonMobileScreens = useMediaQuery('(min-width: 1000px)');
 
-    const theme = useTheme()
-    const neutralLight = theme.palette.neutral.light
-    const dark = theme.palette.neutral.dark
-    const background = theme.palette.background.default
-    const alt = theme.palette.background.alt
+    const theme = useTheme();
+    const neutralLight = theme.palette.neutral.light;
+    const dark = theme.palette.neutral.dark;
+    const background = theme.palette.background.default;
+    const alt = theme.palette.background.alt;
 
     const fullName = user?.user_name || '';
+    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false); // 控制浮動登入視窗
 
     const handleSearch = async (e) => {
-        const { value } = e.target
+        const { value } = e.target;
         if (!value.trim()) return setResults([]);
 
         const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/subscribe/search`, {
@@ -58,14 +58,22 @@ const Navbar = () => {
             headers: { 'Content-Type': 'application/json', },
             body: JSON.stringify({ substring: value, }),
         });
-        const update = await response.json()
-        setSelectedProfile(update)
-        return setResults(update)
-    }
+        const update = await response.json();
+        setSelectedProfile(update);
+        return setResults(update);
+    };
 
+    const handleOpenLoginModal = () => {
+        setIsLoginModalOpen(true);
+    };
+
+    const handleCloseLoginModal = () => {
+        setIsLoginModalOpen(false);
+    };
 
     return (
         <FlexBetween padding="1rem 6%" backgroundColor={alt}>
+            <FloatLogin isOpen={isLoginModalOpen} onClose={handleCloseLoginModal} /> {/* 渲染浮動視窗 */}
             <FlexBetween gap="1.75rem">
                 <Typography
                     fontWeight="bold"
@@ -111,7 +119,7 @@ const Navbar = () => {
                         <Button
                             variant="contained"
                             color="primary"
-                            onClick={() => navigate('/')}
+                            onClick={handleOpenLoginModal} // 打開浮動視窗
                         >
                             Log In
                         </Button>
@@ -159,12 +167,12 @@ const Navbar = () => {
                     top="0"
                     height="40%"
                     zIndex="10"
-                    maxWidth="220px"  // Slightly increased for comfortable fit
+                    maxWidth="220px"
                     minWidth="150px"
                     backgroundColor={background}
-                    borderRadius="8px"  // Rounded corners for a softer look
-                    boxShadow="0px 4px 10px rgba(0, 0, 0, 0.1)" // Subtle shadow for depth
-                    p="1rem"  // Added padding for consistent inner spacing
+                    borderRadius="8px"
+                    boxShadow="0px 4px 10px rgba(0, 0, 0, 0.1)"
+                    p="1rem"
                 >
                     {/* CLOSE ICON */}
                     <Box display="flex" justifyContent="flex-end" mb="0.5rem">
@@ -182,7 +190,7 @@ const Navbar = () => {
                         flexDirection="column"
                         justifyContent="center"
                         alignItems="center"
-                        gap="1rem"  // Reduced gap for a more compact look
+                        gap="1rem"
                     >
                         {/* Theme Toggle Button */}
                         <IconButton
@@ -205,56 +213,61 @@ const Navbar = () => {
                         {/* Notification Drawer */}
                         {isAuth && (<NotificationDrawer />)}
 
-                        {/* User Menu */}
-                        <FormControl
-                            variant="standard"
-                            sx={{
-                                width: '100%',
-                                mt: '0.5rem',
-                                backgroundColor: neutralLight,
-                                borderRadius: '0.5rem',
-                                padding: '0.25rem',
-                            }}
-                        >{!isAuth ? (
+                        {/* Login Button for Mobile */}
+                        {!isAuth && (
                             <Button
                                 variant="contained"
                                 color="primary"
-                                onClick={() => navigate('/')}
+                                onClick={handleOpenLoginModal} // 打開浮動視窗
+                                sx={{ width: '100%' }}
                             >
                                 Log In
                             </Button>
-                        ) : (
-                            <Select
-                                value={fullName}
+                        )}
+
+                        {/* User Menu */}
+                        {isAuth && (
+                            <FormControl
+                                variant="standard"
                                 sx={{
                                     width: '100%',
-                                    borderRadius: '0.25rem',
-                                    padding: '0.25rem 1rem',
+                                    mt: '0.5rem',
                                     backgroundColor: neutralLight,
-                                    '& .MuiSvgIcon-root': {
-                                        paddingRight: '0.5rem',
-                                        fontSize: '1.5rem',
-                                    },
-                                    '& .MuiSelect-select:focus': {
-                                        backgroundColor: neutralLight,
-                                    },
+                                    borderRadius: '0.5rem',
+                                    padding: '0.25rem',
                                 }}
-                                input={<InputBase />}
                             >
-                                <MenuItem value={fullName}>
-                                    <Typography>{fullName}</Typography>
-                                </MenuItem>
-                                <MenuItem onClick={() => dispatch(setLogout())}>
-                                    Log Out
-                                </MenuItem>
-                            </Select>)
-                            }
-                        </FormControl>
+                                <Select
+                                    value={fullName}
+                                    sx={{
+                                        width: '100%',
+                                        borderRadius: '0.25rem',
+                                        padding: '0.25rem 1rem',
+                                        backgroundColor: neutralLight,
+                                        '& .MuiSvgIcon-root': {
+                                            paddingRight: '0.5rem',
+                                            fontSize: '1.5rem',
+                                        },
+                                        '& .MuiSelect-select:focus': {
+                                            backgroundColor: neutralLight,
+                                        },
+                                    }}
+                                    input={<InputBase />}
+                                >
+                                    <MenuItem value={fullName}>
+                                        <Typography>{fullName}</Typography>
+                                    </MenuItem>
+                                    <MenuItem onClick={() => dispatch(setLogout())}>
+                                        Log Out
+                                    </MenuItem>
+                                </Select>
+                            </FormControl>
+                        )}
                     </FlexBetween>
                 </Box>
             )}
         </FlexBetween>
-    )
-}
+    );
+};
 
-export default Navbar
+export default Navbar;

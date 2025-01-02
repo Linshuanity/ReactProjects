@@ -53,7 +53,7 @@ const PostPage = () => {
                 )}
 
                 <Box
-                    flexBasis={isNonMobileScreens ? '42%' : undefined}
+                    flexBasis={isAuth && isNonMobileScreens ? '42%' : '100%'}
                     mt={isNonMobileScreens ? undefined : '2rem'}
                 >
                     {post == null
