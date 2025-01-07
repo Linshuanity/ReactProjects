@@ -134,11 +134,11 @@ const PostsWidget = ({ userId, isProfile = false }) => {
             <div style={{ marginTop: '10px' }}>
                 {isAuth && (
                     <Tabs value={mode} onChange={handleTabChange}>
-                        {userId == loggedInUserId && <Tab label="News" />}
-                        <Tab label="My post" />
-                        <Tab label="My collection" />
-                        {userId == loggedInUserId && <Tab label="My order" />}
-                        <Tab label="Search" />
+                        {userId == loggedInUserId && <Tab label="News" value={0} />}
+                        <Tab label="My post" value={1} />
+                        <Tab label="My collection" value={2} />
+                        {userId == loggedInUserId && <Tab label="My order" value={3} />}
+                        <Tab label="Search" value={4} />
                     </Tabs>
                 )}
                 {isAuth && mode === 4 && (
