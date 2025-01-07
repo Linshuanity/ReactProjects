@@ -85,6 +85,7 @@ const selectUserById = (userId, loginId) => {
             isFriend: result[0].is_friend,
             postCount: result[0].user_post_count,
             description: result[0].user_description,
+            netWorth: result[0].net_worth,
           });
         }
       });

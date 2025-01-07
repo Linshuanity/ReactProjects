@@ -93,6 +93,7 @@ const UserWidget = ({ userId, picturePath }) => {
         totalLiked,
         maxLike,
         isFriend,
+        netWorth,
     } = user
 
     return (
@@ -208,6 +209,12 @@ const UserWidget = ({ userId, picturePath }) => {
                     <Typography color={medium}>Top post</Typography>
                     <Typography color={main} fontWeight="500">
                         {maxLike} likes
+                    </Typography>
+                </FlexBetween>
+                <FlexBetween mb="0.5rem">
+                    <Typography color={medium}>Net worth</Typography>
+                    <Typography color={main} fontWeight="500">
+                        {netWorth} virus
                     </Typography>
                 </FlexBetween>
             </Box>
