@@ -20,10 +20,11 @@ import VirusUser from 'components/VirusUser'
 import WidgetWrapper from 'components/WidgetWrapper'
 import UserImage from 'components/UserImage'
 import { useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { setPost } from 'state'
 import FloatLogin from 'components/FloatLogin' // 引入 FloatLogin
+import { LanguageContext, messages } from 'components/LanguageContext';
 
 import { MessageProvider, useMessage } from 'components/MessageContext'
 import './post_widget.css'
@@ -50,6 +51,7 @@ const PostWidget = ({
     my_bid,
     comments: initialComments, // 將 comments 更名為 initialComments
 }) => {
+    const {currentLanguage} = useContext(LanguageContext);
     const [listMode, setListMode] = useState(0)
     const [isHovered, setIsHovered] = useState(false)
     const [newComment, setNewComment] = useState('')
@@ -391,13 +393,13 @@ const PostWidget = ({
 
         let formattedTime = ''
         if (days > 0) {
-            formattedTime += `${days} day${days > 1 ? 's' : ''} `
+            formattedTime += `${days} ${messages[currentLanguage]?.days} `
         }
         if (hours > 0) {
-            formattedTime += `${hours} hr${hours > 1 ? 's' : ''} `
+            formattedTime += `${hours} ${messages[currentLanguage]?.hrs} `
         }
         if (minutes > 0) {
-            formattedTime += `${minutes} min${minutes > 1 ? 's' : ''} `
+            formattedTime += `${minutes} ${messages[currentLanguage]?.mins}`
         }
 
         return formattedTime.trim()
@@ -514,8 +516,8 @@ const PostWidget = ({
                                 <div
                                     style={{ width: '50%', textAlign: 'right' }}
                                 >
-                                    {isAlive ? '' : 'Expired'} {timeLeft}{' '}
-                                    {isAlive ? `left` : 'ago'}
+                                    {isAlive ? '' : messages[currentLanguage]?.expired} {timeLeft}{' '}
+                                    {isAlive ? messages[currentLanguage]?.left : messages[currentLanguage]?.ago}
                                 </div>
                             </div>
                         </div>
@@ -596,7 +598,7 @@ const PostWidget = ({
                         }}
                         disabled={bid < 0 || (bid == 0 && myBid == 0)}
                     >
-                        {(isSell ? 'Ask (' : 'Bid (') + myBid + ')'}
+                        {(isSell ? messages[currentLanguage]?.ask + ' (' : messages[currentLanguage]?.bid + ' (') + myBid + ')'}
                     </Button>
                     <Button
                         sx={{
@@ -615,7 +617,7 @@ const PostWidget = ({
                         }}
                         disabled={bid < 0 || (bid == 0 && myBid == 0)}
                     >
-                        Refuel
+                        {messages[currentLanguage]?.tip}
                     </Button>
                     <InputBase
                         type="number"
@@ -639,8 +641,8 @@ const PostWidget = ({
                         {confirmationState === 1 ? (
                             <div className="custom-modal-content">
                                 <p style={{ color: 'black' }}>
-                                    Are you sure you want to{' '}
-                                    {isSell ? 'sell' : 'buy'} at ${price}?
+                                    {messages[currentLanguage]?.are_you_sure_you_want_to + ' '}
+                                    {isSell ? messages[currentLanguage]?.sell_at : messages[currentLanguage]?.buy_at} ${price}?
                                 </p>
                                 <div className="button-container">
                                     <button
@@ -665,7 +667,7 @@ const PostWidget = ({
                             <div className="custom-modal-content">
                                 <p style={{ color: 'black' }}>
                                     Are you sure you want to place{' '}
-                                    {isSell ? 'an ask' : 'a bid'} at ${bid}?
+                                    {isSell ? messages[currentLanguage]?.ask_at : messages[currentLanguage]?.bid_at } ${bid}?
                                 </p>
                                 <div className="button-container">
                                     <button
@@ -798,7 +800,7 @@ const PostWidget = ({
             <Box mt="1rem" display="flex" alignItems="center">
                 <InputBase
                     type="text"
-                    placeholder="leave a comment"
+                    placeholder={messages[currentLanguage]?.leave_a_comment}
                     value={newComment}
                     onChange={(event) => {
                         setNewComment(event.target.value)
@@ -818,7 +820,7 @@ const PostWidget = ({
                     }}
                     disabled={!isAlive}
                 >
-                    Send
+                    {messages[currentLanguage]?.send}
                 </Button>
             </Box>
         </WidgetWrapper>

@@ -9,8 +9,9 @@ import UserImage from 'components/UserImage'
 import FlexBetween from 'components/FlexBetween'
 import WidgetWrapper from 'components/WidgetWrapper'
 import { useSelector } from 'react-redux'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { LanguageContext, messages } from 'components/LanguageContext';
 import WalletConnectComponent from '../../WalletConnectComponent'
 import VirusUser from 'components/VirusUser'
 
@@ -19,6 +20,7 @@ const UserWidget = ({ userId, picturePath }) => {
     const [profile, setProfile] = useState('')
     const [inputValue, setInputValue] = useState('')
     const [user, setUser] = useState(null)
+    const {currentLanguage} = useContext(LanguageContext);
     const { palette } = useTheme()
     const navigate = useNavigate()
     const token = useSelector((state) => state.token)
@@ -123,7 +125,7 @@ const UserWidget = ({ userId, picturePath }) => {
                     mb="1rem"
                 >
                     <FlexBetween gap="1rem">
-                        Social Profiles
+                        {messages[currentLanguage]?.social_profiles}
                         {login_id == userId && (
                             <EditOutlined
                                 sx={{ color: main }}
@@ -194,25 +196,25 @@ const UserWidget = ({ userId, picturePath }) => {
             {/* THIRD ROW */}
             <Box p="1rem 0">
                 <FlexBetween mb="0.5rem">
-                    <Typography color={medium}>Number of posts</Typography>
+                    <Typography color={medium}>{messages[currentLanguage]?.number_of_posts}</Typography>
                     <Typography color={main} fontWeight="500">
                         {postCount}
                     </Typography>
                 </FlexBetween>
                 <FlexBetween mb="0.5rem">
-                    <Typography color={medium}>Likes received</Typography>
+                    <Typography color={medium}>{messages[currentLanguage]?.likes_received}</Typography>
                     <Typography color={main} fontWeight="500">
                         {totalLiked}
                     </Typography>
                 </FlexBetween>
                 <FlexBetween mb="0.5rem">
-                    <Typography color={medium}>Top post</Typography>
+                    <Typography color={medium}>{messages[currentLanguage]?.top_post}</Typography>
                     <Typography color={main} fontWeight="500">
-                        {maxLike} likes
+                        {maxLike} {messages[currentLanguage]?.likes}
                     </Typography>
                 </FlexBetween>
                 <FlexBetween mb="0.5rem">
-                    <Typography color={medium}>Net worth</Typography>
+                    <Typography color={medium}>{messages[currentLanguage]?.net_worth}</Typography>
                     <Typography color={main} fontWeight="500">
                         {netWorth} virus
                     </Typography>

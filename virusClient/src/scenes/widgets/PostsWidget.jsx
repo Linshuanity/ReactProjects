@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useSelector } from 'react-redux'
 import { Tab, Tabs, Typography, IconButton, Button, useTheme } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import PostWidget from './PostWidget'
+import { LanguageContext, messages } from 'components/LanguageContext';
+
 const PostsWidget = ({ userId, isProfile = false }) => {
     const [mode, setMode] = useState(0)
+    const {currentLanguage} = useContext(LanguageContext);
     const [posts, setPosts] = useState([])
     const [keyword, setKeyword] = useState('')
     const token = useSelector((state) => state.token)
@@ -134,11 +137,11 @@ const PostsWidget = ({ userId, isProfile = false }) => {
             <div style={{ marginTop: '10px' }}>
                 {isAuth && (
                     <Tabs value={mode} onChange={handleTabChange}>
-                        {userId == loggedInUserId && <Tab label="News" value={0} />}
-                        <Tab label="My post" value={1} />
-                        <Tab label="My collection" value={2} />
-                        {userId == loggedInUserId && <Tab label="My order" value={3} />}
-                        <Tab label="Search" value={4} />
+                        {userId == loggedInUserId && <Tab label={messages[currentLanguage]?.news} value={0} />}
+                        <Tab label={messages[currentLanguage]?.my_post} value={1} />
+                        <Tab label={messages[currentLanguage]?.collection} value={2} />
+                        {userId == loggedInUserId && <Tab label={messages[currentLanguage]?.my_order} value={3} />}
+                        <Tab label={messages[currentLanguage]?.search} value={4} />
                     </Tabs>
                 )}
                 {isAuth && mode === 4 && (
@@ -195,7 +198,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
             ))}
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
                 <p style={{ textAlign: 'center', fontSize: '1.2em', color: '#555' }}>
-                    {loading === 1 ? 'Loading...' : loading === 2 ? 'Bottom of list' : null}
+                    {loading === 1 ? messages[currentLanguage]?.loading : loading === 2 ? messages[currentLanguage]?.bottom_of_list : null}
                 </p>
             </div>
         </>

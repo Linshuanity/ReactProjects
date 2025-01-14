@@ -1,12 +1,14 @@
 import { Box, Typography, useTheme } from '@mui/material'
 import VirusUser from 'components/VirusUser'
 import WidgetWrapper from 'components/WidgetWrapper'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useContext } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { setFriends } from 'state'
+import { LanguageContext, messages } from 'components/LanguageContext';
 
 const FriendListWidget = ({ userId }) => {
     const dispatch = useDispatch()
+    const { currentLanguage } = useContext(LanguageContext);
     const { palette } = useTheme()
     const token = useSelector((state) => state.token)
     const loggedInUserId = useSelector((state) => state.user?._id);
@@ -58,7 +60,7 @@ const FriendListWidget = ({ userId }) => {
                 fontWeight="500"
                 sx={{ mb: '1.5rem' }}
             >
-                Following
+                {messages[currentLanguage]?.following}
             </Typography>
             <Box display="flex" flexDirection="column" gap="1.5rem">
                 {friendDiv}

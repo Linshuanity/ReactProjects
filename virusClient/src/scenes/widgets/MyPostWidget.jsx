@@ -22,13 +22,15 @@ import FlexBetween from 'components/FlexBetween'
 import Dropzone from 'react-dropzone'
 import UserImage from 'components/UserImage'
 import WidgetWrapper from 'components/WidgetWrapper'
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { setPosts } from 'state'
 import { MessageProvider, useMessage } from 'components/MessageContext'
+import { LanguageContext, messages } from 'components/LanguageContext';
 
 const MyPostWidget = ({ picturePath }) => {
     const dispatch = useDispatch()
+    const {currentLanguage} = useContext(LanguageContext);
     const [isImage, setIsImage] = useState(false)
     const [image, setImage] = useState(null)
     const [post, setPost] = useState('')
@@ -85,7 +87,7 @@ const MyPostWidget = ({ picturePath }) => {
             <FlexBetween gap="1.5rem">
                 <UserImage image={picturePath} />
                 <InputBase
-                    placeholder="Add some description..."
+                    placeholder={messages[currentLanguage]?.add_some_description}
                     onChange={(e) => setPost(e.target.value)}
                     value={post}
                     sx={{
@@ -119,7 +121,7 @@ const MyPostWidget = ({ picturePath }) => {
                                 >
                                     <input {...getInputProps()} />
                                     {!image ? (
-                                        <p>Add Image Here</p>
+                                        <p>{messages[currentLanguage]?.add_image_here}</p>
                                     ) : (
                                         <FlexBetween>
                                             <Typography>
@@ -152,7 +154,7 @@ const MyPostWidget = ({ picturePath }) => {
                         color={mediumMain}
                         sx={{ '&:hover': { cursor: 'pointer', color: medium } }}
                     >
-                        Image
+                        {messages[currentLanguage]?.image}
                     </Typography>
                 </FlexBetween>
                 <FlexBetween gap="0.25rem">
@@ -164,7 +166,7 @@ const MyPostWidget = ({ picturePath }) => {
                             marginRight: '0.5rem',
                         }}
                     >
-                        Cost: $ {postPrice} {/* Replace with actual number state or variable */}
+                        {messages[currentLanguage]?.cost}: $ {postPrice} {/* Replace with actual number state or variable */}
                     </Typography>
                     <Button
                         disabled={!post}
@@ -175,7 +177,7 @@ const MyPostWidget = ({ picturePath }) => {
                             borderRadius: '3rem',
                         }}
                     >
-                        POST
+                        {messages[currentLanguage]?.post}
                     </Button>
                 </FlexBetween>
                 <Modal
@@ -187,8 +189,8 @@ const MyPostWidget = ({ picturePath }) => {
                     {confirmationState === 1 && (
                         <div className="custom-modal-content">
                             <p style={{ color: 'black' }}>
-                                This will cost you $1.
-                                Are you sure you want to post?
+                                {messages[currentLanguage]?.this_will_cost_you} $1.
+                                {messages[currentLanguage]?.are_you_sure_you_want_to_post}?
                             </p>
                             <div className="button-container">
                                 <button

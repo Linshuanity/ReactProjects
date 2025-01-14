@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
@@ -6,6 +6,7 @@ import LiveSearch from 'components/LiveSearch';
 import FlexBetween from 'components/FlexBetween';
 import NotificationDrawer from './NotificationDrawer';
 import FloatLogin from 'components/FloatLogin'; // 引入 FloatLogin
+import { LanguageContext } from 'components/LanguageContext';
 
 import { setMode, setLogout } from 'state';
 
@@ -33,6 +34,8 @@ const Navbar = () => {
     const [isMobileMenuToggled, setIsMobileMenuToggled] = useState(false);
     const [results, setResults] = useState([]);
     const [selectedProfile, setSelectedProfile] = useState(null);
+
+    const {currentLanguage, setLanguage} = useContext(LanguageContext);
     const user = useSelector((state) => state.user);
     const isAuth = Boolean(useSelector((state) => state.token));
 
@@ -107,6 +110,18 @@ const Navbar = () => {
 
             {isNonMobileScreens ? (
                 <FlexBetween gap="2rem">
+                    <div>
+                        <Select
+                            value={currentLanguage} // Replace with your state for selected language
+                            onChange={(event) => setLanguage(event.target.value)} // Replace with your state handler
+                            displayEmpty
+                            inputProps={{ 'aria-label': 'Select language' }}
+                        >
+                            <MenuItem value="en">English</MenuItem>
+                            <MenuItem value="zh">中文</MenuItem>
+                            {/* Add more languages as needed */}
+                        </Select>
+                    </div>
                     <IconButton onClick={() => dispatch(setMode())}>
                         {theme.palette.mode === 'dark' ? (
                             <DarkMode sx={{ fontSize: '25px' }} />

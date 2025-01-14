@@ -2,13 +2,15 @@ import { Box, Typography, LinearProgress, useTheme, Button, IconButton, useMedia
 import CoronavirusIcon from '@mui/icons-material/Coronavirus'
 import FlexBetween from 'components/FlexBetween'
 import WidgetWrapper from 'components/WidgetWrapper'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useContext } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { ExpandMore, ExpandLess } from '@mui/icons-material';
 import { MessageProvider, useMessage } from 'components/MessageContext'
+import { LanguageContext, messages } from 'components/LanguageContext';
 
 const MissionWidget = () => {
     const { palette } = useTheme()
+    const {currentLanguage} = useContext(LanguageContext)
     const dark = palette.neutral.dark
     const main = palette.neutral.main
     const medium = palette.neutral.medium
@@ -73,7 +75,7 @@ const MissionWidget = () => {
                     variant="h4"
                     fontWeight="500"
                 >
-                    Achievement
+                    {messages[currentLanguage]?.achievement}
                 </Typography>
             </FlexBetween>
 
