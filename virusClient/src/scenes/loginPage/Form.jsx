@@ -45,7 +45,7 @@ const initialValuesLogin = {
     password: '',
 }
 
-const Form = () => {
+const Form = ({onClose}) => {
     const [pageType, setPageType] = useState('login')
     const { palette } = useTheme()
     const dispatch = useDispatch()
@@ -112,6 +112,7 @@ const Form = () => {
                     token: loggedIn.token,
                 })
             )
+            onClose();
             navigate('/home')
         } else {
             alert('server disconnected')

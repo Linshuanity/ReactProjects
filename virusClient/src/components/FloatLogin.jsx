@@ -90,9 +90,9 @@ const FloatLogin = ({ isOpen, onClose }) => {
                     <CloseIcon />
                 </IconButton>
                 <Typography variant="h6" gutterBottom color={isDarkMode ? theme.palette.text.primary : 'inherit'}>
-                Please Sign in or Sign up to continue
+                Please Sign in or Sign Up to continue
                 </Typography>
-                <Form /> {/* 使用現有的 Form 組件 */}
+                <Form onClose={onClose}/> {/* 使用現有的 Form 組件 */}
             </Box>
         </Box>
     );

@@ -32,6 +32,7 @@ function App() {
                         <CssBaseline />
                         <Routes>
                             <Route path="/" element={<HomePage />} />
+                            <Route path="/home" element={<HomePage />} />
                             <Route path="/login" element={<LoginPage />} />
                             {/* <Route path="/home" element={isAuth ? <HomePage /> : <Navigate to="/" />} />
                             <Route path="/post/:postId" element={isAuth ? <PostPage /> : <Navigate to="/" />} /> */}
