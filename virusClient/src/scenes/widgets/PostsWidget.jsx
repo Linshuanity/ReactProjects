@@ -167,41 +167,37 @@ const PostsWidget = ({ userId, isProfile = false }) => {
             </div>
             {posts.map((post, index) => (
                 <div key={index} className="post">
-                    {
-                        //{index}:{post.pid}
-                    }
-                    {
-                        <PostWidget
-                            key={post.pid}
-                            post_id={post.pid}
-                            owner_id={post.owner_uid}
-                            owner_name={post.owner_name}
-                            owner_profile={post.owner_profile}
-                            author_id={post.author_uid}
-                            author_name={post.author_name}
-                            author_profile={post.author_profile}
-                            level={post.level}
-                            description={post.title}
-                            location="Taipei" // 需要根據實際數據進行動態設置
-                            create_date={post.create_date}
-                            expire_date={post.expire_date}
-                            picturePath={post.image_path}
-                            bid_user_id={post.bid_user_id}
-                            bid_price={post.bid_price}
-                            ask_price={post.ask_price}
-                            is_liked={post.is_liked}
-                            likes={post.likes}
-                            my_bid={post.my_bid}
-                            comments={post.comments}
-                        />
-                    }
+                    {/* {index}:{post.pid} */}
+                    <PostWidget
+                        key={post.pid}
+                        post_id={post.pid}
+                        owner_id={post.owner_uid}
+                        owner_name={post.owner_name}
+                        owner_profile={post.owner_profile}
+                        author_id={post.author_uid}
+                        author_name={post.author_name}
+                        author_profile={post.author_profile}
+                        level={post.level}
+                        description={post.title}
+                        location="Taipei" // 需要根據實際數據進行動態設置
+                        create_date={post.create_date}
+                        expire_date={post.expire_date}
+                        picturePath={post.image_path}
+                        bid_user_id={post.bid_user_id}
+                        bid_price={post.bid_price}
+                        ask_price={post.ask_price}
+                        is_liked={post.is_liked}
+                        likes={post.likes}
+                        my_bid={post.my_bid}
+                        comments={post.comments}
+                    />
                 </div>
             ))}
-            {loading === 1 ? (
-                <p>Loading...</p>
-            ) : loading === 2 ? (
-                <p>Bottom of list</p>
-            ) : null}
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <p style={{ textAlign: 'center', fontSize: '1.2em', color: '#555' }}>
+                    {loading === 1 ? 'Loading...' : loading === 2 ? 'Bottom of list' : null}
+                </p>
+            </div>
         </>
     )
 }
