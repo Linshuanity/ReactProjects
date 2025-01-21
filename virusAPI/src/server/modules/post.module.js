@@ -1183,15 +1183,29 @@ const transfer_post = (trader_id, post_id, user_id, for_sell, price) => {
           params: [post_id, seller_id, price],
         },
         {
-          sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
-                  SELECT ?, 7, NOW(), 1, NOW()
-                  ON DUPLICATE KEY UPDATE value = value + 1, last_update_time = NOW()`,
+          sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+                  SELECT vp.user_id, 7, NOW(),
+                      user_buy_post_count,
+                      NOW(),
+                      lm.level, lm.required, lm.next
+                  FROM virus_platform_user vp
+                      LEFT JOIN level_map lm
+                      ON lm.required <= vp.user_buy_post_count
+                  WHERE vp.user_id = ?
+                  ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`,
           params: [buyer_id],
         },
         {
-          sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
-                  SELECT ?, 8, NOW(), 1, NOW()
-                  ON DUPLICATE KEY UPDATE value = value + 1, last_update_time = NOW()`,
+          sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+                  SELECT vp.user_id, 8, NOW(),
+                      user_sell_post_count,
+                      NOW(),
+                      lm.level, lm.required, lm.next
+                  FROM virus_platform_user vp
+                      LEFT JOIN level_map lm
+                      ON lm.required <= vp.user_sell_post_count
+                  WHERE vp.user_id = ?
+                  ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`,
           params: [seller_id],
         },
       ];
