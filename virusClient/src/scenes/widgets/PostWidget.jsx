@@ -51,7 +51,7 @@ const PostWidget = ({
     my_bid,
     comments: initialComments, // 將 comments 更名為 initialComments
 }) => {
-    const {currentLanguage} = useContext(LanguageContext);
+    const { currentLanguage } = useContext(LanguageContext);
     const [listMode, setListMode] = useState(0)
     const [isHovered, setIsHovered] = useState(false)
     const [newComment, setNewComment] = useState('')
@@ -444,7 +444,7 @@ const PostWidget = ({
                         />
                     </Box>
                 ) : (
-                    description
+                    <pre>{description}</pre>
                 )}
             </Typography>
             {picturePath && (
@@ -667,7 +667,7 @@ const PostWidget = ({
                             <div className="custom-modal-content">
                                 <p style={{ color: 'black' }}>
                                     Are you sure you want to place{' '}
-                                    {isSell ? messages[currentLanguage]?.ask_at : messages[currentLanguage]?.bid_at } ${bid}?
+                                    {isSell ? messages[currentLanguage]?.ask_at : messages[currentLanguage]?.bid_at} ${bid}?
                                 </p>
                                 <div className="button-container">
                                     <button

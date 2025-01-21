@@ -25,12 +25,14 @@ import WidgetWrapper from 'components/WidgetWrapper'
 import { useState, useContext } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { setPosts } from 'state'
+import { TextareaAutosize } from '@mui/material';
+import { TextField } from '@mui/material';
 import { MessageProvider, useMessage } from 'components/MessageContext'
 import { LanguageContext, messages } from 'components/LanguageContext';
 
 const MyPostWidget = ({ picturePath }) => {
     const dispatch = useDispatch()
-    const {currentLanguage} = useContext(LanguageContext);
+    const { currentLanguage } = useContext(LanguageContext);
     const [isImage, setIsImage] = useState(false)
     const [image, setImage] = useState(null)
     const [post, setPost] = useState('')
@@ -86,7 +88,7 @@ const MyPostWidget = ({ picturePath }) => {
         <WidgetWrapper>
             <FlexBetween gap="1.5rem">
                 <UserImage image={picturePath} />
-                <InputBase
+                {/* <InputBase
                     placeholder={messages[currentLanguage]?.add_some_description}
                     onChange={(e) => setPost(e.target.value)}
                     value={post}
@@ -96,6 +98,29 @@ const MyPostWidget = ({ picturePath }) => {
                         borderRadius: '2rem',
                         padding: '1rem 2rem',
                     }}
+                /> */}
+                <TextField
+                    placeholder={messages[currentLanguage]?.add_some_description}
+                    onChange={(e) => setPost(e.target.value)}
+                    value={post}
+                    multiline // 啟用多行輸入
+                    minRows={3} // 可以設定最小行數
+                    InputProps={{
+                        style: {
+                            width: '100%',
+                            backgroundColor: palette.neutral.light,
+                            borderRadius: '2rem',
+                            padding: '1rem 2rem',
+                        },
+                    }}
+                    sx={{
+                      width: '100%'
+                    }}
+                    
+                    InputLabelProps={{
+                        shrink: false, // 防止placeholder跑到上面去
+                    }}
+                    variant="standard" // 使用標準模式，去除TextField原本的框線
                 />
             </FlexBetween>
             {isImage && (
