@@ -6,7 +6,7 @@ import LiveSearch from 'components/LiveSearch';
 import FlexBetween from 'components/FlexBetween';
 import NotificationDrawer from './NotificationDrawer';
 import FloatLogin from 'components/FloatLogin'; // 引入 FloatLogin
-import { LanguageContext, messages } from 'components/LanguageContext';
+import { useLanguage, messages } from 'components/LanguageContext';
 
 import { setMode, setLogout } from 'state';
 
@@ -35,7 +35,7 @@ const Navbar = () => {
     const [results, setResults] = useState([]);
     const [selectedProfile, setSelectedProfile] = useState(null);
 
-    const {currentLanguage, setLanguage} = useContext(LanguageContext);
+    const {currentLanguage, setLanguage} = useLanguage();
     const user = useSelector((state) => state.user);
     const isAuth = Boolean(useSelector((state) => state.token));
 

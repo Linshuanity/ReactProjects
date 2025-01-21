@@ -22,17 +22,17 @@ import FlexBetween from 'components/FlexBetween'
 import Dropzone from 'react-dropzone'
 import UserImage from 'components/UserImage'
 import WidgetWrapper from 'components/WidgetWrapper'
-import { useState, useContext } from 'react'
+import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { setPosts } from 'state'
 import { TextareaAutosize } from '@mui/material';
 import { TextField } from '@mui/material';
 import { MessageProvider, useMessage } from 'components/MessageContext'
-import { LanguageContext, messages } from 'components/LanguageContext';
+import { useLanguage, messages } from 'components/LanguageContext';
 
 const MyPostWidget = ({ picturePath }) => {
     const dispatch = useDispatch()
-    const { currentLanguage } = useContext(LanguageContext);
+    const {currentLanguage} = useLanguage();
     const [isImage, setIsImage] = useState(false)
     const [image, setImage] = useState(null)
     const [post, setPost] = useState('')

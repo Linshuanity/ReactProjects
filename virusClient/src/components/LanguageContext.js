@@ -1,10 +1,14 @@
 // LanguageContext.js
-import React, { createContext, useState } from 'react';
+import React, { createContext, useState, useContext } from 'react';
+import { setLanguage } from 'state';
 
 export const LanguageContext = createContext();
 
 export const LanguageProvider = ({ children }) => {
-    const [currentLanguage, setCurrentLanguage] = useState('en'); // Default language
+
+    const [currentLanguage, setCurrentLanguage] = useState(() => {
+        return localStorage.getItem('language') || 'en';
+    });
 
     const setLanguage = (language) => {
         setCurrentLanguage(language);
@@ -124,3 +128,6 @@ export const messages = {
     // Add more languages here as needed
 };
 
+export const useLanguage = () => {
+    return useContext(LanguageContext);
+};

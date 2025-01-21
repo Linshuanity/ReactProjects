@@ -20,11 +20,11 @@ import VirusUser from 'components/VirusUser'
 import WidgetWrapper from 'components/WidgetWrapper'
 import UserImage from 'components/UserImage'
 import { useNavigate } from 'react-router-dom'
-import { useState, useContext } from 'react'
+import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { setPost } from 'state'
 import FloatLogin from 'components/FloatLogin' // 引入 FloatLogin
-import { LanguageContext, messages } from 'components/LanguageContext';
+import { useLanguage, messages } from 'components/LanguageContext';
 
 import { MessageProvider, useMessage } from 'components/MessageContext'
 import './post_widget.css'
@@ -51,7 +51,7 @@ const PostWidget = ({
     my_bid,
     comments: initialComments, // 將 comments 更名為 initialComments
 }) => {
-    const { currentLanguage } = useContext(LanguageContext);
+    const {currentLanguage} = useLanguage();
     const [listMode, setListMode] = useState(0)
     const [isHovered, setIsHovered] = useState(false)
     const [newComment, setNewComment] = useState('')

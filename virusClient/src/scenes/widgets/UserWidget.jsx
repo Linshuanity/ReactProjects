@@ -9,9 +9,9 @@ import UserImage from 'components/UserImage'
 import FlexBetween from 'components/FlexBetween'
 import WidgetWrapper from 'components/WidgetWrapper'
 import { useSelector } from 'react-redux'
-import { useEffect, useState, useContext } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LanguageContext, messages } from 'components/LanguageContext';
+import { useLanguage, messages } from 'components/LanguageContext';
 import WalletConnectComponent from '../../WalletConnectComponent'
 import VirusUser from 'components/VirusUser'
 
@@ -20,7 +20,7 @@ const UserWidget = ({ userId, picturePath }) => {
     const [profile, setProfile] = useState('')
     const [inputValue, setInputValue] = useState('')
     const [user, setUser] = useState(null)
-    const {currentLanguage} = useContext(LanguageContext);
+    const {currentLanguage} = useLanguage();
     const { palette } = useTheme()
     const navigate = useNavigate()
     const token = useSelector((state) => state.token)

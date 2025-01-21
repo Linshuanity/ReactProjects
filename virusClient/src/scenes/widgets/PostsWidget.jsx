@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux'
 import { Tab, Tabs, Typography, IconButton, Button, useTheme } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import PostWidget from './PostWidget'
-import { LanguageContext, messages } from 'components/LanguageContext';
+import { useLanguage, messages } from 'components/LanguageContext';
 
 const PostsWidget = ({ userId, isProfile = false }) => {
     const [mode, setMode] = useState(0)
-    const {currentLanguage} = useContext(LanguageContext);
+    const {currentLanguage} = useLanguage();
     const [posts, setPosts] = useState([])
     const [keyword, setKeyword] = useState('')
     const token = useSelector((state) => state.token)
