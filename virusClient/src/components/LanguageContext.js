@@ -64,7 +64,11 @@ export const messages = {
         are_you_sure_you_want_to_place: "Are you sure you want to place",
         are_you_sure_you_want_to_post: "Are you sure you want to post",
         buy_at: "buy at",
-        sell_at: "sell at"
+        sell_at: "sell at",
+        post_liked: "Post Liked",
+        comment_liked: "Comment Liked",
+        virus_made: "Virus Made",
+        post_traded: "Post traded",
     },
     zh: {
         following: "追蹤",
@@ -111,7 +115,11 @@ export const messages = {
         are_you_sure_you_want_to_place: "你確定要出價",
         are_you_sure_you_want_to_post: "你確定要貼文",
         buy_at: "購入價格",
-        sell_at: "賣出價格"
+        sell_at: "賣出價格",
+        post_liked: "貼文被讚",
+        comment_liked: "留言被讚",
+        virus_made: "獲得獎勵",
+        post_traded: "交易通知",
     },
     // Add more languages here as needed
 };

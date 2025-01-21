@@ -573,7 +573,7 @@ const PostWidget = ({
                         }}
                         disabled={price <= 0}
                     >
-                        {(isSell ? 'Sell @ ' : 'Buy @ ') +
+                        {(isSell ? messages[currentLanguage]?.sell : messages[currentLanguage]?.buy) + ' @ ' +
                             (price <= 0 ? 0 : price)}
                     </Button>
                     <Button

@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Drawer, List, ListItem, ListItemText, IconButton, Typography, Box, Badge, Button, useTheme, useMediaQuery } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import { useSelector } from 'react-redux';
 import { styled } from '@mui/system';
 import CloseIcon from '@mui/icons-material/Close';
+import { LanguageContext, messages } from 'components/LanguageContext';
 
 const NotificationDrawer = () => {
+  const {currentLanguage} = useContext(LanguageContext);
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState('all');
   const user = useSelector((state) => state.user)
@@ -16,10 +18,10 @@ const NotificationDrawer = () => {
 
   const isNonMobileScreens = useMediaQuery('(min-width: 1000px)')
   const notificationTypes = {
-    1: "貼文被讚",
-    2: "評論被讚",
-    3: "獲得金錢",
-    4: "交易成功"
+    1: messages[currentLanguage]?.post_liked,
+    2: messages[currentLanguage]?.virus_made,
+    3: messages[currentLanguage]?.comment_liked,
+    4: messages[currentLanguage]?.post_traded
   };
 
   const StyledDrawer = styled(Drawer)(({ theme }) => ({
@@ -155,9 +157,9 @@ const NotificationDrawer = () => {
           </IconButton>
         </Box>
         <Box display="flex" justifyContent="space-around" mb={2}>
-          <Button variant="contained" onClick={() => setFilter('all')}>All</Button>
-          <Button variant="contained" onClick={() => setFilter('unread')}>Unread</Button>
-          <Button variant="contained" onClick={() => handleReadClick(userId, 0)}>ReadAll</Button>
+          <Button variant="contained" onClick={() => setFilter('all')}>{messages[currentLanguage]?.all}</Button>
+          <Button variant="contained" onClick={() => setFilter('unread')}>{messages[currentLanguage]?.unread}</Button>
+          <Button variant="contained" onClick={() => handleReadClick(userId, 0)}>{messages[currentLanguage]?.read_all}</Button>
         </Box>
         <List>
           {filteredNotifications.length == 0 ? (

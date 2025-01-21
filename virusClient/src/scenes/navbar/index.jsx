@@ -6,7 +6,7 @@ import LiveSearch from 'components/LiveSearch';
 import FlexBetween from 'components/FlexBetween';
 import NotificationDrawer from './NotificationDrawer';
 import FloatLogin from 'components/FloatLogin'; // 引入 FloatLogin
-import { LanguageContext } from 'components/LanguageContext';
+import { LanguageContext, messages } from 'components/LanguageContext';
 
 import { setMode, setLogout } from 'state';
 
@@ -161,7 +161,7 @@ const Navbar = () => {
                                     <Typography>{fullName}</Typography>
                                 </MenuItem>
                                 <MenuItem onClick={() => dispatch(setLogout())}>
-                                    Log Out
+                                    {messages[currentLanguage]?.log_out}
                                 </MenuItem>
                             </Select>
                         </FormControl>)
@@ -236,7 +236,7 @@ const Navbar = () => {
                                 onClick={handleOpenLoginModal} // 打開浮動視窗
                                 sx={{ width: '100%' }}
                             >
-                                Log In
+                                {messages[currentLanguage]?.log_in}
                             </Button>
                         )}
 
