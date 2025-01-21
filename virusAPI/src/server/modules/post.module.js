@@ -244,7 +244,7 @@ const createPost = (insertValues) => {
                        lm.level, lm.required, lm.next
                 FROM virus_platform_user vp
                     LEFT JOIN level_map lm
-                    ON lm.required < vp.user_post_count
+                    ON lm.required <= vp.user_post_count
                 WHERE vp.user_id = ? AND lm.ach_code = 4
                 ORDER BY lm.required DESC
                 LIMIT 1
@@ -624,7 +624,7 @@ const addCommentlike = (liker_id, comment_id, reward) => {
                       lm.level, lm.required, lm.next
                   FROM virus_platform_user vp
                       LEFT JOIN level_map lm
-                      ON lm.required < vp.user_total_liked_count
+                      ON lm.required <= vp.user_total_liked_count
                   WHERE vp.user_id = (SELECT user_id FROM comments WHERE cid = ?) AND lm.ach_code = 5
                   ORDER BY lm.required DESC
                   LIMIT 1
@@ -640,7 +640,7 @@ const addCommentlike = (liker_id, comment_id, reward) => {
                       lm.level, lm.required, lm.next
                   FROM virus_platform_user vp
                       LEFT JOIN level_map lm
-                      ON lm.required < vp.user_most_liked_count
+                      ON lm.required <= vp.user_most_liked_count
                   WHERE vp.user_id = (SELECT user_id FROM comments WHERE cid = ?) AND lm.ach_code = 9
                   ORDER BY lm.required DESC
                   LIMIT 1
@@ -806,7 +806,7 @@ const addUserLike = async (liker_id, post_id, reward) => {
                       lm.level, lm.required, lm.next
                   FROM virus_platform_user vp
                       LEFT JOIN level_map lm
-                      ON lm.required < vp.user_total_liked_count
+                      ON lm.required <= vp.user_total_liked_count
                   WHERE vp.user_id = (SELECT owner_uid FROM posts WHERE pid = ?)
                       AND lm.ach_code = 5
                   ORDER BY lm.required DESC
@@ -823,7 +823,7 @@ const addUserLike = async (liker_id, post_id, reward) => {
                       lm.level, lm.required, lm.next
                   FROM virus_platform_user vp
                       LEFT JOIN level_map lm
-                      ON lm.required < vp.user_most_liked_count
+                      ON lm.required <= vp.user_most_liked_count
                   WHERE vp.user_id = (SELECT owner_uid FROM posts WHERE pid = ?)
                       AND lm.ach_code = 9
                   ORDER BY lm.required DESC

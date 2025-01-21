@@ -137,7 +137,7 @@ const createSubscribe = (user_id, friend_id, is_delete) => {
                            lm.level, lm.required, lm.next
                     FROM virus_platform_user vp
                         LEFT JOIN level_map lm
-                        ON lm.required < vp.subscribed
+                        ON lm.required <= vp.subscribed
                     WHERE vp.user_id = ? AND lm.ach_code = 2
                     ORDER BY lm.required DESC
                     LIMIT 1
@@ -153,7 +153,7 @@ const createSubscribe = (user_id, friend_id, is_delete) => {
                            lm.level, lm.required, lm.next
                     FROM virus_platform_user vp
                         LEFT JOIN level_map lm
-                        ON lm.required < vp.subscriber
+                        ON lm.required <= vp.subscriber
                     WHERE vp.user_id = ? AND lm.ach_code = 3
                     ORDER BY lm.required DESC
                     LIMIT 1
