@@ -544,19 +544,27 @@ const addCommentlike = (liker_id, comment_id, reward) => {
       const queries =
         [
           {
-            sql: `UPDATE user_achievement
-            SET value = value + 1, last_update_time = NOW()
-            WHERE user_id = ? AND achievement_id = 1 AND DATE(last_update_time) = DATE(CURDATE() - INTERVAL 1 DAY)`,
+            sql: `UPDATE virus_platform_user
+            SET activeness = IF(DATE(update_time) < CURDATE() - INTERVAL 1 DAY, 1, activeness + 1),
+                update_time = NOW()
+            WHERE user_id = ?
+            AND DATE(update_time) != CURDATE()`,
             params: [liker_id],
           },
           {
-            sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
-            SELECT ?, 1, NOW(), 1, NOW()
-            WHERE NOT EXISTS (
-                SELECT 1 FROM user_achievement
-                WHERE user_id = ? AND achievement_id = 1 AND DATE(last_update_time) = DATE(CURDATE())
-            ) ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`,
-            params: [liker_id, liker_id],
+            sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+                  SELECT vp.user_id, 1, NOW(),
+                      activeness, 
+                      NOW(), 
+                      lm.level, lm.required, lm.next
+                  FROM virus_platform_user vp
+                      LEFT JOIN level_map lm
+                      ON lm.required <= vp.activeness
+                  WHERE vp.user_id = ? AND lm.ach_code = 1
+                  ORDER BY lm.required DESC
+                  LIMIT 1
+                  ON DUPLICATE KEY UPDATE value = GREATEST(value, VALUES(value)), last_update_time = Now()`,
+            params: [liker_id],
           },
           {
             sql: `UPDATE comments SET likes = likes + 1 WHERE cid = ?`,
@@ -718,22 +726,29 @@ const addUserLike = async (liker_id, post_id, reward) => {
 
       const queries = [
         {
-          tag: 'UP_ACH',
-          sql: `UPDATE user_achievement
-                SET value = value + 1, last_update_time = NOW()
-                WHERE user_id = ? AND achievement_id = 1 AND DATE(last_update_time) = DATE(CURDATE() - INTERVAL 1 DAY)`,
+          tag: 'UP_VAL',
+          sql: `UPDATE virus_platform_user
+          SET activeness = IF(DATE(update_time) < CURDATE() - INTERVAL 1 DAY, 1, activeness + 1),
+              update_time = NOW()
+          WHERE user_id = ?
+          AND DATE(update_time) != CURDATE()`,
           params: [liker_id],
         },
         {
           tag: 'ADD_ACH',
-          sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time)
-                SELECT ?, 1, NOW(), 1, NOW()
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM user_achievement
-                    WHERE user_id = ? AND achievement_id = 1 AND DATE(last_update_time) = DATE(CURDATE())
-                ) 
-                ON DUPLICATE KEY UPDATE value = VALUES(value), last_update_time = Now()`,
-          params: [liker_id, liker_id],
+          sql: `INSERT INTO user_achievement (user_id, achievement_id, create_time, value, last_update_time, level, previous, next)
+                SELECT vp.user_id, 1, NOW(),
+                    activeness, 
+                    NOW(), 
+                    lm.level, lm.required, lm.next
+                FROM virus_platform_user vp
+                    LEFT JOIN level_map lm
+                    ON lm.required <= vp.activeness
+                WHERE vp.user_id = ? AND lm.ach_code = 1
+                ORDER BY lm.required DESC
+                LIMIT 1
+                ON DUPLICATE KEY UPDATE value = GREATEST(value, VALUES(value)), last_update_time = Now()`,
+          params: [liker_id],
         },
         {
           tag: 'ADD_LK',
