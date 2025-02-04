@@ -90,7 +90,7 @@ const MissionWidget = () => {
                                 fontSize: isNonMobileScreens ? 'inherit' : '1rem' // Adjust font size for mobile
                             }}
                         >
-                            {item.name} : {item.value}
+                            {messages[currentLanguage]?.[item.name] || item.name} : {item.value}
                         </Typography>
                     </Box>
 
