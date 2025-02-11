@@ -10,7 +10,7 @@ const envVarSchema = Joi.object()
       .allow(['development', 'production']), // 字串且預設值為development 並只允許兩種參數
     PORT: Joi.number().default(8080), // 數字且預設值為 8080
     MYSQL_PORT: Joi.number().default(3306), //數字且預設值為3306
-    MYSQL_HOST: Joi.string().default('35.73.168.247'), //字串取預設值為127.0.0.1
+    MYSQL_HOST: Joi.string().default('127.0.0.1'), //字串取預設值為127.0.0.1
     MYSQL_USER: Joi.string(), // 字串
     MYSQL_PASS: Joi.string(), // 字串
     MYSQL_NAME: Joi.string(), // 字串

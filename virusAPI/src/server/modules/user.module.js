@@ -6,6 +6,7 @@ import APPError from '../helper/AppError';
 const connectionPool = mysql.createPool({
   connectionLimit: 10,
   host: config.mysqlHost,
+  port: config.mysqlPort,
   user: config.mysqlUserName,
   password: config.mysqlPass,
   database: config.mysqlDatabase,

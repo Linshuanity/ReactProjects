@@ -9,9 +9,11 @@ import {
 const connectionPool = mysql.createPool({
   connectionLimit: 10,
   host: config.mysqlHost,
+  port: config.mysqlPort,
   user: config.mysqlUserName,
   password: config.mysqlPass,
   database: config.mysqlDatabase,
+  charset: 'utf8mb4',
 });
 
 const getConnection = () => {
